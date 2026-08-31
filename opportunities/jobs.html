@@ -1,0 +1,934 @@
+<!--
+  MedNav jobs board. Same design system as the homepage and the Opportunities
+  hub; the layout differs on purpose, because this page is operated rather than
+  read. Facet rail plus results, the way a doctor actually narrows a board.
+
+  Content rules, unchanged: aggregated and linked never hosted, every source
+  named, no em dashes.
+
+  TEMP: JOBS[] is sample data mirroring the wireframe, not a live feed. Deadline
+  counts are computed from the browser's date, so these rows read as closed once
+  those dates pass. TEMP: https://mednav.ie is a placeholder domain.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NCHD and consultant jobs in Ireland | MedNav</title>
+<meta name="description" content="142 live NCHD and consultant posts in Ireland, sourced from the HSE and named agencies, filtered by grade, specialty, location and post type. Linked to source.">
+<link rel="canonical" href="https://mednav.ie/opportunities/jobs">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MedNav">
+<meta property="og:title" content="NCHD and consultant jobs in Ireland">
+<meta property="og:description" content="142 live NCHD and consultant posts, sourced from the HSE and named agencies. Filter by grade, specialty, location and post type.">
+<meta property="og:url" content="https://mednav.ie/opportunities/jobs">
+<meta property="og:image" content="https://mednav.ie/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "NCHD and consultant jobs in Ireland",
+  "description": "Live NCHD and consultant posts in Ireland, sourced from the HSE and named agencies.",
+  "url": "https://mednav.ie/opportunities/jobs",
+  "isPartOf": { "@type": "WebSite", "name": "MedNav", "url": "https://mednav.ie/" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "MedNav", "item": "https://mednav.ie/" },
+    { "@type": "ListItem", "position": 2, "name": "Opportunities", "item": "https://mednav.ie/opportunities" },
+    { "@type": "ListItem", "position": 3, "name": "Jobs", "item": "https://mednav.ie/opportunities/jobs" }
+  ]
+}
+</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/800.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/600.css">
+<style>
+
+:root{
+  --deep:#0b2e36; --pine:#12404c; --ink:#12333c;
+  --mint:#14b394; --mint-2:#3ed1a8; --mint-soft:#e0f5ec; --mint-text:#0e816a;
+  --paper:#f7faf8; --cream:#fdfbf5;
+  --coral:#ff7a59; --coral-soft:#fff1e6; --coral-text:#b8482a;
+  --amber:#ffc061; --amber-soft:#fff4e0; --amber-text:#8a5a10;
+  --line:rgba(11,46,54,.12); --txt-soft:#41606a;
+  --shadow:0 24px 60px rgba(11,46,54,.16);
+  --card-shadow:0 10px 26px rgba(11,46,54,.07);
+  --fd:'Sora',system-ui,sans-serif; --fb:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-padding-top:96px}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{font-family:var(--fb);background:var(--paper);color:var(--ink);font-size:16px;line-height:1.6;overflow-x:hidden}
+img,svg{display:block;max-width:100%}
+a{text-decoration:none;color:inherit}
+ul{list-style:none}
+button{font-family:inherit;cursor:pointer}
+input{font-family:inherit}
+::selection{background:var(--mint-2);color:var(--deep)}
+.container{max-width:1180px;margin:0 auto;padding:0 24px}
+.noise{position:fixed;inset:0;z-index:120;pointer-events:none;opacity:.045;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+.skip{position:absolute;left:-999px;top:8px;background:var(--deep);color:#fff;padding:10px 18px;border-radius:10px;z-index:200}
+.skip:focus{left:8px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+h1,h2,h3,h4,.logo-word{font-family:var(--fd)}
+h2.sec-title{font-size:clamp(28px,3.4vw,42px);line-height:1.12;color:var(--deep);font-weight:800;letter-spacing:-.01em}
+.sec-lede{color:var(--txt-soft);font-size:17px;max-width:58ch}
+.sec-head{max-width:680px;margin:0 auto 26px;text-align:center}
+.sec-head .sec-lede{margin:12px auto 0}
+/* ============ BUTTONS ============ */
+.btn{display:inline-flex;align-items:center;gap:10px;font-weight:600;font-size:15px;border-radius:14px;padding:14px 26px;border:1.5px solid transparent;transition:transform .25s ease,box-shadow .25s ease,background .25s,color .25s}
+.btn svg{transition:transform .25s}
+.btn:hover svg{transform:translateX(4px)}
+.btn-primary{background:var(--mint);color:#052a22}
+.btn-primary:hover{background:var(--mint-2);transform:translateY(-2px);box-shadow:0 12px 28px rgba(20,179,148,.35)}
+.btn-ghost{border-color:var(--deep);color:var(--deep);background:transparent}
+.btn-ghost:hover{background:var(--deep);color:#fff;transform:translateY(-2px)}
+:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+/* ============ HEADER ============ */
+header.site{position:sticky;top:0;z-index:100;background:rgba(247,250,248,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);transition:box-shadow .3s}
+header.site.scrolled{box-shadow:0 10px 30px rgba(11,46,54,.1)}
+.nav-in{display:flex;align-items:center;gap:30px;height:74px}
+.logo{display:flex;align-items:center;gap:11px;font-weight:800;font-size:22px;color:var(--deep);letter-spacing:-.02em}
+.logo-mark{width:38px;height:38px;flex:none}
+.nav-links{display:flex;gap:26px;margin-left:44px}
+.nav-links a{font-weight:600;font-size:15px;color:var(--ink);position:relative;padding:6px 0}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:0;height:2.5px;width:100%;background:var(--mint);border-radius:2px;transform:scaleX(0);transform-origin:left;transition:transform .3s ease}
+.nav-links a:hover::after,.nav-links a:focus-visible::after{transform:scaleX(1)}
+.nav-links a[aria-current="page"]{color:var(--mint-text)}
+.nav-links a[aria-current="page"]::after{transform:scaleX(1)}
+.nav-actions{display:flex;align-items:center;gap:12px;margin-left:auto}
+.nav-actions .btn{padding:11px 20px;font-size:14px}
+.nav-actions .btn-ghost{padding:10px 18px}
+.burger{display:none;margin-left:auto;background:none;border:0;width:44px;height:44px;position:relative;z-index:130}
+.burger span{position:absolute;left:10px;right:10px;height:2.5px;border-radius:2px;background:var(--deep);transition:.35s ease}
+.burger span:nth-child(1){top:15px}.burger span:nth-child(2){top:22px}.burger span:nth-child(3){top:29px}
+.burger.open span:nth-child(1){top:22px;transform:rotate(45deg)}
+.burger.open span:nth-child(2){opacity:0}
+.burger.open span:nth-child(3){top:22px;transform:rotate(-45deg)}
+.mobile-menu{position:fixed;inset:0;z-index:110;background:var(--paper);padding:20px 28px 40px;transform:translateY(-102%);transition:transform .5s cubic-bezier(.7,0,.3,1);display:flex;flex-direction:column;gap:6px;overflow:auto}
+.mobile-menu.open{transform:translateY(0)}
+.mobile-menu-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.mobile-close{background:none;border:1.5px solid var(--line);border-radius:12px;width:44px;height:44px;display:grid;place-items:center;color:var(--deep);flex:none}
+.mobile-close:hover{background:var(--deep);color:#fff;border-color:var(--deep)}
+.mobile-menu a.mlink{font-family:var(--fd);font-weight:700;font-size:26px;color:var(--deep);padding:12px 0;border-bottom:1px dashed var(--line)}
+.mobile-menu a.mlink[aria-current="page"]{color:var(--mint-text)}
+.mobile-menu .m-cta{margin-top:22px;display:flex;flex-direction:column;gap:12px}
+/* ============ HERO ============ */
+.hero{position:relative;padding:52px 0 84px;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 520'%3E%3Cpath d='M20 480 L150 480 L150 400 L300 400 L300 320 L450 320 L450 240 L600 240 L600 160 L760 160' stroke='%230b2e36' stroke-width='2' fill='none' opacity='0.16'/%3E%3Ccircle cx='150' cy='400' r='5' fill='%2314b394' opacity='0.4'/%3E%3Ccircle cx='300' cy='320' r='5' fill='%2314b394' opacity='0.4'/%3E%3Ccircle cx='450' cy='240' r='5' fill='%2314b394' opacity='0.4'/%3E%3Ccircle cx='600' cy='160' r='6' fill='%23ff7a59' opacity='0.55'/%3E%3C/svg%3E");
+  background-size:800px 520px;background-repeat:no-repeat;background-position:6% 26%;
+  -webkit-mask-image:radial-gradient(ellipse 70% 60% at 60% 30%,#000 30%,transparent 75%);
+  mask-image:radial-gradient(ellipse 70% 60% at 60% 30%,#000 30%,transparent 75%)}
+.hero::after{content:"";position:absolute;top:-160px;right:-160px;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,rgba(62,209,168,.18),transparent 65%);pointer-events:none}
+.crumb{position:relative;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--txt-soft);margin-bottom:22px}
+.crumb a:hover{color:var(--mint-text)}
+.crumb span[aria-current]{color:var(--deep)}
+.crumb i{width:4px;height:4px;border-radius:50%;background:var(--line)}
+.hero-grid{position:relative;display:grid;grid-template-columns:1.02fr .98fr;gap:56px;align-items:center}
+.hero h1{font-size:clamp(31px,4.1vw,49px);line-height:1.06;color:var(--deep);font-weight:800;letter-spacing:-.02em;margin:0 0 22px}
+.hl-line{display:block;overflow:hidden;padding-bottom:.08em}
+.hl-line>span{display:block;transform:translateY(112%);animation:rise .9s cubic-bezier(.2,.75,.2,1) forwards;animation-delay:var(--d,0s)}
+@keyframes rise{to{transform:translateY(0)}}
+.hl{color:var(--mint-text);position:relative;white-space:nowrap;font-family:var(--fd)}
+.hl svg{position:absolute;left:0;bottom:-.18em;width:100%;height:.32em;overflow:visible}
+.hl path{stroke:var(--amber);stroke-width:5;fill:none;stroke-linecap:round;stroke-dasharray:320;stroke-dashoffset:320;animation:draw 1s ease 1.05s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.lede{color:var(--txt-soft);font-size:18px;max-width:52ch}
+.hero-search{display:flex;gap:10px;margin-top:30px;max-width:520px;flex-wrap:wrap}
+.search-wrap{flex:1;min-width:240px;position:relative;display:flex;align-items:center}
+.search-wrap svg{position:absolute;left:16px;color:var(--txt-soft);pointer-events:none}
+.hero-search input{width:100%;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:14px 16px 14px 44px;font-size:15px;color:var(--ink);outline:none;transition:.25s;box-shadow:var(--card-shadow)}
+.hero-search input::placeholder{color:#8ba3a8}
+.hero-search input:focus{border-color:var(--mint)}
+.hero-quick{margin-top:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--txt-soft)}
+.hero-quick button{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600;color:var(--deep);transition:.2s}
+.hero-quick button:hover{border-color:var(--mint);color:var(--mint-text);transform:translateY(-1px)}
+.hero-stats{margin-top:34px;display:flex;gap:30px;flex-wrap:wrap}
+.hstat b{display:block;font-family:var(--fd);font-size:30px;font-weight:800;color:var(--deep);line-height:1.1;letter-spacing:-.02em}
+.hstat span{font-size:12.5px;font-weight:600;color:var(--txt-soft)}
+.hstat i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;vertical-align:middle}
+.hstat.j i{background:var(--mint)}
+.hstat.l i{background:var(--amber)}
+.hstat.c i{background:var(--coral)}
+.hero-proof{margin-top:26px;font-size:13px;color:var(--txt-soft);display:flex;align-items:center;gap:9px}
+.hero-proof svg{color:var(--mint);flex:none}
+.hero-proof b{color:var(--deep)}
+/* ============ BOARD ============ */
+.board-sec{padding:96px 0 40px}
+.board-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:28px}
+.board-head .sec-lede{margin-top:12px}
+.sample-badge{display:inline-flex;align-items:center;gap:7px;font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--amber-text);background:var(--amber-soft);border-radius:999px;padding:5px 12px;margin-bottom:14px}
+.board-shell{background:#fff;border:1px solid var(--line);border-radius:28px;box-shadow:var(--card-shadow);overflow:hidden}
+.board-bar{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;background:var(--paper);border-radius:14px;padding:4px;flex-wrap:wrap}
+.tab{border:0;background:transparent;font-family:var(--fd);font-weight:700;font-size:13px;color:var(--txt-soft);padding:9px 15px;border-radius:11px;transition:.22s;display:inline-flex;align-items:center;gap:7px}
+.tab em{font-style:normal;font-size:11px;font-weight:700;background:rgba(11,46,54,.08);border-radius:999px;padding:1px 7px;color:var(--txt-soft)}
+.tab:hover{color:var(--deep)}
+.tab.on{background:var(--deep);color:#fff;box-shadow:0 6px 16px rgba(11,46,54,.18)}
+.tab.on em{background:rgba(255,255,255,.16);color:#fff}
+.board-search{margin-left:auto;position:relative;display:flex;align-items:center;min-width:230px}
+.board-search svg{position:absolute;left:13px;color:var(--txt-soft);pointer-events:none}
+.board-search input{width:100%;border:1.5px solid var(--line);background:var(--paper);border-radius:12px;padding:10px 12px 10px 38px;font-size:13.5px;color:var(--ink);outline:none;transition:.25s}
+.board-search input:focus{border-color:var(--mint);background:#fff}
+.filter-bar{padding:14px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--paper)}
+.filter-label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-soft);margin-right:2px}
+.fchip{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:600;color:var(--deep);transition:.2s;display:inline-flex;align-items:center;gap:6px}
+.fchip:hover{border-color:var(--mint);transform:translateY(-1px)}
+.fchip.on{background:var(--deep);border-color:var(--deep);color:#fff}
+.fchip.on svg{color:var(--mint-2)}
+.fchip.soon.on{background:var(--coral);border-color:var(--coral);color:#fff}
+.fdiv{width:1px;height:22px;background:var(--line);margin:0 4px}
+.fclear{background:none;border:0;font-size:12.5px;font-weight:600;color:var(--mint-text);padding:7px 6px}
+.fclear:hover{text-decoration:underline}
+.board-count{padding:14px 22px 0;font-size:12.5px;color:var(--txt-soft);font-weight:500}
+.board-count b{color:var(--deep);font-weight:700}
+.board-list{padding:16px 22px 22px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.card{min-width:0;border:1px solid var(--line);border-radius:18px;padding:18px 20px;background:#fff;transition:transform .22s,box-shadow .22s,border-color .22s;position:relative}
+.card:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(11,46,54,.1);border-color:rgba(11,46,54,.2)}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:8px}
+.card h4{font-size:16px;line-height:1.35;color:var(--deep);font-weight:700;letter-spacing:-.01em}
+.card-badges{display:flex;gap:6px;flex:none;align-items:center}
+.type-tag{font-family:var(--fd);font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:4px 10px;white-space:nowrap}
+.type-job{background:var(--mint-soft);color:#0b7a63}
+.type-locum{background:var(--amber-soft);color:var(--amber-text)}
+.type-conf{background:var(--coral-soft);color:var(--coral-text)}
+.src-tag{font-size:10px;font-weight:700;color:var(--txt-soft);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:4px 8px;white-space:nowrap}
+.card-meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--txt-soft);margin-bottom:14px}
+.card-meta span{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%}
+.card-meta svg{color:#8ba3a8;flex:none}
+.card-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:13px;border-top:1px dashed var(--line)}
+.deadline{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--txt-soft)}
+.dpill{font-family:var(--fd);font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--paper);color:var(--txt-soft);border:1px solid var(--line)}
+.dpill.warm{background:var(--amber-soft);color:var(--amber-text);border-color:transparent}
+.dpill.hot{background:var(--coral);color:#fff;border-color:transparent}
+.rate{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--mint-text)}
+.rate-none{font-size:12.5px;color:#8ba3a8;font-weight:500;font-style:italic}
+.card-foot .card-link{margin-left:auto}
+.card-link{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--mint-text);white-space:nowrap}
+.card-link:hover{color:var(--deep)}
+.card-link svg{transition:transform .2s}
+.card:hover .card-link svg{transform:translate(2px,-2px)}
+.empty{padding:46px 22px;text-align:center;color:var(--txt-soft)}
+.empty b{display:block;font-family:var(--fd);color:var(--deep);font-size:16px;margin-bottom:6px}
+.board-foot{padding:20px 22px;border-top:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.board-foot p{font-size:12.5px;color:var(--txt-soft);max-width:56ch}
+.board-foot-links{display:flex;gap:10px;flex-wrap:wrap}
+.mini-link{display:inline-flex;align-items:center;gap:7px;font-family:var(--fd);font-size:12.5px;font-weight:700;color:var(--deep);background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 15px;transition:.2s}
+.mini-link:hover{border-color:var(--mint);color:var(--mint-text);transform:translateY(-2px)}
+@media(max-width:760px){
+  .board-search{margin-left:0;width:100%}
+  .card-foot{align-items:flex-start}
+}
+/* ============ ALERTS ============ */
+.alerts-sec{padding:96px 0}
+.alert-card{display:grid;grid-template-columns:1.05fr .95fr;border-radius:30px;overflow:hidden;box-shadow:var(--shadow);background:var(--deep);color:#fff}
+.alert-body{padding:52px 52px 46px}
+.alert-body h2{font-size:clamp(25px,3vw,36px);font-weight:800;line-height:1.15;margin-bottom:12px;font-family:var(--fd);letter-spacing:-.01em}
+.alert-body>p{color:#b9d8d0;max-width:46ch}
+.alert-form{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}
+.alert-form input{flex:1;min-width:210px;border-radius:14px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;padding:14px 18px;font-size:15px;outline:none;transition:.25s}
+.alert-form input::placeholder{color:#8fb5ac}
+.alert-form input:focus{border-color:var(--mint-2);background:rgba(255,255,255,.12)}
+.form-error{display:none;margin-top:10px;font-size:12.5px;font-weight:600;color:#ffb199}
+.form-error.show{display:block}
+.form-ok{display:none;margin-top:26px;background:rgba(62,209,168,.14);border:1px solid rgba(62,209,168,.5);color:#c9f5e7;border-radius:14px;padding:14px 18px;font-weight:600}
+.form-ok.show{display:flex;gap:10px;align-items:center;animation:pop .45s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.alert-note{margin-top:16px;font-size:12.5px;color:#8fb5ac}
+.alert-preview{background:rgba(255,255,255,.05);border-left:1px solid rgba(255,255,255,.12);padding:46px 44px;display:flex;flex-direction:column;justify-content:center}
+.ap-label{font-family:var(--fd);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8fb5ac;margin-bottom:14px}
+.ap-mail{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.28)}
+.ap-mail-top{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+.ap-mail-top b{font-family:var(--fd);font-size:12.5px;color:var(--deep)}
+.ap-mail-top span{margin-left:auto;font-size:10.5px;color:var(--txt-soft)}
+.ap-row{padding:13px 18px;border-bottom:1px dashed var(--line);display:flex;align-items:center;gap:11px}
+.ap-row:last-child{border-bottom:0}
+.ap-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.ap-row b{font-size:12.5px;color:var(--deep);font-weight:600;line-height:1.35}
+.ap-row small{margin-left:auto;font-size:10.5px;color:var(--txt-soft);font-weight:600;white-space:nowrap;flex:none}
+@media(max-width:940px){
+  .alert-card{grid-template-columns:1fr}
+  .alert-preview{border-left:0;border-top:1px solid rgba(255,255,255,.12)}
+}
+@media(max-width:640px){.alert-body{padding:38px 26px}.alert-preview{padding:34px 26px}}
+/* ============ FAQ ============ */
+.faq-sec{padding:0 0 100px}
+.faq-list{max-width:760px;margin:44px auto 0;border-top:1px solid var(--line)}
+.faq-item{border-bottom:1px solid var(--line)}
+.faq-item summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 4px;cursor:pointer;font-family:var(--fd);font-weight:700;font-size:16px;color:var(--deep)}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary:hover{color:var(--mint-text)}
+.faq-icon{flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;color:var(--deep);transition:transform .25s,background .25s,border-color .25s,color .25s}
+.faq-item[open] .faq-icon{background:var(--deep);border-color:var(--deep);color:#fff;transform:rotate(45deg)}
+.faq-item p{padding:0 34px 24px 4px;color:var(--txt-soft);font-size:15px;max-width:62ch}
+/* ============ FOOTER ============ */
+footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
+.f-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;gap:40px}
+.f-brand .logo{color:#fff}
+.f-brand p{font-size:14px;margin:18px 0 22px;max-width:34ch}
+.news-form{display:flex;gap:8px;max-width:340px}
+.news-form input{flex:1;border-radius:12px;border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);padding:11px 14px;color:#fff;font-size:14px;outline:none;transition:.25s}
+.news-form input:focus{border-color:var(--mint-2)}
+.news-form button{border:0;border-radius:12px;background:var(--mint);color:#052a22;font-weight:700;padding:11px 16px;transition:.25s}
+.news-form button:hover{background:var(--mint-2)}
+.news-ok{display:none;font-size:13px;color:var(--mint-2);font-weight:600;margin-top:10px}
+.news-ok.show{display:block}
+.f-col h5{color:#fff;font-family:var(--fd);font-size:14px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:18px}
+.f-col ul{display:grid;gap:11px}
+.f-col a{font-size:14px;transition:.2s;position:relative}
+.f-col a:hover{color:#fff;padding-left:12px}
+.f-col a::before{content:"\2192";position:absolute;left:-6px;opacity:0;transition:.2s;color:var(--mint-2)}
+.f-col a:hover::before{left:0;opacity:1}
+.f-bottom{border-top:1px solid rgba(255,255,255,.08);margin-top:60px;padding:24px 0;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;font-size:13px}
+.f-legal{display:flex;gap:22px;flex-wrap:wrap}
+.f-legal a:hover{color:#fff}
+.f-disclaimer{padding:0 0 26px;font-size:12px;color:#6d938c;max-width:900px}
+.to-top{position:fixed;right:26px;bottom:26px;width:50px;height:50px;border-radius:16px;border:0;background:var(--deep);color:var(--mint-2);display:grid;place-items:center;box-shadow:0 14px 34px rgba(11,46,54,.3);opacity:0;pointer-events:none;transform:translateY(14px);transition:.35s;z-index:90}
+.to-top.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+.to-top:hover{background:var(--mint);color:#052a22}
+[data-reveal]{opacity:0;transform:translateY(28px);transition:opacity .8s ease var(--d,0s),transform .8s cubic-bezier(.2,.7,.2,1) var(--d,0s)}
+[data-reveal].is-in{opacity:1;transform:none}
+/* ============ RESPONSIVE ============ */
+@media(max-width:1020px){.f-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:960px){
+  .nav-links,.nav-actions .btn{display:none}
+  .burger{display:block}
+  .hero-grid{grid-template-columns:1fr;gap:64px}
+  .chip{display:none}
+}
+@media(max-width:560px){
+  .card-head{flex-direction:column-reverse;align-items:flex-start;gap:9px}
+}
+@media(max-width:640px){
+  .hero::before{display:none}
+  .f-grid{grid-template-columns:1fr}
+  .board-bar,.filter-bar,.board-list,.board-foot,.board-count{padding-left:16px;padding-right:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .hl-line>span{transform:none}
+  [data-reveal]{opacity:1;transform:none}
+  .hl path{stroke-dashoffset:0}
+  .is-in .mock-bar i{width:72%}
+}
+
+/* ============ LISTING PAGE ============ */
+.page-hero{position:relative;padding:36px 0 38px;background:linear-gradient(180deg,var(--cream),var(--paper));border-bottom:1px solid var(--line);overflow:hidden}
+.page-hero::after{content:"";position:absolute;top:-220px;right:-140px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(20,179,148,.13),transparent 65%);pointer-events:none}
+.page-hero .container{position:relative}
+.page-hero h1{font-size:clamp(27px,3.5vw,41px);line-height:1.1;color:var(--deep);font-weight:800;letter-spacing:-.02em;text-wrap:balance;max-width:20ch}
+.page-hero .lede{margin-top:12px;font-size:16px;max-width:58ch}
+.hero-facts{margin-top:22px;display:flex;gap:9px;flex-wrap:wrap}
+.fact{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 15px;font-size:12.5px;font-weight:600;color:var(--txt-soft);box-shadow:var(--card-shadow)}
+.fact b{font-family:var(--fd);color:var(--deep);font-variant-numeric:tabular-nums}
+.fact i{width:7px;height:7px;border-radius:50%;flex:none}
+/* composition bar: the real grade split of what is on the board */
+.split{margin-top:28px;max-width:600px}
+.split-label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-soft);margin-bottom:9px}
+.split-bar{display:flex;height:13px;border-radius:99px;overflow:hidden;background:var(--line);gap:2px}
+.split-bar i{display:block;height:100%;width:0;transition:width .9s cubic-bezier(.3,.9,.3,1) var(--d,0s)}
+.is-in .split-bar i{width:var(--w)}
+.split-key{margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--txt-soft);font-weight:600}
+.split-key span{display:inline-flex;align-items:center;gap:7px}
+.split-key i{width:9px;height:9px;border-radius:3px;flex:none}
+.split-key b{color:var(--deep);font-variant-numeric:tabular-nums}
+/* two column work area */
+.work-sec{padding:30px 0 86px}
+.work{display:grid;grid-template-columns:252px minmax(0,1fr);gap:32px;align-items:start}
+.filters{background:#fff;border:1px solid var(--line);border-radius:22px;padding:20px 20px 14px;box-shadow:var(--card-shadow);position:sticky;top:96px}
+.filters-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
+.filters-head h2{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--deep)}
+.filters-search{position:relative;display:flex;align-items:center;margin-bottom:4px}
+.filters-search svg{position:absolute;left:12px;color:var(--txt-soft);pointer-events:none}
+.filters-search input{width:100%;border:1.5px solid var(--line);background:var(--paper);border-radius:12px;padding:10px 12px 10px 36px;font-size:13.5px;color:var(--ink);outline:none;transition:.25s}
+.filters-search input:focus{border-color:var(--mint);background:#fff}
+.fgroup{border:0;border-top:1px dashed var(--line);padding:14px 0 6px;margin-top:12px}
+.fgroup legend{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-soft);padding:0;margin-bottom:9px}
+.fopt{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:13.5px;color:var(--ink);cursor:pointer;transition:color .18s,opacity .18s}
+.fopt input{accent-color:var(--mint);width:15px;height:15px;flex:none;cursor:pointer;margin:0}
+.fopt em{margin-left:auto;font-style:normal;font-size:11px;font-weight:700;color:var(--txt-soft);background:var(--paper);border-radius:999px;padding:1px 8px;font-variant-numeric:tabular-nums}
+.fopt:hover{color:var(--mint-text)}
+.fopt.zero{opacity:.35}
+.filters-toggle{display:none;width:100%;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:13px 18px;font-family:var(--fd);font-weight:700;font-size:14px;color:var(--deep);margin-bottom:14px;box-shadow:var(--card-shadow)}
+.filters-toggle em{font-style:normal;font-size:11px;font-weight:700;background:var(--deep);color:#fff;border-radius:999px;padding:2px 9px}
+.filters-toggle svg{transition:transform .25s}
+.filters-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
+/* results */
+.results-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.results-bar p{font-size:13.5px;color:var(--txt-soft)}
+.results-bar p b{color:var(--deep);font-weight:700;font-variant-numeric:tabular-nums}
+.sort{margin-left:auto;display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--txt-soft);font-weight:600}
+.sort select{font-family:inherit;font-size:13px;font-weight:600;color:var(--deep);background:#fff;border:1.5px solid var(--line);border-radius:11px;padding:8px 11px;cursor:pointer;outline:none}
+.sort select:focus{border-color:var(--mint)}
+.applied{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.applied .fchip{padding:6px 8px 6px 13px;font-size:12px;gap:8px}
+.applied .fchip b{font-weight:600}
+.applied .x{display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:rgba(11,46,54,.08);color:var(--txt-soft)}
+.applied .fchip:hover .x{background:var(--coral);color:#fff}
+.results{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.type-training{background:var(--mint-soft);color:#0b7a63}
+.type-nontraining{background:var(--amber-soft);color:var(--amber-text)}
+.type-consultant{background:var(--coral-soft);color:var(--coral-text)}
+.grade-tag{font-family:var(--fd);font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:4px 10px;white-space:nowrap;background:var(--paper);border:1px solid var(--line);color:var(--txt-soft)}
+.loadmore{margin-top:24px;text-align:center}
+.loadmore p{font-size:12.5px;color:var(--txt-soft);margin-top:12px}
+/* footnote + cross links */
+.note-panel{margin-top:28px;background:var(--cream);border:1px solid var(--line);border-radius:20px;padding:22px 26px}
+.note-panel p{font-size:13px;color:var(--txt-soft);max-width:70ch}
+.note-panel b{color:var(--deep)}
+.xlinks{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
+@media(max-width:900px){
+  .work{grid-template-columns:minmax(0,1fr)}
+  .filters{position:static;display:none}
+  .filters.open{display:block}
+  .filters-toggle{display:flex}
+}
+</style>
+</head>
+<body>
+<div class="noise" aria-hidden="true"></div>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site" id="siteHeader">
+  <div class="container nav-in">
+    <a class="logo" href="/" aria-label="MedNav home">
+      <svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect x="2" y="2" width="36" height="36" rx="11" fill="#0b2e36"/>
+        <path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="24" r="4" fill="#ffc061"/>
+      </svg>
+      <span class="logo-word">MedNav</span>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/pathways">Pathways</a>
+      <a href="/preparation">Preparation</a>
+      <a href="/tools">Career Tools</a>
+      <a href="/opportunities" aria-current="page">Opportunities</a>
+      <a href="/sources">Resources</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="btn btn-ghost" href="/sign-in">Sign in</a>
+      <a class="btn btn-primary" href="/sign-up">Create free account</a>
+      <button class="burger" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mobile-menu-head">
+    <a class="logo" href="/" aria-label="MedNav home">
+      <svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect x="2" y="2" width="36" height="36" rx="11" fill="#0b2e36"/>
+        <path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="24" r="4" fill="#ffc061"/>
+      </svg>
+      <span class="logo-word">MedNav</span>
+    </a>
+    <button class="mobile-close" id="mobileCloseBtn" aria-label="Close menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <a class="mlink" href="/pathways">Pathways</a>
+  <a class="mlink" href="/preparation">Preparation</a>
+  <a class="mlink" href="/tools">Career Tools</a>
+  <a class="mlink" href="/opportunities" aria-current="page">Opportunities</a>
+  <a class="mlink" href="/sources">Resources</a>
+  <div class="m-cta">
+    <a class="btn btn-primary" href="/sign-up">Create free account</a>
+    <a class="btn btn-ghost" href="/sign-in">Sign in</a>
+  </div>
+</div>
+
+<main id="main">
+
+<section class="page-hero">
+  <div class="container">
+    <nav class="crumb" aria-label="Breadcrumb">
+      <a href="/">MedNav</a><i aria-hidden="true"></i><a href="index.html">Opportunities</a><i aria-hidden="true"></i><span aria-current="page">Jobs</span>
+    </nav>
+    <h1>NCHD and consultant posts in Ireland</h1>
+    <p class="lede">Training and non training posts across every specialty, gathered from the HSE and named agencies and linked straight back to the original posting.</p>
+    <div class="hero-facts">
+      <span class="fact"><i style="background:var(--mint)" aria-hidden="true"></i><b>142</b> live posts</span>
+      <span class="fact"><i style="background:var(--coral)" aria-hidden="true"></i>Closes soonest in <b id="closingWeek">0</b> days</span>
+      <span class="fact">Rechecked <b>2 Aug 2026</b></span>
+      <span class="fact">Sourced from <b>HSE</b> and <b>ICGP</b></span>
+    </div>
+    <div class="split" data-reveal>
+      <p class="split-label">What is on the board right now</p>
+      <div class="split-bar" role="img" aria-label="Of 142 posts, 61 are registrar, 48 SHO, 22 consultant and 11 intern">
+        <i style="--w:43%;--d:.05s;background:var(--mint)"></i>
+        <i style="--w:34%;--d:.15s;background:var(--mint-2)"></i>
+        <i style="--w:15%;--d:.25s;background:var(--coral)"></i>
+        <i style="--w:8%;--d:.35s;background:var(--amber)"></i>
+      </div>
+      <div class="split-key" aria-hidden="true">
+        <span><i style="background:var(--mint)"></i>Registrar <b>61</b></span>
+        <span><i style="background:var(--mint-2)"></i>SHO <b>48</b></span>
+        <span><i style="background:var(--coral)"></i>Consultant <b>22</b></span>
+        <span><i style="background:var(--amber)"></i>Intern <b>11</b></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="work-sec">
+  <div class="container">
+    <button class="filters-toggle" id="filtersToggle" aria-expanded="false" aria-controls="filters">
+      <span>Filter posts <em id="toggleCount" hidden>0</em></span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="work">
+      <form class="filters" id="filters">
+        <div class="filters-head">
+          <h2>Filter</h2>
+          <button class="fclear" id="clearFilters" type="button">Clear all</button>
+        </div>
+        <div class="filters-search">
+          <label class="sr-only" for="q">Search posts</label>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+          <input type="search" id="q" placeholder="Hospital or specialty" autocomplete="off">
+        </div>
+        <fieldset class="fgroup" data-group="grade"><legend>Grade</legend></fieldset>
+        <fieldset class="fgroup" data-group="type"><legend>Post type</legend></fieldset>
+        <fieldset class="fgroup" data-group="specialty"><legend>Specialty</legend></fieldset>
+        <fieldset class="fgroup" data-group="county"><legend>Location</legend></fieldset>
+      </form>
+
+      <div>
+        <div class="results-bar">
+          <p id="resultCount" aria-live="polite"></p>
+          <div class="sort">
+            <label for="sort">Sort</label>
+            <select id="sort">
+              <option value="closing">Closing soonest</option>
+              <option value="posted">Recently posted</option>
+            </select>
+          </div>
+        </div>
+        <div class="applied" id="applied"></div>
+        <div class="results" id="results"></div>
+        <div class="loadmore" id="loadMoreWrap">
+          <button class="btn btn-ghost" id="loadMore" type="button">Show more posts</button>
+          <p id="loadMoreNote"></p>
+        </div>
+
+        <div class="note-panel">
+          <p><b>Aggregated and linked, not hosted.</b> Always apply through the original posting. MedNav never receives your application or your CV, and we never charge to see a post. Salary scales are shown only where the source publishes them.</p>
+          <div class="xlinks">
+            <a class="mini-link" href="locums.html">Locum shifts instead<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+            <a class="mini-link" href="conferences.html">Conferences and courses<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+            <a class="mini-link" href="index.html">All opportunities<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alerts-sec" id="alerts">
+  <div class="container">
+    <div class="alert-card" data-reveal>
+      <div class="alert-body">
+        <h2>Get the post before it closes.</h2>
+        <p>Save this search and MedNav emails you when a matching post appears, and again three days before the deadline. Free with an account.</p>
+        <form class="alert-form" id="alertForm" novalidate>
+          <label class="sr-only" for="alertEmail">Email address</label>
+          <input type="email" id="alertEmail" placeholder="Your email" aria-describedby="alertError" required>
+          <button class="btn btn-primary" type="submit">Save this search
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </form>
+        <p class="form-error" id="alertError" role="alert">Enter a valid email address.</p>
+        <p class="form-ok" id="alertOk"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Check your inbox. Click the magic link to finish your account and your search is saved.</p>
+        <p class="alert-note">No credit card. One email per match, one reminder before it closes.</p>
+      </div>
+      <div class="alert-preview" aria-hidden="true">
+        <p class="ap-label">Your saved search</p>
+        <div class="ap-mail">
+          <div class="ap-mail-top">
+            <svg width="17" height="17" viewBox="0 0 40 40" fill="none"><rect x="2" y="2" width="36" height="36" rx="11" fill="#0b2e36"/><path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="24" r="4" fill="#ffc061"/></svg>
+            <b id="savedSearchName">All posts</b><span>Daily</span>
+          </div>
+          <div class="ap-row"><span class="ap-dot" style="background:#14b394"></span><b>2 new posts matched overnight</b><small>New</small></div>
+          <div class="ap-row"><span class="ap-dot" style="background:#ffc061"></span><b>Registrar, Anaesthesiology, Kerry</b><small>5 days</small></div>
+          <div class="ap-row"><span class="ap-dot" style="background:#ff7a59"></span><b>SHO, General Surgery, Tallaght</b><small>3 days</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site" id="footer">
+  <div class="container">
+    <div class="f-grid">
+      <div class="f-brand">
+        <a class="logo" href="/" aria-label="MedNav home">
+          <svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="11" fill="#12404c"/><path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="24" r="4" fill="#ffc061"/></svg>
+          <span class="logo-word">MedNav</span>
+        </a>
+        <p>Know exactly what to do next in your medical career, from wherever you are now, to consultant.</p>
+        <form class="news-form" id="newsForm" novalidate>
+          <label class="sr-only" for="newsEmail">Newsletter email</label>
+          <input type="email" id="newsEmail" placeholder="Application-window alerts, monthly" aria-describedby="newsEmailError" required>
+          <button type="submit" aria-label="Subscribe">&rarr;</button>
+        </form>
+        <p class="form-error" id="newsEmailError" role="alert">Enter a valid email address.</p>
+        <p class="news-ok" id="newsOk">You're on the list. We'll ping you when windows open.</p>
+      </div>
+      <div class="f-col">
+        <h5>Opportunities</h5>
+        <ul>
+          <li><a href="jobs.html">Jobs</a></li>
+          <li><a href="locums.html">Locums</a></li>
+          <li><a href="conferences.html">Conferences &amp; courses</a></li>
+          <li><a href="#alerts">Job alerts</a></li>
+          <li><a href="/opportunities/submit">Submit an event</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h5>Career Tools</h5>
+        <ul>
+          <li><a href="/tools">Roadmap</a></li>
+          <li><a href="/tools">Gap analyser</a></li>
+          <li><a href="/tools">Shortlisting score</a></li>
+          <li><a href="/tools">Deadlines</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h5>Pathways</h5>
+        <ul>
+          <li><a href="/pathways/specialties">All specialties</a></li>
+          <li><a href="/pathways/programmes">All programmes</a></li>
+          <li><a href="/pathways/img">IMG pathways</a></li>
+          <li><a href="/pathways/return-to-ireland">Return to Ireland</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="/about">About MedNav</a></li>
+          <li><a href="/sources">Sources &amp; verification</a></li>
+          <li><a href="/blog">Blog</a></li>
+          <li><a href="/help">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="f-disclaimer">MedNav is an independent platform and is not affiliated with, or endorsed by, RCPI, RCSI, ICGP, the College of Psychiatrists, the IMC or the HSE. Listings are aggregated from public sources and linked, not hosted. Always verify details and criteria against the original posting before applying.</p>
+    <div class="f-bottom">
+      <span>&copy; <span id="yearNow">2026</span> MedNav. Built for Irish NCHDs.</span>
+      <div class="f-legal">
+        <a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/cookies">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+</button>
+
+
+<script>
+(function(){
+  "use strict";
+  var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- header, back to top ---------- */
+  var hdrEl = document.getElementById("siteHeader");
+  var toTopBtn = document.getElementById("toTop");
+  function onScrollHdr(){
+    hdrEl.classList.toggle("scrolled", window.scrollY > 8);
+    toTopBtn.classList.toggle("show", window.scrollY > 700);
+  }
+  window.addEventListener("scroll", onScrollHdr, {passive:true});
+  onScrollHdr();
+  toTopBtn.addEventListener("click", function(){ window.scrollTo({top:0, behavior: reducedMotion ? "auto" : "smooth"}); });
+
+  /* ---------- mobile menu ---------- */
+  var burgerBtn = document.getElementById("navToggle");
+  var mobilePanel = document.getElementById("mobileMenu");
+  function setMenu(open){
+    burgerBtn.classList.toggle("open", open);
+    mobilePanel.classList.toggle("open", open);
+    burgerBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    document.body.style.overflow = open ? "hidden" : "";
+    if (open){
+      var firstFocusable = mobilePanel.querySelector("a, button");
+      if (firstFocusable) firstFocusable.focus();
+    } else {
+      burgerBtn.focus();
+    }
+  }
+  burgerBtn.addEventListener("click", function(){ setMenu(!mobilePanel.classList.contains("open")); });
+  mobilePanel.querySelectorAll("a").forEach(function(linkEl){ linkEl.addEventListener("click", function(){ setMenu(false); }); });
+  document.getElementById("mobileCloseBtn").addEventListener("click", function(){ setMenu(false); });
+  document.addEventListener("keydown", function(ev){
+    if (!mobilePanel.classList.contains("open")) return;
+    if (ev.key === "Escape"){ setMenu(false); return; }
+    if (ev.key !== "Tab") return;
+    var focusables = Array.prototype.slice.call(mobilePanel.querySelectorAll("a, button"));
+    if (!focusables.length) return;
+    var first = focusables[0], last = focusables[focusables.length - 1];
+    if (ev.shiftKey && document.activeElement === first){ ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last){ ev.preventDefault(); first.focus(); }
+  });
+
+  /* ---------- reveal on scroll ---------- */
+  var revealEls = document.querySelectorAll("[data-reveal]");
+  if (reducedMotion || !("IntersectionObserver" in window)){
+    revealEls.forEach(function(el){ el.classList.add("is-in"); });
+  } else {
+    var revealObs = new IntersectionObserver(function(entries){
+      entries.forEach(function(entryItem){
+        if (entryItem.isIntersecting){ entryItem.target.classList.add("is-in"); revealObs.unobserve(entryItem.target); }
+      });
+    }, {threshold:.15, rootMargin:"0px 0px -40px 0px"});
+    revealEls.forEach(function(el){ revealObs.observe(el); });
+  }
+
+
+  /* ---------- the board ----------
+     TEMP: sample records mirroring the wireframe, not a live feed. */
+  var JOBS = [
+    {title:"SHO, General Surgery", org:"Tallaght University Hospital", county:"Dublin", grade:"SHO", specialty:"General surgery", type:"Non-training", close:"2026-09-03", posted:"2026-08-06", src:"HSE"},
+    {title:"Registrar, Anaesthesiology", org:"University Hospital Kerry", county:"Kerry", grade:"Registrar", specialty:"Anaesthesiology", type:"Non-training", close:"2026-09-05", posted:"2026-08-09", src:"HSE"},
+    {title:"NCHD Registrar, Cardiology", org:"St. James's Hospital", county:"Dublin", grade:"Registrar", specialty:"Cardiology", type:"Training post", close:"2026-09-20", posted:"2026-08-12", src:"HSE"},
+    {title:"Registrar, Emergency Medicine", org:"University Hospital Limerick", county:"Limerick", grade:"Registrar", specialty:"Emergency medicine", type:"Non-training", close:"2026-09-18", posted:"2026-08-08", src:"HSE"},
+    {title:"SHO, General Medicine", org:"Cork University Hospital", county:"Cork", grade:"SHO", specialty:"General medicine", type:"Non-training", close:"2026-09-25", posted:"2026-08-18", src:"HSE"},
+    {title:"Specialist Registrar, Paediatrics", org:"Children's Health Ireland", county:"Dublin", grade:"Registrar", specialty:"Paediatrics", type:"Training post", close:"2026-10-02", posted:"2026-08-14", src:"HSE"},
+    {title:"Consultant, Respiratory Medicine", org:"Galway University Hospital", county:"Galway", grade:"Consultant", specialty:"Respiratory medicine", type:"Consultant", close:"2026-10-10", posted:"2026-08-05", src:"HSE"},
+    {title:"SHO, Psychiatry", org:"St. Patrick's University Hospital", county:"Dublin", grade:"SHO", specialty:"Psychiatry", type:"Training post", close:"2026-10-15", posted:"2026-08-20", src:"HSE"},
+    {title:"Intern, General Internal Medicine", org:"Sligo University Hospital", county:"Sligo", grade:"Intern", specialty:"General medicine", type:"Training post", close:"2026-09-15", posted:"2026-08-03", src:"HSE"},
+    {title:"SHO, Anaesthesiology", org:"Beaumont Hospital", county:"Dublin", grade:"SHO", specialty:"Anaesthesiology", type:"Training post", close:"2026-09-29", posted:"2026-08-19", src:"HSE"},
+    {title:"Registrar, Obstetrics and Gynaecology", org:"Rotunda Hospital", county:"Dublin", grade:"Registrar", specialty:"Obstetrics and gynaecology", type:"Non-training", close:"2026-10-06", posted:"2026-08-21", src:"HSE"},
+    {title:"Consultant, General Surgery", org:"University Hospital Waterford", county:"Waterford", grade:"Consultant", specialty:"General surgery", type:"Consultant", close:"2026-10-30", posted:"2026-08-22", src:"HSE"},
+    {title:"Registrar, Radiology", org:"Mater Misericordiae University Hospital", county:"Dublin", grade:"Registrar", specialty:"Radiology", type:"Training post", close:"2026-10-20", posted:"2026-08-25", src:"HSE"},
+    {title:"SHO, Emergency Medicine", org:"Cork University Hospital", county:"Cork", grade:"SHO", specialty:"Emergency medicine", type:"Non-training", close:"2026-09-22", posted:"2026-08-16", src:"HSE"},
+    {title:"GP Registrar, Mid West Training Scheme", org:"ICGP training scheme", county:"Limerick", grade:"Registrar", specialty:"General practice", type:"Training post", close:"2026-10-08", posted:"2026-08-13", src:"ICGP"},
+    {title:"Registrar, Nephrology", org:"Beaumont Hospital", county:"Dublin", grade:"Registrar", specialty:"Nephrology", type:"Training post", close:"2026-10-13", posted:"2026-08-11", src:"HSE"},
+    {title:"SHO, Paediatrics", org:"Galway University Hospital", county:"Galway", grade:"SHO", specialty:"Paediatrics", type:"Non-training", close:"2026-09-27", posted:"2026-08-17", src:"HSE"},
+    {title:"Consultant, Psychiatry of Old Age", org:"St. Vincent's University Hospital", county:"Dublin", grade:"Consultant", specialty:"Psychiatry", type:"Consultant", close:"2026-11-06", posted:"2026-08-24", src:"HSE"}
+  ];
+
+  var GROUPS = [
+    {key:"grade", order:["Intern","SHO","Registrar","Consultant"]},
+    {key:"type", order:["Training post","Non-training","Consultant"]},
+    {key:"specialty", order:null},
+    {key:"county", order:null}
+  ];
+  var TYPE_CLASS = {"Training post":"type-training", "Non-training":"type-nontraining", "Consultant":"type-consultant"};
+  var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var PAGE = 8;
+
+  var today = new Date(); today.setHours(0,0,0,0);
+  function parseDay(iso){ var p = iso.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
+  function daysUntil(iso){ return Math.round((parseDay(iso) - today) / 86400000); }
+  function shortDate(iso){ var d = parseDay(iso); return d.getDate() + " " + MONTHS[d.getMonth()]; }
+  function daysText(n){ if (n < 0) return "Closed"; if (n === 0) return "Closes today"; if (n === 1) return "1 day left"; return n + " days left"; }
+  function pillClass(n){ if (n < 0) return "dpill"; if (n <= 7) return "dpill hot"; if (n <= 21) return "dpill warm"; return "dpill"; }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  JOBS.forEach(function(j){ j.days = daysUntil(j.close); j.postedTs = parseDay(j.posted).getTime(); });
+  var live = JOBS.filter(function(j){ return j.days >= 0; });
+  document.getElementById("closingWeek").textContent = live.length
+    ? Math.min.apply(null, live.map(function(j){ return j.days; })) : 0;
+
+  var state = {grade:[], type:[], specialty:[], county:[], q:"", sort:"closing", shown:PAGE};
+
+  /* an item passes when it satisfies every group except the one being counted */
+  function passes(j, skipGroup){
+    for (var i = 0; i < GROUPS.length; i++){
+      var k = GROUPS[i].key;
+      if (k === skipGroup) continue;
+      if (state[k].length && state[k].indexOf(j[k]) < 0) return false;
+    }
+    if (state.q){
+      var hay = (j.title+" "+j.org+" "+j.county+" "+j.grade+" "+j.specialty+" "+j.type+" "+j.src).toLowerCase();
+      var terms = state.q.toLowerCase().split(/\s+/).filter(Boolean);
+      for (var t = 0; t < terms.length; t++){ if (hay.indexOf(terms[t]) < 0) return false; }
+    }
+    return true;
+  }
+
+  function buildFilters(){
+    GROUPS.forEach(function(g){
+      var box = document.querySelector('[data-group="' + g.key + '"]');
+      var values = g.order ? g.order.slice() : JOBS.map(function(j){ return j[g.key]; })
+        .filter(function(v, i, a){ return a.indexOf(v) === i; }).sort();
+      values.forEach(function(v){
+        var id = g.key + "-" + v.replace(/\W+/g, "");
+        var label = document.createElement("label");
+        label.className = "fopt";
+        label.setAttribute("data-opt", g.key + "|" + v);
+        label.innerHTML = '<input type="checkbox" id="' + id + '" value="' + esc(v) + '" data-fgroup="' + g.key + '">' +
+                          "<span>" + esc(v) + '</span><em data-count="' + g.key + "|" + esc(v) + '">0</em>';
+        box.appendChild(label);
+        label.querySelector("input").addEventListener("change", function(ev){
+          var arr = state[g.key], idx = arr.indexOf(v);
+          if (ev.target.checked){ if (idx < 0) arr.push(v); } else if (idx > -1){ arr.splice(idx, 1); }
+          state.shown = PAGE;
+          render();
+        });
+      });
+    });
+  }
+
+  function cardHTML(j){
+    return '<article class="card"' + (j.days < 0 ? ' style="opacity:.6"' : "") + ">" +
+      '<div class="card-head">' +
+        "<h4>" + esc(j.title) + "</h4>" +
+        '<div class="card-badges">' +
+          '<span class="type-tag ' + TYPE_CLASS[j.type] + '">' + esc(j.type) + "</span>" +
+          '<span class="src-tag">' + esc(j.src) + "</span>" +
+        "</div>" +
+      "</div>" +
+      '<div class="card-meta">' +
+        '<span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 21s7-5.5 7-11a7 7 0 10-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>' + esc(j.org) + " · " + esc(j.county) + "</span>" +
+        '<span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 4h7l9 9-7 7-9-9z"/><circle cx="8.5" cy="8.5" r="1.2"/></svg>' + esc(j.grade) + " · " + esc(j.specialty) + "</span>" +
+      "</div>" +
+      '<div class="card-foot">' +
+        '<span class="deadline">Closes ' + shortDate(j.close) + '<span class="' + pillClass(j.days) + '">' + daysText(j.days) + "</span></span>" +
+        '<a class="card-link" href="#" aria-label="View ' + esc(j.title) + " on " + esc(j.src) + ', opens the original posting">View on ' + esc(j.src) +
+          ' <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M8 16L18 6M9 6h9v9"/></svg></a>' +
+      "</div>" +
+    "</article>";
+  }
+
+  function render(){
+    /* facet counts: what each option would return given the other groups */
+    GROUPS.forEach(function(g){
+      var pool = JOBS.filter(function(j){ return passes(j, g.key); });
+      document.querySelectorAll('[data-count^="' + g.key + '|"]').forEach(function(em){
+        var v = em.getAttribute("data-count").split("|")[1];
+        var n = pool.filter(function(j){ return j[g.key] === v; }).length;
+        em.textContent = n;
+        em.closest(".fopt").classList.toggle("zero", n === 0 && state[g.key].indexOf(v) < 0);
+      });
+    });
+
+    var rows = JOBS.filter(function(j){ return passes(j, null); });
+    rows.sort(state.sort === "posted"
+      ? function(a,b){ return b.postedTs - a.postedTs; }
+      : function(a,b){ return a.days - b.days; });
+
+    var visible = rows.slice(0, state.shown);
+    var list = document.getElementById("results");
+    list.innerHTML = visible.length
+      ? visible.map(cardHTML).join("")
+      : '<div class="empty"><b>No posts match those filters.</b><p>Try widening the grade or clearing the location. You can also save the search and we will email you when something lands.</p></div>';
+
+    document.getElementById("resultCount").innerHTML = "Showing <b>" + visible.length + "</b> of <b>" + rows.length +
+      "</b> sample posts. The live board carries 142.";
+
+    var more = rows.length - visible.length;
+    document.getElementById("loadMoreWrap").hidden = rows.length === 0;
+    document.getElementById("loadMore").hidden = more <= 0;
+    document.getElementById("loadMoreNote").textContent = more > 0
+      ? more + " more in this sample"
+      : (rows.length ? "That is everything in this sample." : "");
+
+    /* applied filter chips */
+    var chips = [];
+    GROUPS.forEach(function(g){
+      state[g.key].forEach(function(v){
+        chips.push('<button class="fchip on" type="button" data-remove="' + g.key + '|' + esc(v) + '"><b>' + esc(v) +
+          '</b><span class="x" aria-hidden="true">&times;</span><span class="sr-only">Remove filter</span></button>');
+      });
+    });
+    if (state.q){
+      chips.push('<button class="fchip on" type="button" data-remove="q|"><b>&ldquo;' + esc(state.q) +
+        '&rdquo;</b><span class="x" aria-hidden="true">&times;</span><span class="sr-only">Clear search</span></button>');
+    }
+    document.getElementById("applied").innerHTML = chips.join("");
+    document.querySelectorAll("[data-remove]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var bits = btn.getAttribute("data-remove").split("|");
+        if (bits[0] === "q"){ state.q = ""; document.getElementById("q").value = ""; }
+        else {
+          state[bits[0]] = state[bits[0]].filter(function(x){ return x !== bits[1]; });
+          var cb = document.querySelector('input[data-fgroup="' + bits[0] + '"][value="' + bits[1] + '"]');
+          if (cb) cb.checked = false;
+        }
+        state.shown = PAGE;
+        render();
+      });
+    });
+
+    var applied = chips.length;
+    var tc = document.getElementById("toggleCount");
+    tc.textContent = applied; tc.hidden = applied === 0;
+
+    var name = [].concat(state.grade, state.specialty, state.county).join(", ");
+    document.getElementById("savedSearchName").textContent = name ? name.slice(0, 38) : "All posts";
+  }
+
+  buildFilters();
+  document.getElementById("q").addEventListener("input", function(){
+    state.q = this.value.trim(); state.shown = PAGE; render();
+  });
+  document.getElementById("sort").addEventListener("change", function(){ state.sort = this.value; render(); });
+  document.getElementById("loadMore").addEventListener("click", function(){ state.shown += PAGE; render(); });
+  document.getElementById("filters").addEventListener("submit", function(ev){ ev.preventDefault(); });
+  document.getElementById("clearFilters").addEventListener("click", function(){
+    GROUPS.forEach(function(g){ state[g.key] = []; });
+    state.q = ""; state.shown = PAGE;
+    document.getElementById("q").value = "";
+    document.querySelectorAll('#filters input[type="checkbox"]').forEach(function(cb){ cb.checked = false; });
+    render();
+  });
+  var fToggle = document.getElementById("filtersToggle");
+  fToggle.addEventListener("click", function(){
+    var open = document.getElementById("filters").classList.toggle("open");
+    fToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+
+  render();
+
+  /* ---------- forms ---------- */
+  function wireForm(formId, inputId, errorId, okId){
+    var formEl = document.getElementById(formId);
+    var inputEl = document.getElementById(inputId);
+    var errEl = document.getElementById(errorId);
+    inputEl.addEventListener("input", function(){
+      inputEl.removeAttribute("aria-invalid");
+      inputEl.style.borderColor = "";
+      errEl.classList.remove("show");
+    });
+    formEl.addEventListener("submit", function(ev){
+      ev.preventDefault();
+      if (!inputEl.value || inputEl.value.indexOf("@") < 1){
+        inputEl.setAttribute("aria-invalid", "true");
+        inputEl.style.borderColor = "#ff7a59";
+        errEl.classList.add("show");
+        inputEl.focus();
+        return;
+      }
+      formEl.style.display = "none";
+      document.getElementById(okId).classList.add("show");
+    });
+  }
+  wireForm("alertForm", "alertEmail", "alertError", "alertOk");
+  wireForm("newsForm", "newsEmail", "newsEmailError", "newsOk");
+
+  document.getElementById("yearNow").textContent = new Date().getFullYear();
+})();
+</script>
+</body>
+</html>
