@@ -339,9 +339,11 @@ footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
 .page-hero h1{font-size:clamp(27px,3.5vw,41px);line-height:1.1;color:var(--deep);font-weight:800;letter-spacing:-.02em;text-wrap:balance;max-width:20ch}
 .page-hero .lede{margin-top:12px;font-size:16px;max-width:58ch}
 .hero-facts{margin-top:22px;display:flex;gap:9px;flex-wrap:wrap}
-.fact{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 15px;font-size:12.5px;font-weight:600;color:var(--txt-soft);box-shadow:var(--card-shadow)}
+/* inline-block, not inline-flex: flex gaps would push the text apart at every
+   element boundary and leave a space before each comma */
+.fact{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 15px;font-size:12.5px;font-weight:600;color:var(--txt-soft);box-shadow:var(--card-shadow)}
 .fact b{font-family:var(--fd);color:var(--deep);font-variant-numeric:tabular-nums}
-.fact i{width:7px;height:7px;border-radius:50%;flex:none}
+.fact i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;vertical-align:middle}
 /* composition bar: what is actually on the board, not decoration */
 .split{margin-top:28px;max-width:600px}
 .split-label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-soft);margin-bottom:9px}
@@ -374,7 +376,7 @@ footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
 .note-panel b{color:var(--deep)}
 .xlinks{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
 
-/* ============ LOCUM BOARD ============ */
+/* ============ FILTER BAR ============ */
 .filterbar{position:sticky;top:74px;z-index:50;background:rgba(247,250,248,.93);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:13px 0}
 .filterbar-in{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .filterbar .filter-label{margin-right:0}
@@ -382,6 +384,12 @@ footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
 .fsearch svg{position:absolute;left:13px;color:var(--txt-soft);pointer-events:none}
 .fsearch input{width:100%;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px 9px 38px;font-size:13.5px;color:var(--ink);outline:none;transition:.25s}
 .fsearch input:focus{border-color:var(--mint)}
+/* a sticky bar this tall would eat a phone screen, so it only sticks on wide viewports */
+@media(max-width:820px){
+  .filterbar{position:static;background:var(--paper)}
+}
+
+/* ============ LOCUM BOARD ============ */
 .fchip.rate.on{background:var(--mint-text);border-color:var(--mint-text);color:#fff}
 /* month grouping: shifts are read by when they start */
 .month-head{display:flex;align-items:center;gap:14px;margin:30px 0 13px}
@@ -409,10 +417,7 @@ footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
   .lc-rate small{display:inline;margin:0 0 0 6px}
   .lc-none{max-width:none;padding-right:12px}
 }
-/* a sticky bar this tall would eat a phone screen, so it only sticks on wide viewports */
-@media(max-width:820px){
-  .filterbar{position:static;background:var(--paper)}
-}
+
 </style>
 </head>
 <body>
@@ -482,7 +487,7 @@ footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
     <p class="lede">Weekend cover, nights, clinic sessions and longer stints, gathered from named agencies. Where an agency publishes a rate you see it. Where it does not, we say so rather than guess.</p>
     <div class="hero-facts">
       <span class="fact"><i style="background:var(--amber)" aria-hidden="true"></i><b>38</b> shifts live</span>
-      <span class="fact"><i style="background:var(--coral)" aria-hidden="true"></i>Starts soonest in <b id="soonestStart">0</b> days</span>
+      <span class="fact" id="soonestFact"><i style="background:var(--coral)" aria-hidden="true"></i>Starts soonest in <b>0</b> days</span>
       <span class="fact">Rechecked <b>2 Aug 2026</b></span>
       <span class="fact">From <b>LocumLink</b>, <b>Match Medics</b>, <b>Global Medics</b></span>
     </div>
@@ -761,8 +766,16 @@ footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
 
   SHIFTS.forEach(function(s){ s.days = daysUntil(s.start); s.startTs = parseDay(s.start).getTime(); });
   var upcoming = SHIFTS.filter(function(s){ return s.days >= 0; });
-  document.getElementById("soonestStart").textContent = upcoming.length
-    ? Math.min.apply(null, upcoming.map(function(s){ return s.days; })) : 0;
+  var soonestFact = document.getElementById("soonestFact");
+  var dot = '<i style="background:var(--coral)" aria-hidden="true"></i>';
+  if (upcoming.length){
+    var soon = Math.min.apply(null, upcoming.map(function(s){ return s.days; }));
+    soonestFact.innerHTML = dot + (soon === 0
+      ? "A shift starts <b>today</b>"
+      : "Starts soonest in <b>" + soon + "</b> " + (soon === 1 ? "day" : "days"));
+  } else {
+    soonestFact.innerHTML = dot + "Nothing upcoming in this sample";
+  }
 
   var state = {grades:[], q:"", rateOnly:false, sort:"soonest"};
 
