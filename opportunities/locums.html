@@ -1,37 +1,38 @@
 <!--
-  MedNav jobs board. Same design system as the homepage and the Opportunities
-  hub; the layout differs on purpose, because this page is operated rather than
-  read. Facet rail plus results, the way a doctor actually narrows a board.
+  MedNav locums board. Same design system as the homepage, the Opportunities
+  hub and the jobs board. The layout differs again on purpose: locum work is
+  read by date and by rate, so shifts group by starting month and the rate gets
+  its own column rather than being buried in a meta line.
 
-  Content rules, unchanged: aggregated and linked never hosted, every source
-  named, no em dashes.
+  The rate rule is the point of this page: a rate appears only where the agency
+  published one. Nothing is estimated, and a blank says so plainly.
 
-  TEMP: JOBS[] is sample data mirroring the wireframe, not a live feed. Deadline
-  counts are computed from the browser's date, so these rows read as closed once
-  those dates pass. TEMP: https://mednav.ie is a placeholder domain.
+  TEMP: SHIFTS[] is sample data mirroring the wireframe, not a live feed. Day
+  counts come from the browser's date, so these rows read as started once those
+  dates pass. TEMP: https://mednav.ie is a placeholder domain.
 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NCHD and consultant jobs in Ireland | MedNav</title>
-<meta name="description" content="142 live NCHD and consultant posts in Ireland, sourced from the HSE and named agencies, filtered by grade, specialty, location and post type. Linked to source.">
-<link rel="canonical" href="https://mednav.ie/opportunities/jobs">
+<title>Locum shifts for doctors in Ireland | MedNav</title>
+<meta name="description" content="38 locum shifts and short term posts in Ireland from LocumLink, Match Medics, Global Medics and others. Rates shown only where the agency publishes them.">
+<link rel="canonical" href="https://mednav.ie/opportunities/locums">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="MedNav">
-<meta property="og:title" content="NCHD and consultant jobs in Ireland">
-<meta property="og:description" content="142 live NCHD and consultant posts, sourced from the HSE and named agencies. Filter by grade, specialty, location and post type.">
-<meta property="og:url" content="https://mednav.ie/opportunities/jobs">
+<meta property="og:title" content="Locum shifts for doctors in Ireland">
+<meta property="og:description" content="Locum shifts and short term posts from named agencies. Rates shown only where published, never estimated.">
+<meta property="og:url" content="https://mednav.ie/opportunities/locums">
 <meta property="og:image" content="https://mednav.ie/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
-  "name": "NCHD and consultant jobs in Ireland",
-  "description": "Live NCHD and consultant posts in Ireland, sourced from the HSE and named agencies.",
-  "url": "https://mednav.ie/opportunities/jobs",
+  "name": "Locum shifts for doctors in Ireland",
+  "description": "Locum shifts and short term posts in Ireland from named agencies, with rates shown only where the agency publishes them.",
+  "url": "https://mednav.ie/opportunities/locums",
   "isPartOf": { "@type": "WebSite", "name": "MedNav", "url": "https://mednav.ie/" }
 }
 </script>
@@ -42,7 +43,7 @@
   "itemListElement": [
     { "@type": "ListItem", "position": 1, "name": "MedNav", "item": "https://mednav.ie/" },
     { "@type": "ListItem", "position": 2, "name": "Opportunities", "item": "https://mednav.ie/opportunities" },
-    { "@type": "ListItem", "position": 3, "name": "Jobs", "item": "https://mednav.ie/opportunities/jobs" }
+    { "@type": "ListItem", "position": 3, "name": "Locums", "item": "https://mednav.ie/opportunities/locums" }
   ]
 }
 </script>
@@ -232,6 +233,22 @@ header.site.scrolled{box-shadow:0 10px 30px rgba(11,46,54,.1)}
   .board-search{margin-left:0;width:100%}
   .card-foot{align-items:flex-start}
 }
+/* ============ GUIDES ============ */
+.guides-sec{padding:0 0 96px}
+.guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.guide{position:relative;background:#fff;border:1px solid var(--line);border-radius:26px;padding:34px 36px;box-shadow:var(--card-shadow);transition:transform .25s,box-shadow .25s,border-color .25s;overflow:hidden}
+.guide::after{content:"";position:absolute;top:-60px;right:-60px;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,rgba(20,179,148,.12),transparent 65%);pointer-events:none}
+.guide.amberish::after{background:radial-gradient(circle,rgba(255,192,97,.18),transparent 65%)}
+.guide:hover{transform:translateY(-3px);box-shadow:0 20px 42px rgba(11,46,54,.12);border-color:rgba(11,46,54,.2)}
+.guide-ic{width:44px;height:44px;border-radius:14px;background:var(--mint-soft);color:#0b7a63;display:grid;place-items:center;margin-bottom:18px}
+.guide.amberish .guide-ic{background:var(--amber-soft);color:var(--amber-text)}
+.guide h3{font-size:19px;color:var(--deep);font-weight:700;margin-bottom:9px;letter-spacing:-.01em}
+.guide p{font-size:14px;color:var(--txt-soft);max-width:44ch;margin-bottom:20px}
+.guide-cta{display:inline-flex;align-items:center;gap:8px;font-family:var(--fd);font-size:13px;font-weight:700;color:var(--mint-text)}
+.guide.amberish .guide-cta{color:var(--amber-text)}
+.guide-cta svg{transition:transform .2s}
+.guide:hover .guide-cta svg{transform:translateX(4px)}
+@media(max-width:900px){.guide-grid{grid-template-columns:1fr}}
 /* ============ ALERTS ============ */
 .alerts-sec{padding:96px 0}
 .alert-card{display:grid;grid-template-columns:1.05fr .95fr;border-radius:30px;overflow:hidden;box-shadow:var(--shadow);background:var(--deep);color:#fff}
@@ -264,16 +281,6 @@ header.site.scrolled{box-shadow:0 10px 30px rgba(11,46,54,.1)}
   .alert-preview{border-left:0;border-top:1px solid rgba(255,255,255,.12)}
 }
 @media(max-width:640px){.alert-body{padding:38px 26px}.alert-preview{padding:34px 26px}}
-/* ============ FAQ ============ */
-.faq-sec{padding:0 0 100px}
-.faq-list{max-width:760px;margin:44px auto 0;border-top:1px solid var(--line)}
-.faq-item{border-bottom:1px solid var(--line)}
-.faq-item summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 4px;cursor:pointer;font-family:var(--fd);font-weight:700;font-size:16px;color:var(--deep)}
-.faq-item summary::-webkit-details-marker{display:none}
-.faq-item summary:hover{color:var(--mint-text)}
-.faq-icon{flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;color:var(--deep);transition:transform .25s,background .25s,border-color .25s,color .25s}
-.faq-item[open] .faq-icon{background:var(--deep);border-color:var(--deep);color:#fff;transform:rotate(45deg)}
-.faq-item p{padding:0 34px 24px 4px;color:var(--txt-soft);font-size:15px;max-width:62ch}
 /* ============ FOOTER ============ */
 footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
 .f-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;gap:40px}
@@ -367,34 +374,44 @@ footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
 .note-panel b{color:var(--deep)}
 .xlinks{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
 
-/* ============ FACET RAIL ============ */
-.work{display:grid;grid-template-columns:252px minmax(0,1fr);gap:32px;align-items:start}
-.filters{background:#fff;border:1px solid var(--line);border-radius:22px;padding:20px 20px 14px;box-shadow:var(--card-shadow);position:sticky;top:96px}
-.filters-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
-.filters-head h2{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--deep)}
-.filters-search{position:relative;display:flex;align-items:center;margin-bottom:4px}
-.filters-search svg{position:absolute;left:12px;color:var(--txt-soft);pointer-events:none}
-.filters-search input{width:100%;border:1.5px solid var(--line);background:var(--paper);border-radius:12px;padding:10px 12px 10px 36px;font-size:13.5px;color:var(--ink);outline:none;transition:.25s}
-.filters-search input:focus{border-color:var(--mint);background:#fff}
-.fgroup{border:0;border-top:1px dashed var(--line);padding:14px 0 6px;margin-top:12px}
-.fgroup legend{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-soft);padding:0;margin-bottom:9px}
-.fopt{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:13.5px;color:var(--ink);cursor:pointer;transition:color .18s,opacity .18s}
-.fopt input{accent-color:var(--mint);width:15px;height:15px;flex:none;cursor:pointer;margin:0}
-.fopt em{margin-left:auto;font-style:normal;font-size:11px;font-weight:700;color:var(--txt-soft);background:var(--paper);border-radius:999px;padding:1px 8px;font-variant-numeric:tabular-nums}
-.fopt:hover{color:var(--mint-text)}
-.fopt.zero{opacity:.35}
-.filters-toggle{display:none;width:100%;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:13px 18px;font-family:var(--fd);font-weight:700;font-size:14px;color:var(--deep);margin-bottom:14px;box-shadow:var(--card-shadow)}
-.filters-toggle em{font-style:normal;font-size:11px;font-weight:700;background:var(--deep);color:#fff;border-radius:999px;padding:2px 9px}
-.filters-toggle svg{transition:transform .25s}
-.filters-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
-.type-training{background:var(--mint-soft);color:#0b7a63}
-.type-nontraining{background:var(--amber-soft);color:var(--amber-text)}
-.type-consultant{background:var(--coral-soft);color:var(--coral-text)}
-@media(max-width:900px){
-  .work{grid-template-columns:minmax(0,1fr)}
-  .filters{position:static;display:none}
-  .filters.open{display:block}
-  .filters-toggle{display:flex}
+/* ============ LOCUM BOARD ============ */
+.filterbar{position:sticky;top:74px;z-index:50;background:rgba(247,250,248,.93);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:13px 0}
+.filterbar-in{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.filterbar .filter-label{margin-right:0}
+.fsearch{position:relative;display:flex;align-items:center;min-width:210px;flex:1;max-width:280px}
+.fsearch svg{position:absolute;left:13px;color:var(--txt-soft);pointer-events:none}
+.fsearch input{width:100%;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px 9px 38px;font-size:13.5px;color:var(--ink);outline:none;transition:.25s}
+.fsearch input:focus{border-color:var(--mint)}
+.fchip.rate.on{background:var(--mint-text);border-color:var(--mint-text);color:#fff}
+/* month grouping: shifts are read by when they start */
+.month-head{display:flex;align-items:center;gap:14px;margin:30px 0 13px}
+.month-head:first-child{margin-top:0}
+.month-head h3{font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--deep);white-space:nowrap}
+.month-head span{font-size:12px;color:var(--txt-soft);font-weight:600;min-width:0}
+.month-head::after{content:"";flex:1;height:1px;background:var(--line)}
+/* rate is the thing doctors scan for, so it gets its own column */
+.lcard{display:grid;grid-template-columns:minmax(0,1fr) 214px}
+.lc-main{min-width:0}
+.lc-main .card-foot{border-top:1px dashed var(--line)}
+.lc-rate-col{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:11px;border-left:1px dashed var(--line);margin-left:22px;padding-left:22px}
+.lc-rate{font-family:var(--fd);font-size:25px;font-weight:800;line-height:1;color:var(--mint-text);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.lc-rate small{display:block;font-family:var(--fb);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--txt-soft);margin-top:6px}
+.lc-none{font-size:13px;color:#8ba3a8;font-style:italic;line-height:1.45;max-width:16ch}
+.dates{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--txt-soft)}
+.dates svg{color:#8ba3a8;flex:none}
+@media(max-width:600px){
+  .month-head{flex-wrap:wrap;gap:4px 12px}
+  .month-head::after{display:none}
+}
+@media(max-width:760px){
+  .lcard{grid-template-columns:minmax(0,1fr)}
+  .lc-rate-col{border-left:0;border-top:1px dashed var(--line);margin:15px 0 0;padding:15px 0 0;flex-direction:row;align-items:center;justify-content:space-between;width:100%}
+  .lc-rate small{display:inline;margin:0 0 0 6px}
+  .lc-none{max-width:none;padding-right:12px}
+}
+/* a sticky bar this tall would eat a phone screen, so it only sticks on wide viewports */
+@media(max-width:820px){
+  .filterbar{position:static;background:var(--paper)}
 }
 </style>
 </head>
@@ -459,84 +476,90 @@ footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
 <section class="page-hero">
   <div class="container">
     <nav class="crumb" aria-label="Breadcrumb">
-      <a href="/">MedNav</a><i aria-hidden="true"></i><a href="index.html">Opportunities</a><i aria-hidden="true"></i><span aria-current="page">Jobs</span>
+      <a href="/">MedNav</a><i aria-hidden="true"></i><a href="index.html">Opportunities</a><i aria-hidden="true"></i><span aria-current="page">Locums</span>
     </nav>
-    <h1>NCHD and consultant posts in Ireland</h1>
-    <p class="lede">Training and non training posts across every specialty, gathered from the HSE and named agencies and linked straight back to the original posting.</p>
+    <h1>Locum shifts and short term posts</h1>
+    <p class="lede">Weekend cover, nights, clinic sessions and longer stints, gathered from named agencies. Where an agency publishes a rate you see it. Where it does not, we say so rather than guess.</p>
     <div class="hero-facts">
-      <span class="fact"><i style="background:var(--mint)" aria-hidden="true"></i><b>142</b> live posts</span>
-      <span class="fact"><i style="background:var(--coral)" aria-hidden="true"></i>Closes soonest in <b id="closingWeek">0</b> days</span>
+      <span class="fact"><i style="background:var(--amber)" aria-hidden="true"></i><b>38</b> shifts live</span>
+      <span class="fact"><i style="background:var(--coral)" aria-hidden="true"></i>Starts soonest in <b id="soonestStart">0</b> days</span>
       <span class="fact">Rechecked <b>2 Aug 2026</b></span>
-      <span class="fact">Sourced from <b>HSE</b> and <b>ICGP</b></span>
+      <span class="fact">From <b>LocumLink</b>, <b>Match Medics</b>, <b>Global Medics</b></span>
     </div>
     <div class="split" data-reveal>
-      <p class="split-label">What is on the board right now</p>
-      <div class="split-bar" role="img" aria-label="Of 142 posts, 61 are registrar, 48 SHO, 22 consultant and 11 intern">
-        <i style="--w:43%;--d:.05s;background:var(--mint)"></i>
-        <i style="--w:34%;--d:.15s;background:var(--mint-2)"></i>
-        <i style="--w:15%;--d:.25s;background:var(--coral)"></i>
-        <i style="--w:8%;--d:.35s;background:var(--amber)"></i>
+      <p class="split-label">Rate transparency across the board</p>
+      <div class="split-bar" role="img" aria-label="Of 38 shifts, 24 publish an hourly rate and 14 do not">
+        <i style="--w:63%;--d:.05s;background:var(--mint)"></i>
+        <i style="--w:37%;--d:.18s;background:#cfdcd8"></i>
       </div>
       <div class="split-key" aria-hidden="true">
-        <span><i style="background:var(--mint)"></i>Registrar <b>61</b></span>
-        <span><i style="background:var(--mint-2)"></i>SHO <b>48</b></span>
-        <span><i style="background:var(--coral)"></i>Consultant <b>22</b></span>
-        <span><i style="background:var(--amber)"></i>Intern <b>11</b></span>
+        <span><i style="background:var(--mint)"></i>Rate published <b>24</b></span>
+        <span><i style="background:#cfdcd8"></i>Rate not published <b>14</b></span>
       </div>
     </div>
   </div>
 </section>
 
+<div class="filterbar">
+  <div class="container filterbar-in">
+    <div class="fsearch">
+      <label class="sr-only" for="q">Search shifts</label>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+      <input type="search" id="q" placeholder="Hospital, specialty or agency" autocomplete="off">
+    </div>
+    <span class="filter-label">Grade</span>
+    <div id="gradeChips" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+    <span class="fdiv" aria-hidden="true"></span>
+    <button class="fchip rate" id="rateChip" type="button" aria-pressed="false">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3v10"/><path d="M8 9l4 4 4-4"/><path d="M4 17h16v4H4z"/></svg>
+      Published rate only
+    </button>
+    <button class="fclear" id="clearFilters" type="button">Clear all</button>
+  </div>
+</div>
+
 <section class="work-sec">
   <div class="container">
-    <button class="filters-toggle" id="filtersToggle" aria-expanded="false" aria-controls="filters">
-      <span>Filter posts <em id="toggleCount" hidden>0</em></span>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-    </button>
-    <div class="work">
-      <form class="filters" id="filters">
-        <div class="filters-head">
-          <h2>Filter</h2>
-          <button class="fclear" id="clearFilters" type="button">Clear all</button>
-        </div>
-        <div class="filters-search">
-          <label class="sr-only" for="q">Search posts</label>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
-          <input type="search" id="q" placeholder="Hospital or specialty" autocomplete="off">
-        </div>
-        <fieldset class="fgroup" data-group="grade"><legend>Grade</legend></fieldset>
-        <fieldset class="fgroup" data-group="type"><legend>Post type</legend></fieldset>
-        <fieldset class="fgroup" data-group="specialty"><legend>Specialty</legend></fieldset>
-        <fieldset class="fgroup" data-group="county"><legend>Location</legend></fieldset>
-      </form>
-
-      <div>
-        <div class="results-bar">
-          <p id="resultCount" aria-live="polite"></p>
-          <div class="sort">
-            <label for="sort">Sort</label>
-            <select id="sort">
-              <option value="closing">Closing soonest</option>
-              <option value="posted">Recently posted</option>
-            </select>
-          </div>
-        </div>
-        <div class="applied" id="applied"></div>
-        <div class="results" id="results"></div>
-        <div class="loadmore" id="loadMoreWrap">
-          <button class="btn btn-ghost" id="loadMore" type="button">Show more posts</button>
-          <p id="loadMoreNote"></p>
-        </div>
-
-        <div class="note-panel">
-          <p><b>Aggregated and linked, not hosted.</b> Always apply through the original posting. MedNav never receives your application or your CV, and we never charge to see a post. Salary scales are shown only where the source publishes them.</p>
-          <div class="xlinks">
-            <a class="mini-link" href="locums.html">Locum shifts instead<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-            <a class="mini-link" href="conferences.html">Conferences and courses<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-            <a class="mini-link" href="index.html">All opportunities<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-          </div>
-        </div>
+    <div class="results-bar">
+      <p id="resultCount" aria-live="polite"></p>
+      <div class="sort">
+        <label for="sort">Sort</label>
+        <select id="sort">
+          <option value="soonest">Starting soonest</option>
+          <option value="rate">Highest published rate</option>
+        </select>
       </div>
+    </div>
+    <div class="applied" id="applied"></div>
+    <div id="results"></div>
+
+    <div class="note-panel">
+      <p><b>Rates are shown only where the agency publishes them.</b> We never estimate a rate, and we never average one from similar shifts. A blank rate means the source did not state one, so ask the agency directly before you commit to anything.</p>
+      <p><b>Aggregated and linked, not hosted.</b> You arrange the shift with the agency. MedNav takes no fee, no commission and no cut of your rate, and never receives your CV.</p>
+      <div class="xlinks">
+        <a class="mini-link" href="jobs.html">Permanent posts instead<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="mini-link" href="conferences.html">Conferences and courses<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="mini-link" href="index.html">All opportunities<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="guides-sec" style="padding:0 0 90px">
+  <div class="container">
+    <div class="guide-grid">
+      <a class="guide" href="/blog/locum-guide-ireland" data-reveal>
+        <span class="guide-ic"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 5.5A2.5 2.5 0 016.5 3H12v18H6.5A2.5 2.5 0 014 18.5z"/><path d="M20 5.5A2.5 2.5 0 0017.5 3H12v18h5.5a2.5 2.5 0 002.5-2.5z"/></svg></span>
+        <h3>New to locuming?</h3>
+        <p>What agencies actually do, how rates get set and why two shifts on the same ward pay differently, plus the tax, insurance and contract side nobody explains in the mess.</p>
+        <span class="guide-cta">Read the locum guide<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="guide amberish" href="/tools" data-reveal style="--d:.08s">
+        <span class="guide-ic"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 17l6-6 4 4 6-7"/><path d="M14 8h6v6"/></svg></span>
+        <h3>Locuming around training</h3>
+        <p>Picking up shifts is easier when you know which weeks are already spoken for. Your MedNav roadmap holds the exam dates and application windows, so you can see what is safe to take.</p>
+        <span class="guide-cta">Open your roadmap<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
     </div>
   </div>
 </section>
@@ -545,8 +568,8 @@ footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
   <div class="container">
     <div class="alert-card" data-reveal>
       <div class="alert-body">
-        <h2>Get the post before it closes.</h2>
-        <p>Save this search and MedNav emails you when a matching post appears, and again three days before the deadline. Free with an account.</p>
+        <h2>Shifts go fast. Be told first.</h2>
+        <p>Save your grade, your counties and your free weekends. MedNav emails you when a matching shift is posted, with the rate in the subject line where the agency published one.</p>
         <form class="alert-form" id="alertForm" novalidate>
           <label class="sr-only" for="alertEmail">Email address</label>
           <input type="email" id="alertEmail" placeholder="Your email" aria-describedby="alertError" required>
@@ -556,18 +579,18 @@ footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
         </form>
         <p class="form-error" id="alertError" role="alert">Enter a valid email address.</p>
         <p class="form-ok" id="alertOk"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Check your inbox. Click the magic link to finish your account and your search is saved.</p>
-        <p class="alert-note">No credit card. One email per match, one reminder before it closes.</p>
+        <p class="alert-note">No credit card, and we never pass your details to an agency.</p>
       </div>
       <div class="alert-preview" aria-hidden="true">
         <p class="ap-label">Your saved search</p>
         <div class="ap-mail">
           <div class="ap-mail-top">
             <svg width="17" height="17" viewBox="0 0 40 40" fill="none"><rect x="2" y="2" width="36" height="36" rx="11" fill="#0b2e36"/><path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="24" r="4" fill="#ffc061"/></svg>
-            <b id="savedSearchName">All posts</b><span>Daily</span>
+            <b id="savedSearchName">All shifts</b><span>Instant</span>
           </div>
-          <div class="ap-row"><span class="ap-dot" style="background:#14b394"></span><b>2 new posts matched overnight</b><small>New</small></div>
-          <div class="ap-row"><span class="ap-dot" style="background:#ffc061"></span><b>Registrar, Anaesthesiology, Kerry</b><small>5 days</small></div>
-          <div class="ap-row"><span class="ap-dot" style="background:#ff7a59"></span><b>SHO, General Surgery, Tallaght</b><small>3 days</small></div>
+          <div class="ap-row"><span class="ap-dot" style="background:#14b394"></span><b>Night cover, Paediatrics, Galway</b><small>&euro;108/hr</small></div>
+          <div class="ap-row"><span class="ap-dot" style="background:#ffc061"></span><b>Weekend cover, Emergency, Beaumont</b><small>&euro;90/hr</small></div>
+          <div class="ap-row"><span class="ap-dot" style="background:#cfdcd8"></span><b>Clinic cover, Dermatology, Waterford</b><small>No rate</small></div>
         </div>
       </div>
     </div>
@@ -705,153 +728,128 @@ footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
 
 
   /* ---------- the board ----------
-     TEMP: sample records mirroring the wireframe, not a live feed. */
-  var JOBS = [
-    {title:"SHO, General Surgery", org:"Tallaght University Hospital", county:"Dublin", grade:"SHO", specialty:"General surgery", type:"Non-training", close:"2026-09-03", posted:"2026-08-06", src:"HSE"},
-    {title:"Registrar, Anaesthesiology", org:"University Hospital Kerry", county:"Kerry", grade:"Registrar", specialty:"Anaesthesiology", type:"Non-training", close:"2026-09-05", posted:"2026-08-09", src:"HSE"},
-    {title:"NCHD Registrar, Cardiology", org:"St. James's Hospital", county:"Dublin", grade:"Registrar", specialty:"Cardiology", type:"Training post", close:"2026-09-20", posted:"2026-08-12", src:"HSE"},
-    {title:"Registrar, Emergency Medicine", org:"University Hospital Limerick", county:"Limerick", grade:"Registrar", specialty:"Emergency medicine", type:"Non-training", close:"2026-09-18", posted:"2026-08-08", src:"HSE"},
-    {title:"SHO, General Medicine", org:"Cork University Hospital", county:"Cork", grade:"SHO", specialty:"General medicine", type:"Non-training", close:"2026-09-25", posted:"2026-08-18", src:"HSE"},
-    {title:"Specialist Registrar, Paediatrics", org:"Children's Health Ireland", county:"Dublin", grade:"Registrar", specialty:"Paediatrics", type:"Training post", close:"2026-10-02", posted:"2026-08-14", src:"HSE"},
-    {title:"Consultant, Respiratory Medicine", org:"Galway University Hospital", county:"Galway", grade:"Consultant", specialty:"Respiratory medicine", type:"Consultant", close:"2026-10-10", posted:"2026-08-05", src:"HSE"},
-    {title:"SHO, Psychiatry", org:"St. Patrick's University Hospital", county:"Dublin", grade:"SHO", specialty:"Psychiatry", type:"Training post", close:"2026-10-15", posted:"2026-08-20", src:"HSE"},
-    {title:"Intern, General Internal Medicine", org:"Sligo University Hospital", county:"Sligo", grade:"Intern", specialty:"General medicine", type:"Training post", close:"2026-09-15", posted:"2026-08-03", src:"HSE"},
-    {title:"SHO, Anaesthesiology", org:"Beaumont Hospital", county:"Dublin", grade:"SHO", specialty:"Anaesthesiology", type:"Training post", close:"2026-09-29", posted:"2026-08-19", src:"HSE"},
-    {title:"Registrar, Obstetrics and Gynaecology", org:"Rotunda Hospital", county:"Dublin", grade:"Registrar", specialty:"Obstetrics and gynaecology", type:"Non-training", close:"2026-10-06", posted:"2026-08-21", src:"HSE"},
-    {title:"Consultant, General Surgery", org:"University Hospital Waterford", county:"Waterford", grade:"Consultant", specialty:"General surgery", type:"Consultant", close:"2026-10-30", posted:"2026-08-22", src:"HSE"},
-    {title:"Registrar, Radiology", org:"Mater Misericordiae University Hospital", county:"Dublin", grade:"Registrar", specialty:"Radiology", type:"Training post", close:"2026-10-20", posted:"2026-08-25", src:"HSE"},
-    {title:"SHO, Emergency Medicine", org:"Cork University Hospital", county:"Cork", grade:"SHO", specialty:"Emergency medicine", type:"Non-training", close:"2026-09-22", posted:"2026-08-16", src:"HSE"},
-    {title:"GP Registrar, Mid West Training Scheme", org:"ICGP training scheme", county:"Limerick", grade:"Registrar", specialty:"General practice", type:"Training post", close:"2026-10-08", posted:"2026-08-13", src:"ICGP"},
-    {title:"Registrar, Nephrology", org:"Beaumont Hospital", county:"Dublin", grade:"Registrar", specialty:"Nephrology", type:"Training post", close:"2026-10-13", posted:"2026-08-11", src:"HSE"},
-    {title:"SHO, Paediatrics", org:"Galway University Hospital", county:"Galway", grade:"SHO", specialty:"Paediatrics", type:"Non-training", close:"2026-09-27", posted:"2026-08-17", src:"HSE"},
-    {title:"Consultant, Psychiatry of Old Age", org:"St. Vincent's University Hospital", county:"Dublin", grade:"Consultant", specialty:"Psychiatry", type:"Consultant", close:"2026-11-06", posted:"2026-08-24", src:"HSE"}
+     TEMP: sample records mirroring the wireframe, not a live feed.
+     rate is null wherever the agency published no rate. Never estimate one. */
+  var SHIFTS = [
+    {title:"Night cover, Paediatrics", org:"Galway University Hospital", county:"Galway", grade:"SHO", start:"2026-09-03", end:"2026-09-04", duration:"2 nights", rate:108, src:"Global Medics"},
+    {title:"Twilight cover, Emergency Department", org:"University Hospital Limerick", county:"Limerick", grade:"SHO", start:"2026-09-05", end:"2026-09-07", duration:"3 shifts", rate:88, src:"LocumLink"},
+    {title:"Weekend cover, Emergency Department", org:"Beaumont Hospital", county:"Dublin", grade:"SHO", start:"2026-09-06", end:"2026-09-08", duration:"3 days", rate:90, src:"LocumLink"},
+    {title:"Weekend cover, Psychiatry", org:"St. Patrick's University Hospital", county:"Dublin", grade:"Registrar", start:"2026-09-12", end:"2026-09-13", duration:"2 days", rate:95, src:"Global Medics"},
+    {title:"2 week cover, General Medicine", org:"Galway University Hospital", county:"Galway", grade:"Registrar", start:"2026-09-15", end:"2026-09-29", duration:"2 weeks", rate:null, src:"Match Medics"},
+    {title:"Night cover, General Medicine", org:"Cork University Hospital", county:"Cork", grade:"SHO", start:"2026-09-19", end:"2026-09-21", duration:"3 nights", rate:92, src:"LocumLink"},
+    {title:"Clinic cover, Dermatology", org:"University Hospital Waterford", county:"Waterford", grade:"Registrar", start:"2026-09-24", end:"2026-09-25", duration:"2 days", rate:null, src:"Match Medics"},
+    {title:"GP session cover, 6 weeks", org:"Castletroy Family Practice", county:"Limerick", grade:"GP", start:"2026-09-29", end:"2026-11-06", duration:"Tuesday and Thursday sessions", rate:null, src:"Match Medics"},
+    {title:"Night cover, Paediatrics", org:"Children's Health Ireland", county:"Dublin", grade:"SHO", start:"2026-10-01", end:"2026-10-04", duration:"4 nights", rate:110, src:"Global Medics"},
+    {title:"1 month cover, Anaesthesiology", org:"Sligo University Hospital", county:"Sligo", grade:"Registrar", start:"2026-10-05", end:"2026-11-02", duration:"4 weeks", rate:null, src:"Match Medics"},
+    {title:"Weekend cover, Obstetrics", org:"Rotunda Hospital", county:"Dublin", grade:"Registrar", start:"2026-10-10", end:"2026-10-11", duration:"2 days", rate:120, src:"Global Medics"},
+    {title:"Locum Consultant, Radiology", org:"Galway University Hospital", county:"Galway", grade:"Consultant", start:"2026-10-12", end:"2026-12-04", duration:"8 weeks", rate:null, src:"HSE"},
+    {title:"Bank holiday cover, General Surgery", org:"Cork University Hospital", county:"Cork", grade:"Registrar", start:"2026-10-24", end:"2026-10-26", duration:"3 days", rate:105, src:"LocumLink"},
+    {title:"Weekend cover, Orthopaedics", org:"Tallaght University Hospital", county:"Dublin", grade:"Registrar", start:"2026-11-07", end:"2026-11-08", duration:"2 days", rate:115, src:"LocumLink"}
   ];
 
-  var GROUPS = [
-    {key:"grade", order:["Intern","SHO","Registrar","Consultant"]},
-    {key:"type", order:["Training post","Non-training","Consultant"]},
-    {key:"specialty", order:null},
-    {key:"county", order:null}
-  ];
-  var TYPE_CLASS = {"Training post":"type-training", "Non-training":"type-nontraining", "Consultant":"type-consultant"};
+  var GRADES = ["SHO","Registrar","Consultant","GP"];
   var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  var PAGE = 8;
+  var MONTHS_LONG = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
   var today = new Date(); today.setHours(0,0,0,0);
   function parseDay(iso){ var p = iso.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
   function daysUntil(iso){ return Math.round((parseDay(iso) - today) / 86400000); }
   function shortDate(iso){ var d = parseDay(iso); return d.getDate() + " " + MONTHS[d.getMonth()]; }
-  function daysText(n){ if (n < 0) return "Closed"; if (n === 0) return "Closes today"; if (n === 1) return "1 day left"; return n + " days left"; }
+  function startsText(n){ if (n < 0) return "Started"; if (n === 0) return "Starts today"; if (n === 1) return "Starts tomorrow"; return "Starts in " + n + " days"; }
   function pillClass(n){ if (n < 0) return "dpill"; if (n <= 7) return "dpill hot"; if (n <= 21) return "dpill warm"; return "dpill"; }
   function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
-  JOBS.forEach(function(j){ j.days = daysUntil(j.close); j.postedTs = parseDay(j.posted).getTime(); });
-  var live = JOBS.filter(function(j){ return j.days >= 0; });
-  document.getElementById("closingWeek").textContent = live.length
-    ? Math.min.apply(null, live.map(function(j){ return j.days; })) : 0;
+  SHIFTS.forEach(function(s){ s.days = daysUntil(s.start); s.startTs = parseDay(s.start).getTime(); });
+  var upcoming = SHIFTS.filter(function(s){ return s.days >= 0; });
+  document.getElementById("soonestStart").textContent = upcoming.length
+    ? Math.min.apply(null, upcoming.map(function(s){ return s.days; })) : 0;
 
-  var state = {grade:[], type:[], specialty:[], county:[], q:"", sort:"closing", shown:PAGE};
+  var state = {grades:[], q:"", rateOnly:false, sort:"soonest"};
 
-  /* an item passes when it satisfies every group except the one being counted */
-  function passes(j, skipGroup){
-    for (var i = 0; i < GROUPS.length; i++){
-      var k = GROUPS[i].key;
-      if (k === skipGroup) continue;
-      if (state[k].length && state[k].indexOf(j[k]) < 0) return false;
-    }
+  function matches(s){
+    if (state.grades.length && state.grades.indexOf(s.grade) < 0) return false;
+    if (state.rateOnly && s.rate === null) return false;
     if (state.q){
-      var hay = (j.title+" "+j.org+" "+j.county+" "+j.grade+" "+j.specialty+" "+j.type+" "+j.src).toLowerCase();
+      var hay = (s.title+" "+s.org+" "+s.county+" "+s.grade+" "+s.duration+" "+s.src).toLowerCase();
       var terms = state.q.toLowerCase().split(/\s+/).filter(Boolean);
-      for (var t = 0; t < terms.length; t++){ if (hay.indexOf(terms[t]) < 0) return false; }
+      for (var i = 0; i < terms.length; i++){ if (hay.indexOf(terms[i]) < 0) return false; }
     }
     return true;
   }
 
-  function buildFilters(){
-    GROUPS.forEach(function(g){
-      var box = document.querySelector('[data-group="' + g.key + '"]');
-      var values = g.order ? g.order.slice() : JOBS.map(function(j){ return j[g.key]; })
-        .filter(function(v, i, a){ return a.indexOf(v) === i; }).sort();
-      values.forEach(function(v){
-        var id = g.key + "-" + v.replace(/\W+/g, "");
-        var label = document.createElement("label");
-        label.className = "fopt";
-        label.setAttribute("data-opt", g.key + "|" + v);
-        label.innerHTML = '<input type="checkbox" id="' + id + '" value="' + esc(v) + '" data-fgroup="' + g.key + '">' +
-                          "<span>" + esc(v) + '</span><em data-count="' + g.key + "|" + esc(v) + '">0</em>';
-        box.appendChild(label);
-        label.querySelector("input").addEventListener("change", function(ev){
-          var arr = state[g.key], idx = arr.indexOf(v);
-          if (ev.target.checked){ if (idx < 0) arr.push(v); } else if (idx > -1){ arr.splice(idx, 1); }
-          state.shown = PAGE;
-          render();
-        });
-      });
-    });
-  }
-
-  function cardHTML(j){
-    return '<article class="card"' + (j.days < 0 ? ' style="opacity:.6"' : "") + ">" +
-      '<div class="card-head">' +
-        "<h4>" + esc(j.title) + "</h4>" +
-        '<div class="card-badges">' +
-          '<span class="type-tag ' + TYPE_CLASS[j.type] + '">' + esc(j.type) + "</span>" +
-          '<span class="src-tag">' + esc(j.src) + "</span>" +
+  function cardHTML(s){
+    var rate = s.rate !== null
+      ? '<p class="lc-rate">&euro;' + s.rate + '<small>per hour, published</small></p>'
+      : '<p class="lc-none">Rate not published by ' + esc(s.src) + "</p>";
+    return '<article class="card lcard"' + (s.days < 0 ? ' style="opacity:.6"' : "") + ">" +
+      '<div class="lc-main">' +
+        '<div class="card-head">' +
+          "<h4>" + esc(s.title) + "</h4>" +
+          '<div class="card-badges"><span class="grade-tag">' + esc(s.grade) + '</span><span class="src-tag">' + esc(s.src) + "</span></div>" +
+        "</div>" +
+        '<div class="card-meta">' +
+          '<span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 21s7-5.5 7-11a7 7 0 10-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>' + esc(s.org) + " · " + esc(s.county) + "</span>" +
+          '<span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>' + esc(s.duration) + "</span>" +
+        "</div>" +
+        '<div class="card-foot">' +
+          '<span class="dates"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>' +
+            shortDate(s.start) + " to " + shortDate(s.end) + '</span>' +
+          '<span class="' + pillClass(s.days) + '">' + startsText(s.days) + "</span>" +
         "</div>" +
       "</div>" +
-      '<div class="card-meta">' +
-        '<span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 21s7-5.5 7-11a7 7 0 10-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>' + esc(j.org) + " · " + esc(j.county) + "</span>" +
-        '<span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 4h7l9 9-7 7-9-9z"/><circle cx="8.5" cy="8.5" r="1.2"/></svg>' + esc(j.grade) + " · " + esc(j.specialty) + "</span>" +
-      "</div>" +
-      '<div class="card-foot">' +
-        '<span class="deadline">Closes ' + shortDate(j.close) + '<span class="' + pillClass(j.days) + '">' + daysText(j.days) + "</span></span>" +
-        '<a class="card-link" href="#" aria-label="View ' + esc(j.title) + " on " + esc(j.src) + ', opens the original posting">View on ' + esc(j.src) +
-          ' <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M8 16L18 6M9 6h9v9"/></svg></a>' +
+      '<div class="lc-rate-col">' + rate +
+        '<a class="card-link" href="#" aria-label="View ' + esc(s.title) + " on " + esc(s.src) + ', opens the original posting">View on ' + esc(s.src) +
+        ' <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M8 16L18 6M9 6h9v9"/></svg></a>' +
       "</div>" +
     "</article>";
   }
 
   function render(){
-    /* facet counts: what each option would return given the other groups */
-    GROUPS.forEach(function(g){
-      var pool = JOBS.filter(function(j){ return passes(j, g.key); });
-      document.querySelectorAll('[data-count^="' + g.key + '|"]').forEach(function(em){
-        var v = em.getAttribute("data-count").split("|")[1];
-        var n = pool.filter(function(j){ return j[g.key] === v; }).length;
-        em.textContent = n;
-        em.closest(".fopt").classList.toggle("zero", n === 0 && state[g.key].indexOf(v) < 0);
+    var rows = SHIFTS.filter(matches);
+    rows.sort(state.sort === "rate"
+      ? function(a,b){
+          if (a.rate === null && b.rate === null) return a.startTs - b.startTs;
+          if (a.rate === null) return 1;          /* unpublished rates sort last, never as zero */
+          if (b.rate === null) return -1;
+          return b.rate - a.rate;
+        }
+      : function(a,b){ return a.startTs - b.startTs; });
+
+    var host = document.getElementById("results");
+    if (!rows.length){
+      host.innerHTML = '<div class="empty"><b>No shifts match those filters.</b>' +
+        "<p>Try clearing the grade, or turn off the published rate filter. Plenty of agencies post the rate only once you ask.</p></div>";
+    } else if (state.sort === "rate"){
+      host.innerHTML = '<div class="results">' + rows.map(cardHTML).join("") + "</div>";
+    } else {
+      /* grouped by starting month, which is how a locum shift is actually chosen */
+      var html = "", current = "";
+      var groups = {};
+      rows.forEach(function(s){
+        var d = parseDay(s.start), key = d.getFullYear() + "-" + d.getMonth();
+        (groups[key] = groups[key] || []).push(s);
       });
-    });
-
-    var rows = JOBS.filter(function(j){ return passes(j, null); });
-    rows.sort(state.sort === "posted"
-      ? function(a,b){ return b.postedTs - a.postedTs; }
-      : function(a,b){ return a.days - b.days; });
-
-    var visible = rows.slice(0, state.shown);
-    var list = document.getElementById("results");
-    list.innerHTML = visible.length
-      ? visible.map(cardHTML).join("")
-      : '<div class="empty"><b>No posts match those filters.</b><p>Try widening the grade or clearing the location. You can also save the search and we will email you when something lands.</p></div>';
-
-    document.getElementById("resultCount").innerHTML = "Showing <b>" + visible.length + "</b> of <b>" + rows.length +
-      "</b> sample posts. The live board carries 142.";
-
-    var more = rows.length - visible.length;
-    document.getElementById("loadMoreWrap").hidden = rows.length === 0;
-    document.getElementById("loadMore").hidden = more <= 0;
-    document.getElementById("loadMoreNote").textContent = more > 0
-      ? more + " more in this sample"
-      : (rows.length ? "That is everything in this sample." : "");
-
-    /* applied filter chips */
-    var chips = [];
-    GROUPS.forEach(function(g){
-      state[g.key].forEach(function(v){
-        chips.push('<button class="fchip on" type="button" data-remove="' + g.key + '|' + esc(v) + '"><b>' + esc(v) +
-          '</b><span class="x" aria-hidden="true">&times;</span><span class="sr-only">Remove filter</span></button>');
+      Object.keys(groups).forEach(function(key){
+        var items = groups[key], d = parseDay(items[0].start);
+        var withRate = items.filter(function(s){ return s.rate !== null; }).length;
+        html += '<div class="month-head"><h3>' + MONTHS_LONG[d.getMonth()] + " " + d.getFullYear() + "</h3>" +
+          "<span>" + items.length + (items.length === 1 ? " shift" : " shifts") + " · " + withRate + " with a published rate</span></div>" +
+          '<div class="results">' + items.map(cardHTML).join("") + "</div>";
       });
+      host.innerHTML = html;
+    }
+
+    var withRate = rows.filter(function(s){ return s.rate !== null; }).length;
+    document.getElementById("resultCount").innerHTML = "Showing <b>" + rows.length + "</b> of " + SHIFTS.length +
+      " sample shifts, <b>" + withRate + "</b> with a published rate. The live board carries 38.";
+
+    var chips = state.grades.map(function(g){
+      return '<button class="fchip on" type="button" data-remove="grade|' + esc(g) + '"><b>' + esc(g) +
+        '</b><span class="x" aria-hidden="true">&times;</span><span class="sr-only">Remove filter</span></button>';
     });
+    if (state.rateOnly){
+      chips.push('<button class="fchip on" type="button" data-remove="rate|"><b>Published rate only</b><span class="x" aria-hidden="true">&times;</span><span class="sr-only">Remove filter</span></button>');
+    }
     if (state.q){
       chips.push('<button class="fchip on" type="button" data-remove="q|"><b>&ldquo;' + esc(state.q) +
         '&rdquo;</b><span class="x" aria-hidden="true">&times;</span><span class="sr-only">Clear search</span></button>');
@@ -861,42 +859,48 @@ footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
       btn.addEventListener("click", function(){
         var bits = btn.getAttribute("data-remove").split("|");
         if (bits[0] === "q"){ state.q = ""; document.getElementById("q").value = ""; }
-        else {
-          state[bits[0]] = state[bits[0]].filter(function(x){ return x !== bits[1]; });
-          var cb = document.querySelector('input[data-fgroup="' + bits[0] + '"][value="' + bits[1] + '"]');
-          if (cb) cb.checked = false;
-        }
-        state.shown = PAGE;
+        else if (bits[0] === "rate"){ setRateOnly(false); }
+        else { state.grades = state.grades.filter(function(x){ return x !== bits[1]; }); syncGradeChips(); }
         render();
       });
     });
 
-    var applied = chips.length;
-    var tc = document.getElementById("toggleCount");
-    tc.textContent = applied; tc.hidden = applied === 0;
-
-    var name = [].concat(state.grade, state.specialty, state.county).join(", ");
-    document.getElementById("savedSearchName").textContent = name ? name.slice(0, 38) : "All posts";
+    document.getElementById("savedSearchName").textContent = state.grades.length
+      ? state.grades.join(", ") + " shifts" : "All shifts";
   }
 
-  buildFilters();
-  document.getElementById("q").addEventListener("input", function(){
-    state.q = this.value.trim(); state.shown = PAGE; render();
+  var gradeHost = document.getElementById("gradeChips");
+  GRADES.forEach(function(g){
+    var btn = document.createElement("button");
+    btn.type = "button"; btn.className = "fchip"; btn.textContent = g;
+    btn.setAttribute("data-grade", g); btn.setAttribute("aria-pressed", "false");
+    btn.addEventListener("click", function(){
+      var i = state.grades.indexOf(g);
+      if (i < 0) state.grades.push(g); else state.grades.splice(i, 1);
+      syncGradeChips(); render();
+    });
+    gradeHost.appendChild(btn);
   });
+  function syncGradeChips(){
+    document.querySelectorAll("[data-grade]").forEach(function(btn){
+      var on = state.grades.indexOf(btn.getAttribute("data-grade")) > -1;
+      btn.classList.toggle("on", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+  var rateChip = document.getElementById("rateChip");
+  function setRateOnly(v){
+    state.rateOnly = v;
+    rateChip.classList.toggle("on", v);
+    rateChip.setAttribute("aria-pressed", v ? "true" : "false");
+  }
+  rateChip.addEventListener("click", function(){ setRateOnly(!state.rateOnly); render(); });
+  document.getElementById("q").addEventListener("input", function(){ state.q = this.value.trim(); render(); });
   document.getElementById("sort").addEventListener("change", function(){ state.sort = this.value; render(); });
-  document.getElementById("loadMore").addEventListener("click", function(){ state.shown += PAGE; render(); });
-  document.getElementById("filters").addEventListener("submit", function(ev){ ev.preventDefault(); });
   document.getElementById("clearFilters").addEventListener("click", function(){
-    GROUPS.forEach(function(g){ state[g.key] = []; });
-    state.q = ""; state.shown = PAGE;
+    state.grades = []; state.q = ""; setRateOnly(false);
     document.getElementById("q").value = "";
-    document.querySelectorAll('#filters input[type="checkbox"]').forEach(function(cb){ cb.checked = false; });
-    render();
-  });
-  var fToggle = document.getElementById("filtersToggle");
-  fToggle.addEventListener("click", function(){
-    var open = document.getElementById("filters").classList.toggle("open");
-    fToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    syncGradeChips(); render();
   });
 
   render();
