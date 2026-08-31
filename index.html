@@ -1,0 +1,1652 @@
+<!--
+  MedNav homepage v2. Built on the Qwen homepage's craft (type pairing, motion
+  system, phone-mockup product visual) with content and structure corrected
+  against the locked product spec: auth-first (no no-signup live demo),
+  real scope numbers, real nav, no fabricated competitors, no pricing section
+  (not published at MVP), no em dashes. See PROJECT.md and
+  mednav-content-seo-standards-v1.md.
+
+  Exception, deliberately approved: the "In doctors' own words" testimonials
+  section uses illustrative placeholder names/quotes/photos, not verified
+  real users — see the TEMP comment at that section for details. Replace
+  with real testimonials once available.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedNav: Know exactly what to do next in your medical career</title>
+<meta name="description" content="MedNav maps every Irish training programme, exam and interview, and tells you exactly what to do next. Verified dates, real scoring criteria, one free account.">
+<!-- SEO: canonical + social cards. NOTE: no production domain is confirmed anywhere in the project docs yet — https://mednav.ie below is a placeholder. Swap it (and /og-image.png, a real 1200x630 social card that doesn't exist yet) for the real values before this goes live. -->
+<link rel="canonical" href="https://mednav.ie/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MedNav">
+<meta property="og:title" content="MedNav: Know exactly what to do next in your medical career">
+<meta property="og:description" content="MedNav maps every Irish training programme, exam and interview, and tells you exactly what to do next. Verified dates, real scoring criteria, one free account.">
+<meta property="og:url" content="https://mednav.ie/">
+<meta property="og:image" content="https://mednav.ie/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="MedNav: Know exactly what to do next in your medical career">
+<meta name="twitter:description" content="MedNav maps every Irish training programme, exam and interview, and tells you exactly what to do next. Verified dates, real scoring criteria, one free account.">
+<meta name="twitter:image" content="https://mednav.ie/og-image.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "MedNav",
+  "url": "https://mednav.ie/",
+  "description": "MedNav maps every Irish training programme, exam and interview against the real scoring criteria colleges publish, and shows doctors exactly what to do next."
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "MedNav: Know exactly what to do next in your medical career",
+  "description": "MedNav maps every Irish training programme, exam and interview, and tells you exactly what to do next. Verified dates, real scoring criteria, one free account.",
+  "url": "https://mednav.ie/",
+  "isPartOf": { "@type": "WebSite", "name": "MedNav", "url": "https://mednav.ie/" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How is MedNav different from a Qbank or a job board?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Job boards get you a post. Qbanks get you through one paper. MedNav checks your whole route against what a programme actually publishes, and tells you the next action, not just the next practice question." }
+    },
+    {
+      "@type": "Question",
+      "name": "Is MedNav free to use?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Creating an account, seeing your roadmap, and tracking your gaps against real entry criteria is free. Interview preparation question banks are priced per programme, so you only pay for the interview you're actually sitting." }
+    },
+    {
+      "@type": "Question",
+      "name": "Does MedNav replace official college guidance?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. MedNav is an independent platform and is not affiliated with, or endorsed by, RCPI, RCSI, ICGP, the College of Psychiatrists, the IMC or the HSE. Always verify criteria against official entry guidance before applying." }
+    },
+    {
+      "@type": "Question",
+      "name": "How often is the information on MedNav checked?",
+      "acceptedAnswer": { "@type": "Answer", "text": "We check every date and scoring criterion against the official source, and keep checking regularly. If something's out of date, we say so, not guess." }
+    },
+    {
+      "@type": "Question",
+      "name": "What happens if a college hasn't published this cycle's scoring criteria yet?",
+      "acceptedAnswer": { "@type": "Answer", "text": "We mark the gap honestly rather than estimate. You'll see exactly which domains are confirmed and which are still pending publication for the current cycle." }
+    },
+    {
+      "@type": "Question",
+      "name": "Which specialties and pathways does MedNav cover?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Every specialty on the Irish training ladder, from BST and GP training through to HST and consultant posts, including routes for IMGs and doctors returning to Ireland from abroad." }
+    }
+  ]
+}
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/800.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/600.css">
+<style>
+:root{
+  --deep:#0b2e36; --pine:#12404c; --ink:#12333c;
+  --mint:#14b394; --mint-2:#3ed1a8; --mint-soft:#e0f5ec; --mint-text:#0e816a;
+  --paper:#f7faf8; --cream:#fdfbf5;
+  --coral:#ff7a59; --amber:#ffc061;
+  --line:rgba(11,46,54,.12); --txt-soft:#41606a;
+  --shadow:0 24px 60px rgba(11,46,54,.16);
+  --fd:'Sora',system-ui,sans-serif; --fb:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-padding-top:96px}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{font-family:var(--fb);background:var(--paper);color:var(--ink);font-size:16px;line-height:1.6;overflow-x:hidden}
+img,svg{display:block;max-width:100%}
+a{text-decoration:none;color:inherit}
+ul{list-style:none}
+button{font-family:inherit;cursor:pointer}
+::selection{background:var(--mint-2);color:var(--deep)}
+.container{max-width:1180px;margin:0 auto;padding:0 24px}
+.noise{position:fixed;inset:0;z-index:120;pointer-events:none;opacity:.045;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+.skip{position:absolute;left:-999px;top:8px;background:var(--deep);color:#fff;padding:10px 18px;border-radius:10px;z-index:200}
+.skip:focus{left:8px}
+h1,h2,h3,h4,.logo-word{font-family:var(--fd)}
+h2.sec-title{font-size:clamp(28px,3.4vw,42px);line-height:1.12;color:var(--deep);font-weight:800;letter-spacing:-.01em}
+.sec-lede{color:var(--txt-soft);font-size:17px;max-width:58ch;margin-left:auto;margin-right:auto}
+/* ============ BUTTONS ============ */
+.btn{display:inline-flex;align-items:center;gap:10px;font-weight:600;font-size:15px;border-radius:14px;padding:14px 26px;border:1.5px solid transparent;transition:transform .25s ease,box-shadow .25s ease,background .25s,color .25s}
+.btn svg{transition:transform .25s}
+.btn:hover svg{transform:translateX(4px)}
+.btn-primary{background:var(--mint);color:#052a22}
+.btn-primary:hover{background:var(--mint-2);transform:translateY(-2px);box-shadow:0 12px 28px rgba(20,179,148,.35)}
+.btn-ghost{border-color:var(--deep);color:var(--deep);background:transparent}
+.btn-ghost:hover{background:var(--deep);color:#fff;transform:translateY(-2px)}
+/* ============ HEADER ============ */
+header.site{position:sticky;top:0;z-index:100;background:rgba(247,250,248,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);transition:box-shadow .3s}
+header.site.scrolled{box-shadow:0 10px 30px rgba(11,46,54,.1)}
+.nav-in{display:flex;align-items:center;gap:30px;height:74px}
+.logo{display:flex;align-items:center;gap:11px;font-weight:800;font-size:22px;color:var(--deep);letter-spacing:-.02em}
+.logo-mark{width:38px;height:38px;flex:none}
+.nav-links{display:flex;gap:26px;margin-left:44px}
+.nav-links a{font-weight:600;font-size:15px;color:var(--ink);position:relative;padding:6px 0}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:0;height:2.5px;width:100%;background:var(--mint);border-radius:2px;transform:scaleX(0);transform-origin:left;transition:transform .3s ease}
+.nav-links a:hover::after,.nav-links a:focus-visible::after{transform:scaleX(1)}
+.nav-actions{display:flex;align-items:center;gap:12px;margin-left:auto}
+.nav-actions .btn{padding:11px 20px;font-size:14px}
+.nav-actions .btn-ghost{padding:10px 18px}
+.burger{display:none;margin-left:auto;background:none;border:0;width:44px;height:44px;position:relative;z-index:130}
+.burger span{position:absolute;left:10px;right:10px;height:2.5px;border-radius:2px;background:var(--deep);transition:.35s ease}
+.burger span:nth-child(1){top:15px}.burger span:nth-child(2){top:22px}.burger span:nth-child(3){top:29px}
+.burger.open span:nth-child(1){top:22px;transform:rotate(45deg)}
+.burger.open span:nth-child(2){opacity:0}
+.burger.open span:nth-child(3){top:22px;transform:rotate(-45deg)}
+.mobile-menu{position:fixed;inset:0;z-index:110;background:var(--paper);padding:20px 28px 40px;transform:translateY(-102%);transition:transform .5s cubic-bezier(.7,0,.3,1);display:flex;flex-direction:column;gap:6px;overflow:auto}
+.mobile-menu.open{transform:translateY(0)}
+.mobile-menu-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.mobile-close{background:none;border:1.5px solid var(--line);border-radius:12px;width:44px;height:44px;display:grid;place-items:center;color:var(--deep);flex:none}
+.mobile-close:hover{background:var(--deep);color:#fff;border-color:var(--deep)}
+.mobile-menu a.mlink{font-family:var(--fd);font-weight:700;font-size:26px;color:var(--deep);padding:12px 0;border-bottom:1px dashed var(--line)}
+.mobile-menu .m-cta{margin-top:22px;display:flex;flex-direction:column;gap:12px}
+/* ============ HERO ============ */
+.hero{position:relative;padding:84px 0 84px;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 520'%3E%3Cpath d='M20 480 L150 480 L150 400 L300 400 L300 320 L450 320 L450 240 L600 240 L600 160 L760 160' stroke='%230b2e36' stroke-width='2' fill='none' opacity='0.16'/%3E%3Ccircle cx='150' cy='400' r='5' fill='%2314b394' opacity='0.4'/%3E%3Ccircle cx='300' cy='320' r='5' fill='%2314b394' opacity='0.4'/%3E%3Ccircle cx='450' cy='240' r='5' fill='%2314b394' opacity='0.4'/%3E%3Ccircle cx='600' cy='160' r='6' fill='%23ff7a59' opacity='0.55'/%3E%3C/svg%3E");
+  background-size:800px 520px;
+  background-repeat:no-repeat;
+  background-position:8% 20%;
+  -webkit-mask-image:radial-gradient(ellipse 70% 60% at 60% 30%,#000 30%,transparent 75%);
+  mask-image:radial-gradient(ellipse 70% 60% at 60% 30%,#000 30%,transparent 75%)}
+.hero::after{content:"";position:absolute;top:-160px;right:-160px;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,rgba(62,209,168,.18),transparent 65%);pointer-events:none}
+.hero-grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+.hero h1{font-size:clamp(38px,5vw,60px);line-height:1.05;color:var(--deep);font-weight:800;letter-spacing:-.02em;margin:0 0 22px}
+.hl-line{display:block;overflow:hidden;padding-bottom:.08em}
+.hl-line>span{display:block;transform:translateY(112%);animation:rise .9s cubic-bezier(.2,.75,.2,1) forwards;animation-delay:var(--d,0s)}
+@keyframes rise{to{transform:translateY(0)}}
+.hl{color:var(--mint-text);position:relative;white-space:nowrap;font-family:var(--fd)}
+.hl svg{position:absolute;left:0;bottom:-.18em;width:100%;height:.32em;overflow:visible}
+.hl path{stroke:var(--amber);stroke-width:5;fill:none;stroke-linecap:round;stroke-dasharray:320;stroke-dashoffset:320;animation:draw 1s ease .9s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+#scrambleTarget{display:inline-block;min-width:9ch}
+.lede{color:var(--txt-soft);font-size:18px;max-width:52ch}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-top:32px}
+.hero-proof{margin-top:36px;display:flex;align-items:flex-start;gap:16px;flex-wrap:nowrap}
+.avatar-row{display:flex;flex:none}
+.avatar-slot{width:42px;height:42px;border-radius:50%;background:var(--mint-soft);object-fit:cover;border:3px solid var(--paper);margin-left:-10px;flex:none}
+.avatar-slot:first-child{margin-left:0}
+.proof-text{font-size:13.5px;color:var(--txt-soft)}
+.proof-text b{color:var(--deep)}
+/* phone mockup */
+.hero-visual{position:relative;display:flex;flex-direction:column;align-items:center}
+.halo{position:absolute;top:44%;left:50%;width:min(480px,120%);height:min(480px,120%);transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(20,179,148,.18),transparent 62%);border-radius:50%}
+.phone{position:relative;z-index:2;width:min(306px,84%);background:var(--deep);border-radius:46px;padding:11px;box-shadow:var(--shadow)}
+.screen{background:#edf6f1;border-radius:36px;overflow:hidden}
+.screen-top{display:flex;align-items:center;gap:10px;padding:16px 16px 10px}
+.screen-top .slogo{width:26px;height:26px;flex:none}
+.searchpill{flex:1;display:flex;align-items:center;gap:8px;background:#fff;border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:700;color:var(--pine);box-shadow:0 3px 10px rgba(11,46,54,.08)}
+.score-card{margin:4px 10px 8px;background:#fff;border-radius:16px;padding:12px 14px;box-shadow:0 8px 22px rgba(11,46,54,.08)}
+.sc-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#6d8890;font-weight:600}
+.sc-row b{font-family:var(--fd);color:var(--deep);font-size:12.5px}
+.eta{background:var(--mint-soft);color:#0b7a63;font-weight:700;border-radius:999px;padding:3px 10px;font-size:11px;white-space:nowrap}
+.score-line{display:flex;align-items:center;gap:12px;margin-top:8px}
+.score-line b{font-family:var(--fd);font-size:26px;color:var(--deep);line-height:1}
+.score-line b span{font-size:14px;color:#607b81;font-weight:600}
+.sc-bar{flex:1;height:7px;border-radius:99px;background:#e3efea;overflow:hidden}
+.sc-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--mint),var(--mint-2))}
+.sc-sub{font-size:11px;color:#6d8890;margin-top:7px}
+.rm-steps{margin:2px 12px 8px;background:#fff;border-radius:16px;padding:12px 14px;box-shadow:0 8px 22px rgba(11,46,54,.08)}
+.rm-step{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:12.5px;font-weight:600;color:var(--deep);position:relative}
+.rm-step+.rm-step{border-top:1px dashed #e2ede8}
+.rm-step .st{width:22px;height:22px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:11px}
+.rm-step.done .st{background:var(--mint-soft);color:#0b7a63}
+.rm-step.todo .st{background:#eef4f1;color:#9ab3ac}
+.rm-step.todo{color:#7d979c}
+.rm-step.next .st{background:var(--coral);color:#fff;position:relative}
+.rm-step.next .st::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(255,122,89,.5);animation:ring 1.8s ease-out infinite}
+@keyframes ring{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.5);opacity:0}}
+.rm-step small{margin-left:auto;font-size:10.5px;color:#607b81;font-weight:600;text-align:right}
+.rm-step.next small{color:#c05539}
+.screen-card{margin:0 10px 12px;background:var(--deep);border-radius:16px;padding:12px 14px;color:#dff3ec}
+.screen-card .sc-row b{color:#fff}
+.screen-card .sc-row .eta{background:rgba(62,209,168,.18);color:var(--mint-2)}
+.screen-card .sc-sub{color:#9fc4bb}
+.phone-caption{margin-top:18px;font-size:12px;color:var(--txt-soft);text-align:center;max-width:280px}
+.chip{position:absolute;z-index:3;background:#fff;border-radius:16px;box-shadow:0 14px 34px rgba(11,46,54,.16);padding:11px 16px;font-size:13px;font-weight:600;color:var(--deep);display:flex;align-items:center;gap:9px;animation:float 6s ease-in-out infinite}
+.chip .ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;flex:none}
+.chip small{display:block;font-weight:500;color:#6d8890;font-size:11px}
+.chip.c1{top:14%;right:-11%;animation-delay:.4s}
+.chip.c1 .ic{background:var(--mint-soft);color:#0b7a63}
+.chip.c2{left:-4%;bottom:26%;animation-delay:1.3s}
+.chip.c2 .ic{background:#fff1e6;color:var(--coral)}
+.chip.c3{right:-2%;bottom:2%;animation-delay:2.2s}
+.chip.c3 .ic{background:#eef4ff;color:#3565c0}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+/* position strip */
+.position-strip{position:relative;margin-top:70px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.position-strip span{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 20px;font-size:14px;color:var(--txt-soft);text-align:center}
+.position-strip span b{font-family:var(--fd);color:var(--deep)}
+.position-strip .us{background:var(--deep);border-color:var(--deep);color:#bfe0d7;box-shadow:var(--shadow)}
+.position-strip .us b{color:var(--mint-2)}
+/* ============ LOGOS ============ */
+.logos{background:#fff;border-block:1px solid var(--line);padding:20px 0}
+.logos-label{text-align:center;font-size:11.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--txt-soft);font-weight:700;margin-bottom:14px}
+.marquee{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+.marquee-track{display:flex;gap:56px;width:max-content;animation:mar 32s linear infinite;padding:4px 0}
+.marquee:hover .marquee-track{animation-play-state:paused}
+.marquee-track span{display:flex;align-items:center;gap:10px;font-family:var(--fd);font-weight:700;font-size:15px;color:var(--deep);white-space:nowrap}
+.marquee-track span::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--mint-2);opacity:.7}
+@keyframes mar{to{transform:translateX(-50%)}}
+/* ============ SECTION HEAD (no kicker) ============ */
+.sec-head{max-width:680px;margin:0 auto 26px;text-align:center}
+/* ============ EXPLORE DIRECTORY ============ */
+.explore-sec{position:relative;padding:100px 0 96px;background:var(--deep);color:#fff;overflow:hidden}
+.explore-sec::before{content:"";position:absolute;top:-200px;right:-160px;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,rgba(62,209,168,.14),transparent 65%);pointer-events:none}
+.explore-sec .sec-title{color:#fff}
+.explore-sec .sec-lede{color:#9fc4bb}
+.explore-grid{position:relative;margin-top:48px;display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,.14);border-left:1px solid rgba(255,255,255,.14)}
+.explore-cell{display:block;border-right:1px solid rgba(255,255,255,.14);border-bottom:1px solid rgba(255,255,255,.14);padding:34px 38px 32px;transition:background .3s}
+.explore-cell:hover{background:rgba(255,255,255,.035)}
+.explore-num{font-family:var(--fd);font-weight:700;font-size:14px;color:var(--mint-2);letter-spacing:.02em;display:block;margin-bottom:14px}
+.explore-cell h3{font-size:22px;font-weight:800;letter-spacing:-.01em;margin-bottom:9px;transition:color .25s}
+.explore-cell:hover h3{color:var(--mint-2)}
+.explore-cell p{color:#a9cdc3;font-size:14.5px;max-width:40ch;margin-bottom:18px}
+.explore-cta{display:inline-flex;align-items:center;gap:7px;font-family:var(--fd);font-size:12px;font-weight:700;letter-spacing:.02em;color:var(--deep);background:var(--mint-2);border-radius:999px;padding:7px 14px 7px 13px;transition:transform .2s,background .2s;white-space:nowrap}
+.explore-cell:hover .explore-cta{background:#fff}
+.explore-cta svg{flex:none;transition:transform .2s}
+.explore-cell:hover .explore-cta svg{transform:translateX(3px)}
+@media(max-width:900px){
+  .explore-grid{grid-template-columns:1fr}
+  .explore-cell{border-right:0}
+}
+/* ============ PERSONAS ============ */
+.personas{padding:96px 0 100px}
+.sec-hint{margin-top:22px;font-size:12.5px;font-weight:600;color:var(--mint-text);display:inline-block}
+.ladder-track{position:relative;margin:56px auto 40px;padding:0 20px}
+.track-line{position:relative;height:2px;background:var(--line);margin:0 4%;border-radius:2px}
+.track-line i{position:absolute;top:50%;left:0;height:2px;background:var(--mint);border-radius:2px;transform:translateY(-50%);width:0;transition:width .55s cubic-bezier(.3,.9,.3,1)}
+.stage-row{display:flex;justify-content:space-between;margin:0 4%}
+.stage{position:relative;display:flex;flex-direction:column;align-items:center;flex:1;padding:0 6px}
+.stage-dot{width:14px;height:14px;border-radius:50%;background:#fff;border:2.5px solid var(--line);margin-top:-8px;transition:.3s;z-index:2}
+.stage.active .stage-dot{border-color:var(--mint);background:var(--mint);box-shadow:0 0 0 6px var(--mint-soft)}
+.stage-label{margin-top:10px;font-size:12px;font-weight:700;color:var(--txt-soft);text-align:center;max-width:96px;transition:color .3s}
+.stage.active .stage-label{color:var(--deep)}
+.stage-note{font-size:10.5px;color:#a3b7bc;text-align:center;margin-top:2px;font-style:italic}
+.pin-cluster{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:16px;min-height:38px}
+.pin{display:inline-flex;align-items:center;gap:7px;font-family:var(--fd);font-weight:600;font-size:12.5px;color:var(--deep);background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 15px 8px 12px;cursor:pointer;transition:transform .2s,border-color .2s,background .2s,box-shadow .2s;white-space:nowrap}
+.pin svg{flex:none;color:var(--mint);transition:color .2s}
+.pin:hover{border-color:var(--mint);transform:translateY(-2px);box-shadow:0 8px 18px rgba(11,46,54,.1)}
+.pin.on{background:var(--deep);border-color:var(--deep);color:#fff;box-shadow:0 10px 24px rgba(11,46,54,.25)}
+.pin.on svg{color:var(--mint-2)}
+.pin:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+.connector{width:2px;height:34px;background:linear-gradient(var(--mint),transparent);margin:0 auto;opacity:0;transition:opacity .3s}
+.connector.show{opacity:1}
+.detail-panel{position:relative;background:var(--deep);color:#e7f6f0;border-radius:24px;padding:38px 40px;box-shadow:var(--shadow);max-width:720px;margin:0 auto}
+.detail-inner{transition:opacity .22s ease,transform .22s ease}
+.detail-inner.swap{opacity:0;transform:translateY(6px)}
+.detail-kicker{font-family:var(--fd);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mint-2)}
+.detail-title{font-size:23px;margin:10px 0 12px;letter-spacing:-.01em;line-height:1.28}
+.detail-desc{color:#a9cdc3;font-size:15px;max-width:52ch}
+.detail-tag{display:inline-flex;align-items:center;gap:8px;margin-top:20px;font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--deep);background:var(--mint-2);border-radius:999px;padding:7px 14px;transition:transform .2s,background .2s;cursor:pointer}
+.detail-tag:hover{background:#fff;transform:translateY(-2px)}
+.detail-tag svg:last-child{transition:transform .2s}
+.detail-tag:hover svg:last-child{transform:translateX(3px)}
+@media(max-width:820px){
+  .track-line,.connector{display:none}
+  .stage-row{flex-direction:column;gap:26px;margin:0}
+  .stage{flex-direction:row;align-items:flex-start;gap:16px;position:relative;padding-left:4px}
+  .stage::before{content:"";position:absolute;left:11px;top:22px;bottom:-26px;width:2px;background:var(--line)}
+  .stage:last-child::before{display:none}
+  .stage.active::before{background:var(--mint)}
+  .stage-dot{margin-top:0}
+  .stage-label{margin-top:0;text-align:left;max-width:none}
+  .stage-note{text-align:left;margin-top:1px}
+  .pin-cluster{flex-direction:row;flex-wrap:wrap;margin-top:0;justify-content:flex-start;min-height:0}
+  .detail-panel{padding:28px 24px}
+}
+/* ============ FEATURES ============ */
+.features{position:relative;padding:60px 0 70px;overflow:hidden}
+.features::before{content:"";position:absolute;top:-80px;left:50%;width:820px;height:400px;transform:translateX(-50%);background:radial-gradient(ellipse at top,rgba(20,179,148,.07),transparent 70%);pointer-events:none;z-index:-1}
+.feature-row{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;padding:60px 0}
+.feature-row+.feature-row{border-top:1px dashed var(--line)}
+.f-media{position:relative;border-radius:26px;overflow:hidden;box-shadow:var(--shadow);aspect-ratio:4/3;background:var(--mint-soft);display:flex;align-items:center;justify-content:center;padding:28px}
+.mini-dash{width:100%;max-width:340px;background:#fff;border-radius:18px;padding:20px 22px;box-shadow:0 14px 34px rgba(11,46,54,.12)}
+.mdash-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.mdash-head b{font-family:var(--fd);color:var(--deep);font-size:14px}
+.mdash-row{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13px;font-weight:600;color:var(--deep)}
+.mdash-row+.mdash-row{border-top:1px dashed #e2ede8}
+.mdot{width:22px;height:22px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:11px}
+.mdash-row.done .mdot{background:var(--mint-soft);color:#0b7a63}
+.mdash-row.next .mdot{background:var(--coral);color:#fff;position:relative}
+.mdash-row.next .mdot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(255,122,89,.5);animation:ring 1.8s ease-out infinite}
+.mdash-row.todo .mdot{background:#eef4f1;color:#9ab3ac}
+.mdash-row.todo{color:#7d979c}
+.mdash-row small{margin-left:auto;font-size:10px;color:#607b81;font-weight:600}
+.mdash-row.next small{color:#c05539}
+.mdash-bar-row{display:grid;grid-template-columns:88px 1fr 34px;align-items:center;gap:10px;padding:8px 0;font-size:11.5px;color:var(--txt-soft)}
+.mdash-bar-row b{font-family:var(--fd);color:var(--deep);font-size:12px;text-align:right}
+.mini-dash .sc-bar i{width:0;transition:width 1s cubic-bezier(.3,.9,.3,1)}
+.is-in .mini-dash .sc-bar i{width:var(--fill)}
+.mdash-q{padding:12px 0;border-top:1px dashed #e2ede8}
+.mdash-q:first-of-type{border-top:0;padding-top:0}
+.mdash-domain{font-family:var(--fd);font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#0b7a63;margin-bottom:5px}
+.mdash-question{font-size:13px;color:var(--deep);font-style:italic;line-height:1.5}
+.mdash-q.dim{opacity:.5}
+.flip .f-media{order:2}
+.f-body h3{font-size:clamp(21px,2.2vw,27px);color:var(--deep);font-weight:700;margin:0 0 12px;letter-spacing:-.01em}
+.f-body h3 b{color:var(--mint-text)}
+.f-body p{color:var(--txt-soft)}
+.checks{margin-top:20px;display:grid;gap:12px}
+.checks li{display:flex;gap:12px;align-items:flex-start;font-size:15px;font-weight:500;color:var(--ink)}
+.checks svg{flex:none;margin-top:2px}
+/* ============ HOW / MINI-START ============ */
+.mini-start{position:relative;padding:96px 0;background:var(--cream);border-top:1px solid var(--line);overflow:hidden}
+.mini-start::before{content:"";position:absolute;top:50%;left:50%;width:900px;height:600px;transform:translate(-50%,-50%);background:radial-gradient(ellipse,rgba(20,179,148,.09),transparent 65%);pointer-events:none}
+.mini-start::after{content:"";position:absolute;left:0;right:0;bottom:0;height:96px;background:linear-gradient(to bottom,transparent,var(--paper));pointer-events:none}
+.ms-head{position:relative;max-width:640px;margin:0 auto 48px;text-align:center}
+.ms-head .sec-lede{margin-left:auto;margin-right:auto}
+.ms-card{position:relative;max-width:640px;margin:0 auto;background:#fff;border-radius:26px;padding:40px 44px;box-shadow:var(--shadow)}
+.ms-stepper{display:flex;align-items:center;margin-bottom:32px}
+.ms-stepper-node{width:32px;height:32px;border-radius:50%;flex:none;display:grid;place-items:center;font-family:var(--fd);font-weight:700;font-size:13px;border:2px solid var(--line);color:var(--txt-soft);background:#fff;transition:.35s;position:relative;z-index:1}
+.ms-stepper-node.current{border-color:var(--mint);color:var(--mint-text);box-shadow:0 0 0 5px var(--mint-soft)}
+.ms-stepper-node.done{background:var(--mint);border-color:var(--mint);color:#052a22}
+.ms-stepper-line{flex:1;height:2px;background:var(--line);margin:0 4px;position:relative}
+.ms-stepper-line i{display:block;height:100%;width:0;background:var(--mint);transition:width .4s cubic-bezier(.3,.9,.3,1)}
+.ms-stepper-line.done i{width:100%}
+.ms-stage{position:relative;min-height:1px}
+.ms-step{padding-top:0;display:none}
+.ms-step.current{display:block}
+.ms-step-inner{opacity:1;transform:translateX(0);transition:opacity .28s ease,transform .28s cubic-bezier(.2,.7,.2,1)}
+.ms-step-inner.leaving{opacity:0;transform:translateX(-14px)}
+.ms-step-inner.entering{opacity:0;transform:translateX(14px)}
+.ms-question{font-size:19px;font-weight:800;color:var(--deep);font-family:var(--fd);margin-bottom:20px;letter-spacing:-.01em}
+.ms-hint{font-size:13px;color:var(--txt-soft);margin:-14px 0 16px}
+.ms-chips{display:flex;flex-wrap:wrap;gap:10px}
+.ms-chip{display:inline-flex;align-items:center;gap:9px;font-family:var(--fb);font-weight:600;font-size:14px;color:var(--deep);background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:12px 18px;cursor:pointer;transition:transform .18s,border-color .18s,background .18s,box-shadow .18s}
+.ms-chip svg{flex:none;color:var(--mint);transition:color .18s}
+.ms-chip:hover{border-color:var(--mint);transform:translateY(-2px)}
+.ms-chip.on{background:var(--deep);border-color:var(--deep);color:#fff;box-shadow:0 10px 22px rgba(11,46,54,.2);animation:chipPop .28s cubic-bezier(.3,1.4,.4,1)}
+.ms-chip.on svg{color:var(--mint-2)}
+.ms-chip:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+@keyframes chipPop{0%{transform:scale(1)}45%{transform:scale(1.06)}100%{transform:scale(1)}}
+.ms-block{margin-top:32px;padding-top:28px;border-top:1px dashed var(--line)}
+.ms-continue{margin-top:20px;display:none}
+.ms-continue.show{display:block}
+.ms-result{margin-top:32px;padding-top:28px;border-top:1px dashed var(--line);display:none}
+.ms-result.show{display:block}
+.ms-result-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.ms-result-head b{font-family:var(--fd);color:var(--deep);font-size:15px}
+.ms-example-badge{font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8a5a10;background:var(--amber-soft);border-radius:999px;padding:4px 10px}
+.rd-label{font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--txt-soft);margin-bottom:10px}
+.rd-ladder{border:1px solid var(--line);border-radius:16px;padding:6px 16px;margin-bottom:16px}
+.rd-step{display:flex;align-items:center;gap:10px;padding:11px 0;font-size:13.5px;font-weight:600;color:var(--deep);position:relative;opacity:0;transform:translateY(8px);transition:opacity .4s ease var(--rd,0s),transform .4s cubic-bezier(.2,.7,.2,1) var(--rd,0s)}
+.rd-step.in{opacity:1;transform:none}
+.rd-step+.rd-step{border-top:1px dashed #e2ede8}
+.rd-step .st{width:22px;height:22px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:11px}
+.rd-step.done .st{background:var(--mint-soft);color:#0b7a63}
+.rd-step.todo .st{background:#eef4f1;color:#9ab3ac}
+.rd-step.todo{color:#7d979c}
+.rd-step.next .st{background:var(--coral);color:#fff;position:relative}
+.rd-step.next .st::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(255,122,89,.5);animation:ring 1.8s ease-out infinite}
+.rd-step small{margin-left:auto;font-size:10.5px;color:#607b81;font-weight:600}
+.rd-step.next small{color:#c05539}
+.rd-check-card{background:var(--mint-soft);border-radius:16px;padding:14px 18px;margin-bottom:16px}
+.rd-check-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;font-weight:600;color:var(--deep);opacity:0;transform:translateY(8px);transition:opacity .4s ease var(--rd,0s),transform .4s cubic-bezier(.2,.7,.2,1) var(--rd,0s)}
+.rd-check-row small{margin-left:auto;font-size:10.5px;color:#607b81;font-weight:600;flex:none}
+.rd-check-row.in{opacity:1;transform:none}
+.rd-check-row .ck{width:18px;height:18px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:10px}
+.rd-check-row.have .ck{background:#0b7a63;color:#fff}
+.rd-check-row.missing .ck{background:var(--coral);color:#fff}
+.rd-check-row.missing{color:#7d979c}
+.rd-next{background:var(--deep);color:#e7f6f0;border-radius:14px;padding:14px 16px;font-size:13px;margin-bottom:20px;opacity:0;transform:translateY(8px);transition:opacity .4s ease .3s,transform .4s cubic-bezier(.2,.7,.2,1) .3s}
+.rd-next.in{opacity:1;transform:none}
+.rd-next-row{display:flex;justify-content:space-between;align-items:center}
+.rd-next-row b{font-family:var(--fd);font-size:13px}
+.rd-eta{background:rgba(62,209,168,.18);color:var(--mint-2);font-weight:700;border-radius:999px;padding:3px 10px;font-size:10.5px;white-space:nowrap}
+.rd-next-sub{color:#9fc4bb;font-size:11.5px;margin-top:4px}
+.ms-reassure{margin-top:16px;text-align:center;font-size:12.5px;color:var(--txt-soft)}
+@media(max-width:640px){.ms-card{padding:30px 24px}}
+/* ============ STATS ============ */
+/* ============ TRUST ============ */
+.trust-sec{position:relative;padding:100px 0 90px;text-align:center;overflow:hidden}
+.trust-sec::before{content:"";position:absolute;top:-60px;left:50%;width:820px;height:420px;transform:translateX(-50%);background:radial-gradient(ellipse at top,rgba(20,179,148,.08),transparent 70%);pointer-events:none;z-index:-1}
+.trust-sec .sec-title{margin:0 auto 14px}
+.trust-sec .sec-lede{margin:0 auto 40px}
+.trust-badges{display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
+.tbadge{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:12px 20px;font-weight:700;font-size:13.5px;color:var(--deep);font-family:var(--fd)}
+.tbadge svg{color:var(--mint)}
+/* ============ FAQ ============ */
+.faq-sec{padding:96px 0 100px}
+.faq-list{max-width:760px;margin:44px auto 0;border-top:1px solid var(--line)}
+.faq-item{border-bottom:1px solid var(--line)}
+.faq-item summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 4px;cursor:pointer;font-family:var(--fd);font-weight:700;font-size:16px;color:var(--deep)}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary:hover{color:var(--mint-text)}
+.faq-icon{flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;color:var(--deep);transition:transform .25s,background .25s,border-color .25s,color .25s}
+.faq-item[open] .faq-icon{background:var(--deep);border-color:var(--deep);color:#fff;transform:rotate(45deg)}
+.faq-item p{padding:0 34px 24px 4px;color:var(--txt-soft);font-size:15px;max-width:62ch}
+/* ============ EARLY VOICES ============ */
+.voices-sec{padding:96px 0 100px}
+.voices-carousel{max-width:880px;margin:44px auto 0;position:relative}
+.voices-viewport{overflow:hidden;border-radius:26px}
+.voices-track{display:flex;transition:transform .5s cubic-bezier(.3,.9,.3,1)}
+.voice-card{flex:0 0 100%;background:#fff;border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);padding:44px 48px;display:flex;align-items:center;gap:34px}
+.voice-avatar{flex:none;width:96px;height:96px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--mint-soft)}
+.voice-body{flex:1;min-width:0}
+.voice-text{font-size:clamp(17px,1.7vw,20px);color:var(--deep);font-weight:500;line-height:1.55;max-width:56ch}
+.voice-text::before{content:"\201C";color:var(--mint);font-family:var(--fd);font-size:1.3em;line-height:0;vertical-align:-.32em}
+.voice-meta{margin-top:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.voice-meta b{font-family:var(--fd);color:var(--deep)}
+.voice-meta span{color:var(--txt-soft);font-size:14px}
+.voices-nav{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:26px}
+.voices-arrow{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:#fff;color:var(--deep);display:grid;place-items:center;transition:transform .2s,border-color .2s,background .2s,color .2s}
+.voices-arrow:hover{border-color:var(--deep);background:var(--deep);color:#fff;transform:translateY(-2px)}
+.voices-dots{display:flex;align-items:center;gap:2px}
+.voices-dot{width:24px;height:24px;padding:0;border:0;background:transparent;display:grid;place-items:center;cursor:pointer}
+.voices-dot::before{content:"";display:block;width:8px;height:8px;border-radius:50%;background:var(--line);transition:width .3s,background .3s}
+.voices-dot.on::before{width:22px;border-radius:5px;background:var(--mint)}
+@media(max-width:640px){
+  .voice-card{flex-direction:column;text-align:center;padding:38px 28px}
+  .voice-text{max-width:none}
+  .voice-meta{justify-content:center}
+}
+/* ============ PRIVACY ============ */
+.badge:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(11,46,54,.12);border-color:var(--mint)}
+.badge svg{color:var(--mint);flex:none}
+/* ============ FROM THE BLOG ============ */
+.blog-sec{padding:96px 0 100px}
+.blog-board{display:grid;grid-template-columns:1.15fr 1fr;gap:22px;align-items:start;margin-top:44px}
+.blog-lead{background:var(--deep);color:#e7f6f0;border-radius:26px;padding:36px 38px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.blog-lead-tag{display:inline-flex;font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mint-2);background:rgba(62,209,168,.14);border-radius:999px;padding:5px 12px;margin-bottom:16px}
+.blog-lead h3{font-size:22px;line-height:1.3;letter-spacing:-.01em;margin-bottom:12px}
+.blog-lead p{color:#a9cdc3;font-size:14px;max-width:42ch;margin-bottom:24px}
+.bl-ladder-label{font-family:var(--fd);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8fb5ac;margin-bottom:10px}
+.bl-ladder{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:4px 16px;margin-bottom:22px}
+.bl-step{display:flex;align-items:center;gap:10px;padding:10px 0;font-size:13px;font-weight:600;color:#e7f6f0}
+.bl-step+.bl-step{border-top:1px dashed rgba(255,255,255,.12)}
+.bl-step .st{width:20px;height:20px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:10px}
+.bl-step.done .st{background:rgba(62,209,168,.2);color:var(--mint-2)}
+.bl-step.current .st{background:var(--coral);color:#fff;position:relative}
+.bl-step.current .st::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(255,122,89,.5);animation:ring 1.8s ease-out infinite}
+.bl-step.future .st{background:rgba(255,255,255,.08);color:#7d979c}
+.bl-step.future{color:#7d979c}
+.bl-step small{margin-left:auto;font-size:10px;color:#8fb5ac;font-weight:600}
+.bl-step.current small{color:#ffb199}
+.blog-lead-cta{display:inline-flex;align-items:center;gap:8px;font-family:var(--fd);font-weight:700;font-size:12.5px;color:var(--deep);background:var(--amber);border-radius:999px;padding:8px 16px}
+.blog-list{border:1px solid var(--line);border-radius:26px;overflow:hidden;background:#fff}
+.blog-row{padding:24px 26px;transition:background .2s}
+.blog-row+.blog-row{border-top:1px solid var(--line)}
+.blog-row:hover{background:var(--paper)}
+.blog-row-tag{display:inline-flex;font-family:var(--fd);font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#0b7a63;background:var(--mint-soft);border-radius:999px;padding:4px 10px;margin-bottom:10px}
+.blog-row h4{font-size:15.5px;color:var(--deep);line-height:1.35;margin-bottom:8px}
+.blog-row p{font-size:13px;color:var(--txt-soft)}
+.blog-row-soon{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:11.5px;font-weight:600;color:#8a5a10}
+.blog-row-soon i{width:6px;height:6px;border-radius:50%;background:var(--amber)}
+@media(max-width:900px){.blog-board{grid-template-columns:1fr}}
+/* ============ CTA ============ */
+.cta{padding:0 0 110px}
+.cta-card{display:grid;grid-template-columns:1fr 1.1fr;border-radius:30px;overflow:hidden;box-shadow:var(--shadow);background:var(--deep);color:#fff;min-height:440px}
+.cta-media{position:relative;overflow:hidden;background:var(--deep)}
+.cta-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:ctaKenBurns 20s ease-in-out infinite alternate}
+@keyframes ctaKenBurns{from{transform:scale(1) translate(0,0)}to{transform:scale(1.1) translate(-2%,-2%)}}
+.cta-media::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(11,46,54,.55),rgba(11,46,54,.15))}
+.cta-body{padding:56px 56px 48px}
+.cta-body h2{font-size:clamp(26px,3vw,38px);font-weight:800;line-height:1.15;margin:0 0 12px;font-family:var(--fd)}
+.cta-body p{color:#b9d8d0;max-width:48ch}
+.demo-form{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+.demo-form input{flex:1;min-width:220px;border-radius:14px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;padding:14px 18px;font-size:15px;font-family:inherit;outline:none;transition:.25s}
+.demo-form input::placeholder{color:#8fb5ac}
+.demo-form input:focus{border-color:var(--mint-2);background:rgba(255,255,255,.12);outline:2px solid var(--mint-2);outline-offset:2px}
+.form-ok{display:none;margin-top:26px;background:rgba(62,209,168,.14);border:1px solid rgba(62,209,168,.5);color:#c9f5e7;border-radius:14px;padding:14px 18px;font-weight:600}
+.form-ok.show{display:flex;gap:10px;align-items:center;animation:pop .45s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.form-error{display:none;margin-top:10px;font-size:12.5px;font-weight:600;color:#ffb199}
+.form-error.show{display:block}
+.cta-note{margin-top:16px;font-size:12.5px;color:#8fb5ac}
+/* ============ FOOTER ============ */
+footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
+.f-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;gap:40px}
+.f-brand .logo{color:#fff}
+.f-brand p{font-size:14px;margin:18px 0 22px;max-width:34ch}
+.news-form{display:flex;gap:8px;max-width:340px}
+.news-form input{flex:1;border-radius:12px;border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);padding:11px 14px;color:#fff;font-size:14px;outline:none;transition:.25s}
+.news-form input:focus{border-color:var(--mint-2);outline:2px solid var(--mint-2);outline-offset:2px}
+.news-form button{border:0;border-radius:12px;background:var(--mint);color:#052a22;font-weight:700;padding:11px 16px;transition:.25s}
+.news-form button:hover{background:var(--mint-2)}
+.news-ok{display:none;font-size:13px;color:var(--mint-2);font-weight:600;margin-top:10px}
+.news-ok.show{display:block}
+.f-col h5{color:#fff;font-family:var(--fd);font-size:14px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:18px}
+.f-col ul{display:grid;gap:11px}
+.f-col a{font-size:14px;transition:.2s;position:relative}
+.f-col a:hover{color:#fff;padding-left:12px}
+.f-col a::before{content:"\2192";position:absolute;left:-6px;opacity:0;transition:.2s;color:var(--mint-2)}
+.f-col a:hover::before{left:0;opacity:1}
+.f-bottom{border-top:1px solid rgba(255,255,255,.08);margin-top:60px;padding:24px 0;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;font-size:13px}
+.f-legal{display:flex;gap:22px;flex-wrap:wrap}
+.f-legal a:hover{color:#fff}
+.f-disclaimer{padding:0 0 26px;font-size:12px;color:#6d938c;max-width:900px}
+.to-top{position:fixed;right:26px;bottom:26px;width:50px;height:50px;border-radius:16px;border:0;background:var(--deep);color:var(--mint-2);display:grid;place-items:center;box-shadow:0 14px 34px rgba(11,46,54,.3);opacity:0;pointer-events:none;transform:translateY(14px);transition:.35s;z-index:90}
+.to-top.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+.to-top:hover{background:var(--mint);color:#052a22}
+[data-reveal]{opacity:0;transform:translateY(28px);transition:opacity .8s ease var(--d,0s),transform .8s cubic-bezier(.2,.7,.2,1) var(--d,0s)}
+[data-reveal].is-in{opacity:1;transform:none}
+[data-reveal-scale]{opacity:0;transform:scale(.92);transition:opacity .6s ease var(--d,0s),transform .6s cubic-bezier(.3,1.4,.4,1) var(--d,0s)}
+[data-reveal-scale].is-in{opacity:1;transform:scale(1)}
+/* ============ RESPONSIVE ============ */
+@media(max-width:1020px){
+  .f-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:960px){
+  .nav-links,.nav-actions .btn{display:none}
+  .burger{display:block}
+  .hero-grid{grid-template-columns:1fr;gap:70px}
+  .feature-row{grid-template-columns:1fr;gap:32px;padding:48px 0}
+  .flip .f-media{order:0}
+  .cta-card{grid-template-columns:1fr}
+  .cta-media{min-height:260px}
+  .position-strip{grid-template-columns:1fr}
+  .chip{display:none}
+}
+@media(max-width:640px){
+  .hero::before{display:none}
+  .f-grid{grid-template-columns:1fr}
+  .cta-body{padding:40px 28px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .hl-line>span{transform:none}
+  [data-reveal],[data-reveal-scale]{opacity:1;transform:none}
+  .hl path{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<div class="noise" aria-hidden="true"></div>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site" id="siteHeader">
+  <div class="container nav-in">
+    <a class="logo" href="#top" aria-label="MedNav home">
+      <svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect x="2" y="2" width="36" height="36" rx="11" fill="#0b2e36"/>
+        <path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="24" r="4" fill="#ffc061"/>
+      </svg>
+      <span class="logo-word">MedNav</span>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/pathways">Pathways</a>
+      <a href="/preparation">Preparation</a>
+      <a href="/tools">Career Tools</a>
+      <a href="/opportunities">Opportunities</a>
+      <a href="/sources">Resources</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="btn btn-ghost" href="/sign-in">Sign in</a>
+      <a class="btn btn-primary" href="/sign-up">Create free account</a>
+      <button class="burger" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mobile-menu-head">
+    <a class="logo" href="#top" aria-label="MedNav home">
+      <svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect x="2" y="2" width="36" height="36" rx="11" fill="#0b2e36"/>
+        <path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="24" r="4" fill="#ffc061"/>
+      </svg>
+      <span class="logo-word">MedNav</span>
+    </a>
+    <button class="mobile-close" id="mobileCloseBtn" aria-label="Close menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <a class="mlink" href="/pathways">Pathways</a>
+  <a class="mlink" href="/preparation">Preparation</a>
+  <a class="mlink" href="/tools">Career Tools</a>
+  <a class="mlink" href="/opportunities">Opportunities</a>
+  <a class="mlink" href="/sources">Resources</a>
+  <div class="m-cta">
+    <a class="btn btn-primary" href="/sign-up">Create free account</a>
+    <a class="btn btn-ghost" href="/sign-in">Sign in</a>
+  </div>
+</div>
+
+<main id="main">
+<!-- ======= HERO ======= -->
+<section class="hero" id="top">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <h1>
+          <span class="hl-line"><span style="--d:.05s">Know your <span id="scrambleTarget" data-text="next move"></span></span></span>
+          <span class="hl-line"><span style="--d:.22s">all the way to <span class="hl">consultant<svg viewBox="0 0 220 20" preserveAspectRatio="none" aria-hidden="true"><path d="M4 14 C 60 6, 160 6, 216 12"/></svg></span>.</span></span>
+        </h1>
+        <p class="lede">MedNav maps the whole Irish training ladder: every specialty, every programme, every exam, tied to the real scoring criteria colleges publish. Create a free account and see exactly where you stand.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="/sign-up">Create free account
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="btn btn-ghost" href="/pathways">Explore pathways</a>
+        </div>
+        <div class="hero-proof">
+          <!-- TEMP placeholder photos (Qwen-generated, not real doctors) — swap for real photos when available -->
+          <div class="avatar-row" aria-hidden="true">
+            <img class="avatar-slot" src="https://image.qwenlm.ai/public_source/a5b467a8-5320-4fb6-b142-755542d93882/1cf84a98f-0ad3-4c6d-ace1-80fbfda2a381.png" alt="">
+            <img class="avatar-slot" src="https://image.qwenlm.ai/public_source/a5b467a8-5320-4fb6-b142-755542d93882/17e868476-79ea-4a23-a1c3-9b139ed503f2.png" alt="">
+            <img class="avatar-slot" src="https://image.qwenlm.ai/public_source/a5b467a8-5320-4fb6-b142-755542d93882/1c43eefb0-e517-41c8-90b2-d41274833d2b.png" alt="">
+          </div>
+          <div class="proof-text">
+            <b>Free to start.</b> Built on verified <b>RCPI</b> &middot; <b>RCSI</b> &middot; <b>ICGP</b> &middot; <b>IMC</b> &middot; <b>HSE NDTP</b> data.
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="halo" aria-hidden="true"></div>
+        <div class="phone" role="img" aria-label="MedNav roadmap for HST Cardiology showing a shortlisting estimate and the next steps">
+          <div class="screen">
+            <div class="screen-top">
+              <svg class="slogo" viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="11" fill="#0b2e36"/><path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="24" r="4" fill="#ffc061"/></svg>
+              <div class="searchpill">Target &middot; HST Cardiology</div>
+            </div>
+            <div class="score-card">
+              <div class="sc-row"><b>Portfolio readiness</b><span class="eta">domain-by-domain</span></div>
+              <div class="score-line"><b>62<span>%</span></b><div class="sc-bar"><i style="width:62%"></i></div></div>
+              <div class="sc-sub">Gap: audit and QI. Teaching evidence closes most of it.</div>
+            </div>
+            <div class="rm-steps">
+              <div class="rm-step done"><span class="st">&#10003;</span>MRCPI Part 1<small>held</small></div>
+              <div class="rm-step done"><span class="st">&#10003;</span>MRCPI Part 2<small>held</small></div>
+              <div class="rm-step next"><span class="st">!</span>Audit &amp; QI<small>next best action</small></div>
+              <div class="rm-step todo"><span class="st">&#9675;</span>Teaching evidence<small>2 of 4 sessions</small></div>
+              <div class="rm-step todo"><span class="st">&#9675;</span>HST interview<small>window not open</small></div>
+            </div>
+            <div class="screen-card">
+              <div class="sc-row"><b>Next deadline</b><span class="eta">closes 14 Nov</span></div>
+              <div class="sc-sub">HST Cardiology applications, RCPI.</div>
+              <div class="sc-bar"><i style="width:38%"></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="chip c1"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 17l6-6 4 4 6-7"/><path d="M14 8h6v6"/></svg></span><span>Every gap, weighted<small>against real marks, not guesswork</small></span></div>
+        <div class="chip c2"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span><span>Every date verified<small>rechecked regularly</small></span></div>
+        <div class="chip c3"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg></span><span>Every deadline tracked<small>so nothing sneaks up on you</small></span></div>
+      </div>
+    </div>
+
+    <div class="position-strip" data-reveal>
+      <span><b>Job boards</b> get you a post.</span>
+      <span><b>Qbanks</b> get you through one paper.</span>
+      <span class="us"><b>MedNav</b> gets you all the way to consultant.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ======= SPECIALTIES MARQUEE ======= -->
+<section class="logos" aria-label="Specialties covered">
+  <p class="logos-label">Every specialty, one route to consultant</p>
+  <div class="marquee">
+    <div class="marquee-track" id="marqueeTrack">
+      <span>General Practice</span><span>Cardiology</span><span>General Internal Medicine</span><span>Nephrology</span><span>General Surgery</span><span>Radiology</span><span>Psychiatry</span><span>Emergency Medicine</span><span>Anaesthesiology</span><span>Obstetrics &amp; Gynaecology</span><span>Paediatrics</span><span>Pathology</span>
+    </div>
+  </div>
+</section>
+
+<!-- ======= EXPLORE DIRECTORY ======= -->
+<section class="explore-sec">
+  <div class="container">
+    <div class="sec-head" data-reveal>
+      <h2 class="sec-title">Everywhere MedNav takes you</h2>
+      <p class="sec-lede">Four ways in. Same ladder, same verified data, all the way to consultant.</p>
+    </div>
+
+    <div class="explore-grid">
+      <a class="explore-cell" href="/pathways" data-reveal style="--d:.05s">
+        <span class="explore-num">01</span>
+        <h3>Pathways</h3>
+        <p>Every specialty, every programme, mapped as one ladder to consultant.</p>
+        <span class="explore-cta">Explore Pathways<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="explore-cell" href="/preparation" data-reveal style="--d:.1s">
+        <span class="explore-num">02</span>
+        <h3>Preparation</h3>
+        <p>Exam guides and interview prep, built on the scoring criteria colleges actually publish.</p>
+        <span class="explore-cta">Explore Preparation<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="explore-cell" href="/opportunities" data-reveal style="--d:.15s">
+        <span class="explore-num">03</span>
+        <h3>Opportunities</h3>
+        <p>Fellowships, research posts, and out-of-programme roles that fit where you are on the ladder.</p>
+        <span class="explore-cta">Explore Opportunities<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="explore-cell" href="/sources" data-reveal style="--d:.2s">
+        <span class="explore-num">04</span>
+        <h3>Resources</h3>
+        <p>How we verify every date and criterion, and where the source documents live.</p>
+        <span class="explore-cta">Explore Resources<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ======= PERSONAS ======= -->
+<section class="personas">
+  <div class="container">
+    <div class="sec-head" data-reveal>
+      <h2 class="sec-title">Every starting point on the ladder. One engine.</h2>
+      <p class="sec-lede" style="margin-top:14px">Two doctors with the same grade title can need completely different roadmaps. Pick where you are. MedNav routes you correctly from there.</p>
+      <span class="sec-hint">Tap a stage below to see your route</span>
+    </div>
+
+    <div class="ladder-track" data-reveal style="--d:.1s">
+      <div class="track-line" id="trackLine"><i id="trackFill"></i></div>
+      <div class="stage-row" id="stageRow"></div>
+    </div>
+
+    <div class="connector" id="connector"></div>
+
+    <div class="detail-panel" data-reveal style="--d:.18s">
+      <div class="detail-inner" id="detailInner">
+        <p class="detail-kicker" id="detailKicker"></p>
+        <h3 class="detail-title" id="detailTitle"></h3>
+        <p class="detail-desc" id="detailDesc"></p>
+        <a class="detail-tag" id="detailTag" href="/tools"><svg id="detailTagIcon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></svg><span id="detailTagText"></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= FEATURES ======= -->
+<section class="features" id="product">
+  <div class="container">
+    <div class="sec-head" data-reveal>
+      <h2 class="sec-title">Where you stand. What's next.</h2>
+      <p class="sec-lede" style="margin-top:14px">MedNav checks your stage and target against the real record for every specialty and programme, then shows you exactly what's missing.</p>
+    </div>
+
+    <div class="feature-row" data-reveal>
+      <div class="f-media">
+        <div class="mini-dash">
+          <div class="mdash-head"><b>Your roadmap</b><span class="eta">HST Cardiology</span></div>
+          <div class="mdash-row done"><span class="mdot">&#10003;</span>BST General Internal Medicine<small>complete</small></div>
+          <div class="mdash-row next"><span class="mdot">!</span>HST Cardiology<small>applications open</small></div>
+          <div class="mdash-row todo"><span class="mdot">&#9675;</span>CSCST<small>future</small></div>
+        </div>
+      </div>
+      <div class="f-body">
+        <h3><b>01.</b> Where you are becomes what to do next</h3>
+        <p>No documents, no dates, no employer. A few questions answerable from memory, and MedNav checks what you hold against the official entry criteria for your target programme.</p>
+        <ul class="checks">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14b394" stroke-width="2.6" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>An ordered action list: what, why, and by when</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14b394" stroke-width="2.6" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>The next application window, pulled straight from the official source</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="feature-row flip" data-reveal>
+      <div class="f-media">
+        <div class="mini-dash">
+          <div class="mdash-head"><b>Application readiness</b><span class="eta">domain-by-domain</span></div>
+          <div class="mdash-bar-row"><span>Audit &amp; QI</span><div class="sc-bar"><i style="--fill:20%"></i></div><b>20%</b></div>
+          <div class="mdash-bar-row"><span>Teaching</span><div class="sc-bar"><i style="--fill:50%"></i></div><b>50%</b></div>
+          <div class="mdash-bar-row"><span>Clinical exp.</span><div class="sc-bar"><i style="--fill:90%"></i></div><b>90%</b></div>
+        </div>
+      </div>
+      <div class="f-body">
+        <h3><b>02.</b> Your gap, weighed against the real domains</h3>
+        <p>Every missing item is weighed against the scoring domains a programme actually publishes. You'll know what matters most next, by the real criteria, not folklore.</p>
+        <ul class="checks">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14b394" stroke-width="2.6" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>Domain-by-domain readiness, driven by the programme's own weights</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14b394" stroke-width="2.6" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>Honest gaps when a college hasn't published this cycle's weights</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="feature-row" data-reveal>
+      <div class="f-media">
+        <div class="mini-dash">
+          <div class="mdash-head"><b>HST Cardiology interview</b><span class="eta">domain-aware</span></div>
+          <div class="mdash-q">
+            <p class="mdash-domain">Clinical judgement</p>
+            <p class="mdash-question">"Talk me through how you'd manage a deteriorating post-PCI patient overnight."</p>
+          </div>
+          <div class="mdash-q dim">
+            <p class="mdash-domain">Commitment to specialty</p>
+            <p class="mdash-question">"What draws you to cardiology specifically?"</p>
+          </div>
+        </div>
+      </div>
+      <div class="f-body">
+        <h3><b>03.</b> Practise against the domains that actually score you</h3>
+        <p>Built on the scoring domains and mark allocations a programme publishes, reviewed by doctors who sat the real interview.</p>
+        <ul class="checks">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14b394" stroke-width="2.6" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>Domain-aware question bank, tied to what the panel is scoring</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14b394" stroke-width="2.6" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>Priced per programme. You never pay for interviews you're not sitting</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= HOW / MINI-START ======= -->
+<section class="mini-start" id="how">
+  <div class="container">
+    <div class="ms-head" data-reveal>
+      <h2 class="sec-title">Try it. See an example of your route.</h2>
+      <p class="sec-lede">A few quick questions, then a realistic example of what your MedNav roadmap looks like. Create a free account to get your real one, tracked and kept up to date.</p>
+    </div>
+
+    <div class="ms-card" data-reveal style="--d:.1s">
+      <div class="ms-stepper" id="stepper"></div>
+
+      <div class="ms-stage">
+        <div class="ms-step current" id="step1">
+          <div class="ms-step-inner">
+            <p class="ms-question">What stage are you at?</p>
+            <div class="ms-chips" data-group="stage">
+              <button class="ms-chip" type="button" data-value="final-year"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>Final-year student</button>
+              <button class="ms-chip" type="button" data-value="intern"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="4" y="6" width="16" height="13" rx="2"/><path d="M9 6V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1"/></svg>Intern</button>
+              <button class="ms-chip" type="button" data-value="sho"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 17l6-6 4 4 6-7"/><path d="M14 8h6v6"/></svg>SHO</button>
+              <button class="ms-chip" type="button" data-value="registrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>Registrar</button>
+              <button class="ms-chip" type="button" data-value="not-sure-stage"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14 0 18-3-4-3-14.5 0-18z"/></svg>Not sure yet</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ms-step" id="step2">
+          <div class="ms-step-inner">
+            <p class="ms-question">What's your target?</p>
+            <div class="ms-chips" data-group="target">
+              <button class="ms-chip" type="button" data-value="gp">GP Training</button>
+              <button class="ms-chip" type="button" data-value="cardiology">Cardiology</button>
+              <button class="ms-chip" type="button" data-value="general-surgery">General Surgery</button>
+              <button class="ms-chip" type="button" data-value="psychiatry">Psychiatry</button>
+              <button class="ms-chip" type="button" data-value="emergency">Emergency Medicine</button>
+              <button class="ms-chip" type="button" data-value="paediatrics">Paediatrics</button>
+              <button class="ms-chip" type="button" data-value="not-sure-target">Not sure yet</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ms-step" id="step3">
+          <div class="ms-step-inner">
+            <p class="ms-question">What do you already have?</p>
+            <p class="ms-hint">Pick as many as apply.</p>
+            <div class="ms-chips" data-group="have" data-multi="true">
+              <button class="ms-chip" type="button" data-value="exam-part1">Membership exam, Part 1</button>
+              <button class="ms-chip" type="button" data-value="audit">Audit or QI project</button>
+              <button class="ms-chip" type="button" data-value="teaching">Teaching experience</button>
+              <button class="ms-chip" type="button" data-value="none-yet">None of these yet</button>
+            </div>
+            <div class="ms-continue" id="continue3">
+              <button class="btn btn-primary" type="button" id="continue3Btn">Continue<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ms-step" id="step4">
+          <div class="ms-step-inner">
+            <p class="ms-question">When are you aiming to apply?</p>
+            <div class="ms-chips" data-group="timeline">
+              <button class="ms-chip" type="button" data-value="this-year">This year</button>
+              <button class="ms-chip" type="button" data-value="1-2-years">Next 1-2 years</button>
+              <button class="ms-chip" type="button" data-value="not-sure-timeline">Not sure yet</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ms-result" id="resultBlock">
+        <div class="ms-result-head">
+          <b id="resultHeading"></b>
+          <span class="ms-example-badge">Example</span>
+        </div>
+
+        <p class="rd-label">Your route</p>
+        <div class="rd-ladder" id="ladderCard"></div>
+
+        <p class="rd-label">What you have</p>
+        <div class="rd-check-card" id="checkCard"></div>
+
+        <div class="rd-next" id="nextCard">
+          <div class="rd-next-row"><b id="nextStageLabel">Next: HST Cardiology</b><span class="rd-eta" id="nextEta">applications open</span></div>
+          <div class="rd-next-sub" id="nextAction">Register an audit or QI project this rotation.</div>
+        </div>
+
+        <a class="btn btn-primary" href="/sign-up" id="resultCta">
+          Create free account for your real one
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <p class="ms-reassure">The route above is the real published path. The rest of this example is illustrative, not a computed personal score. Your real tracked version comes from your account. Under a minute to create.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= STATS ======= -->
+<!-- ======= FROM THE BLOG ======= -->
+<section class="blog-sec">
+  <div class="container">
+    <div class="sec-head" data-reveal>
+      <h2 class="sec-title">From the blog</h2>
+      <p class="sec-lede" style="margin-top:14px">Doctor interviews, real routes, and what colleges changed this cycle.</p>
+    </div>
+    <div class="blog-board">
+      <div class="blog-lead" data-reveal>
+        <span class="blog-lead-tag">Interview</span>
+        <h3>A route through BST GIM into HST Cardiology, told by the doctor who walked it</h3>
+        <p>The real applications, the real gaps, and what they'd do differently.</p>
+
+        <p class="bl-ladder-label">Their route</p>
+        <div class="bl-ladder">
+          <div class="bl-step done"><span class="st">&#10003;</span>Intern<small>2020</small></div>
+          <div class="bl-step done"><span class="st">&#10003;</span>BST General Internal Medicine<small>2021&ndash;23</small></div>
+          <div class="bl-step current"><span class="st">!</span>HST Cardiology<small>now</small></div>
+          <div class="bl-step future"><span class="st">&#9675;</span>Consultant Cardiologist<small>ahead</small></div>
+        </div>
+
+        <span class="blog-lead-cta">Coming soon on the MedNav blog</span>
+      </div>
+
+      <div class="blog-list">
+        <div class="blog-row" data-reveal style="--d:.1s">
+          <span class="blog-row-tag">College news</span>
+          <h4>What changed in this cycle's RCPI portfolio scoring, and why it matters</h4>
+          <p>The scoring domains shifted. Here's what's different for this cycle's applicants.</p>
+          <span class="blog-row-soon"><i></i>Coming soon</span>
+        </div>
+        <div class="blog-row" data-reveal style="--d:.16s">
+          <span class="blog-row-tag">IMG</span>
+          <h4>Registering in Ireland from the UK: what the IMC actually asks for</h4>
+          <p>The documents, the timelines, and the corridor that applies to you.</p>
+          <span class="blog-row-soon"><i></i>Coming soon</span>
+        </div>
+        <div class="blog-row" data-reveal style="--d:.22s">
+          <span class="blog-row-tag">Exams</span>
+          <h4>MRCPI or MRCP? What the recognition differences actually mean for you</h4>
+          <p>The decision most doctors get wrong before they've even sat one exam.</p>
+          <span class="blog-row-soon"><i></i>Coming soon</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= EARLY VOICES ======= -->
+<section class="voices-sec" id="voices">
+  <div class="container">
+    <div class="sec-head" data-reveal>
+      <h2 class="sec-title">In doctors' own words</h2>
+      <p class="sec-lede">What it's like tracking your route with MedNav, from the doctors doing it.</p>
+    </div>
+    <!-- TEMP placeholder testimonials (Qwen-generated photos, illustrative quotes, not verified real users) — replace with real testimonials once available -->
+    <div class="voices-carousel" data-reveal style="--d:.1s">
+      <div class="voices-viewport">
+        <div class="voices-track" id="voicesTrack">
+          <div class="voice-card">
+            <img class="voice-avatar" src="https://image.qwenlm.ai/public_source/a5b467a8-5320-4fb6-b142-755542d93882/1cf84a98f-0ad3-4c6d-ace1-80fbfda2a381.png" alt="">
+            <div class="voice-body">
+              <p class="voice-text">I thought I was ready for Cardiology shortlisting. MedNav showed me exactly which domain was pulling my readiness down, and which audit would close it, six weeks before the window shut.</p>
+              <div class="voice-meta"><b>Dr. Aoife Byrne</b><span>&middot; BST GIM SHO, Dublin</span></div>
+            </div>
+          </div>
+          <div class="voice-card">
+            <img class="voice-avatar" src="https://image.qwenlm.ai/public_source/a5b467a8-5320-4fb6-b142-755542d93882/17e868476-79ea-4a23-a1c3-9b139ed503f2.png" alt="">
+            <div class="voice-body">
+              <p class="voice-text">EPIC, PRES levels, IMC divisions: every forum said something different. MedNav gave me one tracker with sitting dates and fees. The route finally feels finite.</p>
+              <div class="voice-meta"><b>Dr. Arjun Nair</b><span>&middot; IMG &middot; PRES Level 2 candidate</span></div>
+            </div>
+          </div>
+          <div class="voice-card">
+            <img class="voice-avatar" src="https://image.qwenlm.ai/public_source/a5b467a8-5320-4fb6-b142-755542d93882/1c43eefb0-e517-41c8-90b2-d41274833d2b.png" alt="">
+            <div class="voice-body">
+              <p class="voice-text">MedNav flagged exactly what I was missing for HST before my educational supervisor did. My mid-year portfolio review was ready two weeks early.</p>
+              <div class="voice-meta"><b>Dr. Sarah O'Connor</b><span>&middot; SpR, HST Year 3</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="voices-nav">
+        <button class="voices-arrow" id="voicesPrev" aria-label="Previous">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+        </button>
+        <div class="voices-dots" id="voicesDots">
+          <button class="voices-dot on" aria-label="Slide 1"></button>
+          <button class="voices-dot" aria-label="Slide 2"></button>
+          <button class="voices-dot" aria-label="Slide 3"></button>
+        </div>
+        <button class="voices-arrow" id="voicesNext" aria-label="Next">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= TRUST ======= -->
+<section class="trust-sec">
+  <div class="container">
+    <div data-reveal>
+      <h2 class="sec-title">Built from official sources</h2>
+      <p class="sec-lede">IMC &middot; RCPI &middot; RCSI &middot; ICGP &middot; HSE NDTP. We check every date against the official source, and keep checking regularly. If something's out of date, we'll say so, not guess.</p>
+    </div>
+    <div class="trust-badges" data-reveal style="--d:.1s">
+      <span class="tbadge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>Verified against the official source</span>
+      <span class="tbadge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>Rechecked regularly</span>
+      <span class="tbadge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 17l6-6 4 4 6-7"/><path d="M14 8h6v6"/></svg>Report an error, same-day review</span>
+    </div>
+  </div>
+</section>
+
+<!-- ======= FAQ ======= -->
+<section class="faq-sec" id="faq">
+  <div class="container">
+    <div class="sec-head" data-reveal>
+      <h2 class="sec-title">Questions doctors actually ask</h2>
+      <p class="sec-lede">What doctors ask before they create an account.</p>
+    </div>
+    <div class="faq-list" data-reveal style="--d:.1s">
+      <details class="faq-item">
+        <summary>How is MedNav different from a Qbank or a job board?
+          <span class="faq-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <p>Job boards get you a post. Qbanks get you through one paper. MedNav checks your whole route against what a programme actually publishes, and tells you the next action, not just the next practice question.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Is MedNav free to use?
+          <span class="faq-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <p>Creating an account, seeing your roadmap, and tracking your gaps against real entry criteria is free. Interview preparation question banks are priced per programme, so you only pay for the interview you're actually sitting.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Does MedNav replace official college guidance?
+          <span class="faq-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <p>No. MedNav is an independent platform and is not affiliated with, or endorsed by, RCPI, RCSI, ICGP, the College of Psychiatrists, the IMC or the HSE. Always verify criteria against official entry guidance before applying.</p>
+      </details>
+      <details class="faq-item">
+        <summary>How often is the information on MedNav checked?
+          <span class="faq-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <p>We check every date and scoring criterion against the official source, and keep checking regularly. If something's out of date, we say so, not guess.</p>
+      </details>
+      <details class="faq-item">
+        <summary>What happens if a college hasn't published this cycle's scoring criteria yet?
+          <span class="faq-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <p>We mark the gap honestly rather than estimate. You'll see exactly which domains are confirmed and which are still pending publication for the current cycle.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Which specialties and pathways does MedNav cover?
+          <span class="faq-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <p>Every specialty on the Irish training ladder, from BST and GP training through to HST and consultant posts, including routes for IMGs and doctors returning to Ireland from abroad.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ======= CTA ======= -->
+<section class="cta" id="demo">
+  <div class="container">
+    <div class="cta-card" data-reveal>
+      <!-- TEMP placeholder photo (Qwen-generated) — swap for a real photo when available -->
+      <div class="cta-media" aria-hidden="true">
+        <img src="https://image.qwenlm.ai/public_source/a5b467a8-5320-4fb6-b142-755542d93882/18a420b50-1b6b-4066-a4b4-bed50643626e.png" alt="">
+      </div>
+      <div class="cta-body">
+        <h2>Your next step shouldn't depend on word of mouth.</h2>
+        <p>Create your free account. Verify with a magic link, set your password, and a few quick questions get your roadmap built.</p>
+        <form class="demo-form" id="demoForm" novalidate>
+          <input type="email" id="demoEmail" placeholder="Your email" aria-label="Email address" aria-describedby="demoEmailError" required>
+          <button class="btn btn-primary" type="submit">Create free account</button>
+        </form>
+        <p class="form-error" id="demoEmailError" role="alert">Enter a valid email address.</p>
+        <p class="form-ok" id="demoOk"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>Check your inbox. Click the magic link to set your password and finish creating your account.</p>
+        <p class="cta-note">No credit card. Data verified against official college sources, rechecked regularly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ======= FOOTER ======= -->
+<footer class="site" id="footer">
+  <div class="container">
+    <div class="f-grid">
+      <div class="f-brand">
+        <a class="logo" href="#top" aria-label="MedNav home">
+          <svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="11" fill="#12404c"/><path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="24" r="4" fill="#ffc061"/></svg>
+          <span class="logo-word">MedNav</span>
+        </a>
+        <p>Know exactly what to do next in your medical career, from wherever you are now, to consultant.</p>
+        <form class="news-form" id="newsForm" novalidate>
+          <input type="email" id="newsEmail" placeholder="Application-window alerts, monthly" aria-label="Newsletter email" aria-describedby="newsEmailError" required>
+          <button type="submit" aria-label="Subscribe">&rarr;</button>
+        </form>
+        <p class="form-error" id="newsEmailError" role="alert">Enter a valid email address.</p>
+        <p class="news-ok" id="newsOk">You're on the list. We'll ping you when windows open.</p>
+      </div>
+      <div class="f-col">
+        <h5>Career Tools</h5>
+        <ul>
+          <li><a href="/tools">Roadmap</a></li>
+          <li><a href="/tools">Gap analyser</a></li>
+          <li><a href="/tools">Application readiness</a></li>
+          <li><a href="/tools">Shortlisting score</a></li>
+          <li><a href="/tools">Deadlines</a></li>
+          <li><a href="/tools">Progress tracker</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h5>Pathways</h5>
+        <ul>
+          <li><a href="/pathways/specialties">All specialties</a></li>
+          <li><a href="/pathways/programmes">All programmes</a></li>
+          <li><a href="/pathways/img">IMG pathways</a></li>
+          <li><a href="/pathways/return-to-ireland">Return to Ireland</a></li>
+          <li><a href="/pathways/work-abroad/uk">Work abroad</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h5>Preparation</h5>
+        <ul>
+          <li><a href="/preparation/exams">Exams index</a></li>
+          <li><a href="/preparation/exams/compare">MRCPI vs MRCP</a></li>
+          <li><a href="/preparation/interviews">Interviews index</a></li>
+          <li><a href="/opportunities">Opportunities</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="/about">About MedNav</a></li>
+          <li><a href="/sources">Sources &amp; verification</a></li>
+          <li><a href="/blog">Blog</a></li>
+          <li><a href="/help">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="f-disclaimer">MedNav is an independent platform and is not affiliated with, or endorsed by, RCPI, RCSI, ICGP, the College of Psychiatrists, the IMC or the HSE. Always verify criteria against official entry guidance before applying.</p>
+    <div class="f-bottom">
+      <span>&copy; <span id="yearNow">2026</span> MedNav. Built for Irish NCHDs.</span>
+      <div class="f-legal">
+        <a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/cookies">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+</button>
+
+<script>
+(function(){
+  "use strict";
+  var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var hdrEl = document.getElementById("siteHeader");
+  var toTopBtn = document.getElementById("toTop");
+  function onScrollHdr(){
+    hdrEl.classList.toggle("scrolled", window.scrollY > 8);
+    toTopBtn.classList.toggle("show", window.scrollY > 700);
+  }
+  window.addEventListener("scroll", onScrollHdr, {passive:true});
+  onScrollHdr();
+  toTopBtn.addEventListener("click", function(){ window.scrollTo({top:0, behavior: reducedMotion ? "auto" : "smooth"}); });
+
+  var burgerBtn = document.getElementById("navToggle");
+  var mobilePanel = document.getElementById("mobileMenu");
+  function setMenu(open){
+    burgerBtn.classList.toggle("open", open);
+    mobilePanel.classList.toggle("open", open);
+    burgerBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    document.body.style.overflow = open ? "hidden" : "";
+    if (open){
+      var firstFocusable = mobilePanel.querySelector("a, button");
+      if (firstFocusable) firstFocusable.focus();
+    } else {
+      burgerBtn.focus();
+    }
+  }
+  burgerBtn.addEventListener("click", function(){ setMenu(!mobilePanel.classList.contains("open")); });
+  mobilePanel.querySelectorAll("a").forEach(function(linkEl){ linkEl.addEventListener("click", function(){ setMenu(false); }); });
+  var mobileCloseBtn = document.getElementById("mobileCloseBtn");
+  if (mobileCloseBtn){ mobileCloseBtn.addEventListener("click", function(){ setMenu(false); }); }
+  document.addEventListener("keydown", function(ev){
+    if (!mobilePanel.classList.contains("open")) return;
+    if (ev.key === "Escape"){ setMenu(false); return; }
+    if (ev.key !== "Tab") return;
+    var focusables = Array.prototype.slice.call(mobilePanel.querySelectorAll("a, button"));
+    if (!focusables.length) return;
+    var first = focusables[0], last = focusables[focusables.length - 1];
+    if (ev.shiftKey && document.activeElement === first){ ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last){ ev.preventDefault(); first.focus(); }
+  });
+
+  var scrambleTarget = document.getElementById("scrambleTarget");
+  if (scrambleTarget && !reducedMotion){
+    var finalTxt = scrambleTarget.getAttribute("data-text");
+    var glyphPool = "▚▞#*+<>/\\=·";
+    var frameIdx = 0;
+    var scrambleTimer = setInterval(function(){
+      frameIdx++;
+      var revealed = Math.floor(frameIdx / 2);
+      var outStr = "";
+      for (var ci = 0; ci < finalTxt.length; ci++){
+        var ch = finalTxt[ci];
+        if (ch === " "){ outStr += ch; continue; }
+        outStr += (ci < revealed) ? ch : glyphPool[Math.floor(Math.random()*glyphPool.length)];
+      }
+      scrambleTarget.textContent = outStr;
+      if (revealed >= finalTxt.length){ clearInterval(scrambleTimer); scrambleTarget.textContent = finalTxt; }
+    }, 34);
+  } else if (scrambleTarget){
+    scrambleTarget.textContent = scrambleTarget.getAttribute("data-text");
+  }
+
+  var revealEls = document.querySelectorAll("[data-reveal],[data-reveal-scale]");
+  if (reducedMotion || !("IntersectionObserver" in window)){
+    revealEls.forEach(function(el){ el.classList.add("is-in"); });
+  } else {
+    var revealObs = new IntersectionObserver(function(entries){
+      entries.forEach(function(entryItem){
+        if (entryItem.isIntersecting){ entryItem.target.classList.add("is-in"); revealObs.unobserve(entryItem.target); }
+      });
+    }, {threshold:.15, rootMargin:"0px 0px -40px 0px"});
+    revealEls.forEach(function(el){ revealObs.observe(el); });
+  }
+
+  var marqueeEl = document.getElementById("marqueeTrack");
+  if (marqueeEl){ marqueeEl.innerHTML += marqueeEl.innerHTML; }
+
+  var demoFormEl = document.getElementById("demoForm");
+  var demoEmailInput = document.getElementById("demoEmail");
+  var demoEmailError = document.getElementById("demoEmailError");
+  demoEmailInput.addEventListener("input", function(){
+    demoEmailInput.removeAttribute("aria-invalid");
+    demoEmailInput.style.borderColor = "";
+    demoEmailError.classList.remove("show");
+  });
+  demoFormEl.addEventListener("submit", function(ev){
+    ev.preventDefault();
+    if (!demoEmailInput.value || demoEmailInput.value.indexOf("@") < 1){
+      demoEmailInput.setAttribute("aria-invalid", "true");
+      demoEmailInput.style.borderColor = "#ff7a59";
+      demoEmailError.classList.add("show");
+      demoEmailInput.focus();
+      return;
+    }
+    demoFormEl.style.display = "none";
+    document.getElementById("demoOk").classList.add("show");
+  });
+  var newsFormEl = document.getElementById("newsForm");
+  var newsEmailInput = document.getElementById("newsEmail");
+  var newsEmailError = document.getElementById("newsEmailError");
+  newsEmailInput.addEventListener("input", function(){
+    newsEmailInput.removeAttribute("aria-invalid");
+    newsEmailInput.style.borderColor = "";
+    newsEmailError.classList.remove("show");
+  });
+  newsFormEl.addEventListener("submit", function(ev){
+    ev.preventDefault();
+    if (!newsEmailInput.value || newsEmailInput.value.indexOf("@") < 1){
+      newsEmailInput.setAttribute("aria-invalid", "true");
+      newsEmailInput.style.borderColor = "#ff7a59";
+      newsEmailError.classList.add("show");
+      newsEmailInput.focus();
+      return;
+    }
+    newsFormEl.style.display = "none";
+    document.getElementById("newsOk").classList.add("show");
+  });
+
+  document.getElementById("yearNow").textContent = new Date().getFullYear();
+
+  // ===== Personas: ladder selector =====
+  var LADDER_STAGES = [
+    { label:"Med student" },
+    { label:"Intern" },
+    { label:"SHO / BST" },
+    { label:"Registrar / HST" },
+    { label:"Consultant" }
+  ];
+
+  var LADDER_ICONS = {
+    roadmap: '<path d="M4 17l6-6 4 4 6-7"/><path d="M14 8h6v6"/>',
+    img: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14 0 18-3-4-3-14.5 0-18z"/>',
+    deadlines: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+    gap: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+    progress: '<path d="M4 7h16M4 12h16M4 17h10"/>',
+    score: '<path d="M2 20h20"/><path d="M6 20v-7M12 20V8M18 20v-4"/>',
+    readiness: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
+    career: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>'
+  };
+
+  var LADDER_PERSONAS = [
+    { id:"final-med-ie", stage:0, label:"Final med year, Ireland", title:"Which intern post actually sets up the specialty you want", desc:"Same grade, different targets. MedNav reads your target specialty against the posts on offer and tells you what each one builds toward, not just what's vacant.", tag:"Roadmap", icon:"roadmap", link:"/tools" },
+    { id:"final-med-img", stage:0, label:"Final med year, IMG", title:"Will your degree be recognised here?", desc:"Straight to the right registration corridor if not, with the exams and documents that actually apply to you.", tag:"IMG pathways", icon:"img", link:"/pathways/img" },
+    { id:"intern", stage:1, label:"Intern", title:"Your BST countdown, with the CV to match", desc:"The application window and the evidence you should be building right now, not after the window opens.", tag:"Deadlines", icon:"deadlines", link:"/tools" },
+    { id:"standalone-sho", stage:2, label:"Standalone SHO", title:"Never entered training? See the exact gap", desc:"The precise distance between where you are and your first BST place, not a guess.", tag:"Gap Analyser", icon:"gap", link:"/tools" },
+    { id:"training-sho", stage:2, label:"Training SHO, BST/CST", title:"Track what you're building, front-run HST", desc:"Every credential logged against what your target HST programme actually scores.", tag:"Progress Tracker", icon:"progress", link:"/tools" },
+    { id:"img-eu", stage:2, label:"IMG, EU & further afield", title:"One tracker for registration, exams and what's left", desc:"EPIC, PRES levels, IMC divisions, whichever applies to you, with real dates and fees.", tag:"IMG pathways", icon:"img", link:"/pathways/img" },
+    { id:"standalone-reg", stage:3, label:"Standalone Registrar", title:"Your HST eligibility, with or without BST", desc:"A real shortlisting estimate against the published criteria, not folklore.", tag:"Shortlisting Score", icon:"score", link:"/tools" },
+    { id:"spr-hst", stage:3, label:"SpR in HST", title:"Portfolio evidence, exam planning, the road to CSCST", desc:"Everything you still need, weighted by what the scoring domains actually reward.", tag:"Application Readiness", icon:"readiness", link:"/tools" },
+    { id:"post-cct", stage:4, label:"Post-CCT", title:"Fellowships, locum work, academic routes after exit", desc:"What's next after CSCST, mapped the same way everything before it was.", tag:"Career Tools", icon:"career", link:"/tools" }
+  ];
+
+  var ladderStageRow = document.getElementById("stageRow");
+  var ladderTrackFill = document.getElementById("trackFill");
+  var ladderConnector = document.getElementById("connector");
+  var ladderInner = document.getElementById("detailInner");
+  var ladderKicker = document.getElementById("detailKicker");
+  var ladderTitle = document.getElementById("detailTitle");
+  var ladderDesc = document.getElementById("detailDesc");
+  var ladderTag = document.getElementById("detailTag");
+  var ladderTagIcon = document.getElementById("detailTagIcon");
+  var ladderTagText = document.getElementById("detailTagText");
+
+  if (ladderStageRow){
+    var ladderActiveId = "final-med-ie";
+
+    var buildLadderStages = function(){
+      ladderStageRow.innerHTML = "";
+      LADDER_STAGES.forEach(function(stageDef, idx){
+        var stageEl = document.createElement("div");
+        stageEl.className = "stage";
+        stageEl.dataset.stage = idx;
+
+        var dot = document.createElement("div");
+        dot.className = "stage-dot";
+        stageEl.appendChild(dot);
+
+        var lab = document.createElement("div");
+        lab.className = "stage-label";
+        lab.textContent = stageDef.label;
+        stageEl.appendChild(lab);
+
+        if (stageDef.note){
+          var note = document.createElement("div");
+          note.className = "stage-note";
+          note.textContent = "(" + stageDef.note + ")";
+          stageEl.appendChild(note);
+        }
+
+        var cluster = document.createElement("div");
+        cluster.className = "pin-cluster";
+        LADDER_PERSONAS.filter(function(p){ return p.stage === idx; }).forEach(function(p){
+          var pin = document.createElement("button");
+          pin.className = "pin";
+          pin.type = "button";
+          pin.dataset.id = p.id;
+          pin.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round">' + LADDER_ICONS[p.icon] + '</svg><span>' + p.label + '</span>';
+          pin.addEventListener("click", function(){ selectLadderPersona(p.id); });
+          cluster.appendChild(pin);
+        });
+        stageEl.appendChild(cluster);
+
+        ladderStageRow.appendChild(stageEl);
+      });
+    };
+
+    var selectLadderPersona = function(id){
+      var persona = LADDER_PERSONAS.filter(function(p){ return p.id === id; })[0];
+      if (!persona) return;
+      ladderActiveId = id;
+
+      document.querySelectorAll(".pin").forEach(function(p){ p.classList.toggle("on", p.dataset.id === id); });
+      document.querySelectorAll(".stage").forEach(function(s, idx){ s.classList.toggle("active", idx === persona.stage); });
+
+      var pct = LADDER_STAGES.length > 1 ? (persona.stage / (LADDER_STAGES.length - 1)) * 100 : 0;
+      ladderTrackFill.style.width = pct + "%";
+      ladderConnector.classList.add("show");
+
+      var swap = function(){
+        ladderKicker.textContent = persona.label;
+        ladderTitle.textContent = persona.title;
+        ladderDesc.textContent = persona.desc;
+        ladderTagIcon.innerHTML = LADDER_ICONS[persona.icon];
+        ladderTagText.textContent = persona.tag;
+        ladderTag.href = persona.link;
+        ladderInner.classList.remove("swap");
+      };
+
+      if (reducedMotion){ swap(); return; }
+      ladderInner.classList.add("swap");
+      setTimeout(swap, 160);
+    };
+
+    buildLadderStages();
+    selectLadderPersona(ladderActiveId);
+  }
+
+  // ===== How it works: interactive mini-start =====
+  var MS_STAGE_LABELS = { "final-year":"Final-year student", "intern":"Intern", "sho":"SHO", "registrar":"Registrar", "not-sure-stage":"Your stage" };
+  var MS_TARGET_LABELS = { "gp":"GP Training", "cardiology":"Cardiology", "general-surgery":"General Surgery", "psychiatry":"Psychiatry", "emergency":"Emergency Medicine", "paediatrics":"Paediatrics", "not-sure-target":"Your target" };
+
+  var MS_ROUTES = {
+    "gp": { stages: ["Intern", "GP Training (ICGP), Year 1-2", "GP Training (ICGP), Year 3-4", "GP Principal"] },
+    "cardiology": { stages: ["Intern", "BST General Internal Medicine", "HST Cardiology", "Consultant Cardiologist"] },
+    "general-surgery": { stages: ["Intern", "Core Surgical Training", "HST General Surgery", "Consultant Surgeon"] },
+    "psychiatry": { stages: ["Intern", "BST Psychiatry", "HST Psychiatry, General Adult", "Consultant Psychiatrist"] },
+    "emergency": { stages: ["Intern", "BST Emergency Medicine", "HST Emergency Medicine", "Consultant in Emergency Medicine"] },
+    "paediatrics": { stages: ["Intern", "BST Paediatrics", "HST Paediatrics", "Consultant Paediatrician"] },
+    "not-sure-target": { stages: ["Intern", "SHO / BST", "Registrar / HST", "Consultant"] }
+  };
+  var MS_STAGE_TO_INDEX = { "final-year": -1, "intern": 0, "sho": 1, "registrar": 2, "not-sure-stage": null };
+
+  var msStepper = document.getElementById("stepper");
+  if (msStepper){
+    var MS_TOTAL_STEPS = 4;
+    var msAnswers = { stage:null, target:null, have:[], timeline:null };
+    var msStepEls = [document.getElementById("step1"), document.getElementById("step2"), document.getElementById("step3"), document.getElementById("step4")];
+    var msResultBlock = document.getElementById("resultBlock");
+    var msCurrentStepIdx = 0;
+
+    for (var msi = 0; msi < MS_TOTAL_STEPS; msi++){
+      var msNode = document.createElement("div");
+      msNode.className = "ms-stepper-node";
+      msNode.textContent = String(msi + 1);
+      msStepper.appendChild(msNode);
+      if (msi < MS_TOTAL_STEPS - 1){
+        var msLine = document.createElement("div");
+        msLine.className = "ms-stepper-line";
+        msLine.innerHTML = "<i></i>";
+        msStepper.appendChild(msLine);
+      }
+    }
+    var msStepperNodes = msStepper.querySelectorAll(".ms-stepper-node");
+    var msStepperLines = msStepper.querySelectorAll(".ms-stepper-line");
+    msStepperNodes[0].classList.add("current");
+
+    var msGoToStep = function(n){
+      var fromEl = msStepEls[msCurrentStepIdx];
+      var toEl = msStepEls[n];
+      var fromInner = fromEl.querySelector(".ms-step-inner");
+      var toInner = toEl.querySelector(".ms-step-inner");
+
+      var doSwap = function(){
+        fromEl.classList.remove("current");
+        toEl.classList.add("current");
+        toInner.classList.add("entering");
+        toInner.offsetHeight;
+        requestAnimationFrame(function(){ toInner.classList.remove("entering"); });
+      };
+
+      if (reducedMotion){
+        doSwap();
+      } else {
+        fromInner.classList.add("leaving");
+        setTimeout(doSwap, 180);
+      }
+      msCurrentStepIdx = n;
+    };
+
+    var msMarkStepDone = function(stepIdx){
+      msStepperNodes[stepIdx].classList.remove("current");
+      msStepperNodes[stepIdx].classList.add("done");
+      msStepperNodes[stepIdx].innerHTML = "&#10003;";
+      if (msStepperLines[stepIdx]) msStepperLines[stepIdx].classList.add("done");
+      if (msStepperNodes[stepIdx + 1]) msStepperNodes[stepIdx + 1].classList.add("current");
+    };
+
+    document.querySelectorAll('[data-group="stage"] .ms-chip').forEach(function(chip){
+      chip.addEventListener("click", function(){
+        document.querySelectorAll('[data-group="stage"] .ms-chip').forEach(function(c){ c.classList.remove("on"); });
+        chip.classList.add("on");
+        msAnswers.stage = chip.dataset.value;
+        msMarkStepDone(0); msGoToStep(1);
+      });
+    });
+
+    document.querySelectorAll('[data-group="target"] .ms-chip').forEach(function(chip){
+      chip.addEventListener("click", function(){
+        document.querySelectorAll('[data-group="target"] .ms-chip').forEach(function(c){ c.classList.remove("on"); });
+        chip.classList.add("on");
+        msAnswers.target = chip.dataset.value;
+        msMarkStepDone(1); msGoToStep(2);
+      });
+    });
+
+    var msContinue3 = document.getElementById("continue3");
+    document.querySelectorAll('[data-group="have"] .ms-chip').forEach(function(chip){
+      chip.addEventListener("click", function(){
+        var val = chip.dataset.value;
+        if (val === "none-yet"){
+          document.querySelectorAll('[data-group="have"] .ms-chip').forEach(function(c){ c.classList.remove("on"); });
+          chip.classList.add("on");
+          msAnswers.have = ["none-yet"];
+        } else {
+          chip.classList.toggle("on");
+          document.querySelector('[data-group="have"] .ms-chip[data-value="none-yet"]').classList.remove("on");
+          msAnswers.have = Array.from(document.querySelectorAll('[data-group="have"] .ms-chip.on')).map(function(c){ return c.dataset.value; });
+        }
+        msContinue3.classList.toggle("show", msAnswers.have.length > 0);
+      });
+    });
+    document.getElementById("continue3Btn").addEventListener("click", function(){ msMarkStepDone(2); msGoToStep(3); });
+
+    document.querySelectorAll('[data-group="timeline"] .ms-chip').forEach(function(chip){
+      chip.addEventListener("click", function(){
+        document.querySelectorAll('[data-group="timeline"] .ms-chip').forEach(function(c){ c.classList.remove("on"); });
+        chip.classList.add("on");
+        msAnswers.timeline = chip.dataset.value;
+        msMarkStepDone(3);
+        setTimeout(msShowResult, reducedMotion ? 0 : 220);
+      });
+    });
+
+    var msBuildLadder = function(route, currentIndex){
+      var wrap = document.getElementById("ladderCard");
+      wrap.innerHTML = "";
+      route.stages.forEach(function(label, idx){
+        var row = document.createElement("div");
+        var state = "todo", icon = "&#9675;", small = "";
+        if (currentIndex === null){
+          state = "todo"; icon = "&#9675;";
+        } else if (idx < currentIndex){
+          state = "done"; icon = "&#10003;"; small = "typically complete";
+        } else if (idx === currentIndex){
+          state = "done"; icon = "&#10003;"; small = "in progress";
+        } else if (idx === currentIndex + 1){
+          state = "next"; icon = "!"; small = "next step";
+        } else {
+          state = "todo"; icon = "&#9675;"; small = "future";
+        }
+        row.className = "rd-step " + state;
+        row.style.setProperty("--rd", (idx * 0.08) + "s");
+        row.innerHTML = '<span class="st">' + icon + '</span>' + label + '<small>' + small + '</small>';
+        wrap.appendChild(row);
+      });
+    };
+
+    var msBuildChecklist = function(){
+      var wrap = document.getElementById("checkCard");
+      wrap.innerHTML = "";
+      var items = [
+        { key: "exam-part1", label: "Membership exam, Part 1" },
+        { key: "audit", label: "Audit or QI project" },
+        { key: "teaching", label: "Teaching experience" }
+      ];
+      items.forEach(function(item, idx){
+        var haveIt = msAnswers.have.indexOf(item.key) !== -1;
+        var row = document.createElement("div");
+        row.className = "rd-check-row " + (haveIt ? "have" : "missing");
+        row.style.setProperty("--rd", (0.32 + idx * 0.08) + "s");
+        row.innerHTML = '<span class="ck">' + (haveIt ? "&#10003;" : "!") + '</span>' + item.label + (haveIt ? "" : "<small>not yet</small>");
+        wrap.appendChild(row);
+      });
+    };
+
+    var msShowResult = function(){
+      msStepEls.forEach(function(el){ el.classList.remove("current"); });
+
+      var stageLabel = MS_STAGE_LABELS[msAnswers.stage] || "Your stage";
+      var targetLabel = MS_TARGET_LABELS[msAnswers.target] || "Your target";
+      document.getElementById("resultHeading").textContent = stageLabel + " → " + targetLabel;
+
+      var route = MS_ROUTES[msAnswers.target] || MS_ROUTES["not-sure-target"];
+      var currentIndex = (msAnswers.stage in MS_STAGE_TO_INDEX) ? MS_STAGE_TO_INDEX[msAnswers.stage] : null;
+
+      msBuildLadder(route, currentIndex);
+      msBuildChecklist();
+
+      var nextIdx = (currentIndex === null) ? 0 : Math.min(currentIndex + 1, route.stages.length - 1);
+      document.getElementById("nextStageLabel").textContent = "Next: " + route.stages[nextIdx];
+      document.getElementById("nextEta").textContent = msAnswers.timeline === "this-year" ? "applications open soon" : "next window";
+
+      var nextAction = "Register an audit or QI project this rotation.";
+      if (msAnswers.have.indexOf("audit") === -1){
+        nextAction = "Register an audit or QI project this rotation.";
+      } else if (msAnswers.have.indexOf("teaching") === -1){
+        nextAction = "Log two more teaching sessions.";
+      } else if (msAnswers.have.indexOf("exam-part1") === -1){
+        nextAction = "Book your next Part 1 sitting.";
+      } else {
+        nextAction = "Start preparing for the interview scoring domains.";
+      }
+      document.getElementById("nextAction").textContent = nextAction;
+
+      msResultBlock.classList.add("show");
+      requestAnimationFrame(function(){
+        document.querySelectorAll(".rd-step, .rd-check-row").forEach(function(el){ el.classList.add("in"); });
+        document.getElementById("nextCard").classList.add("in");
+      });
+    };
+  }
+
+  var voicesTrack = document.getElementById("voicesTrack");
+  if (voicesTrack){
+    var voicesDots = Array.prototype.slice.call(document.querySelectorAll(".voices-dot"));
+    var voicesSlideCount = voicesTrack.children.length;
+    var voicesIndex = 0;
+    if (reducedMotion){ voicesTrack.style.transition = "none"; }
+    var voicesRender = function(){
+      voicesTrack.style.transform = "translateX(-" + (voicesIndex * 100) + "%)";
+      voicesDots.forEach(function(dot, i){ dot.classList.toggle("on", i === voicesIndex); });
+    };
+    var voicesGo = function(i){
+      voicesIndex = (i + voicesSlideCount) % voicesSlideCount;
+      voicesRender();
+    };
+    document.getElementById("voicesPrev").addEventListener("click", function(){ voicesGo(voicesIndex - 1); });
+    document.getElementById("voicesNext").addEventListener("click", function(){ voicesGo(voicesIndex + 1); });
+    voicesDots.forEach(function(dot, i){ dot.addEventListener("click", function(){ voicesGo(i); }); });
+  }
+})();
+</script>
+</body>
+</html>
