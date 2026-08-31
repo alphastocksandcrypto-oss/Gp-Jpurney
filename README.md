@@ -11,15 +11,27 @@ Static marketing site for MedNav, the Irish medical career navigation platform.
 | `opportunities/jobs.html` | NCHD and consultant posts | Facet rail beside results |
 | `opportunities/locums.html` | Locum shifts | Grouped by starting month |
 | `opportunities/conferences.html` | Conferences, courses and CPD | Agenda timeline with a CPD planner |
+| `tools/index.html` | Career Tools | One profile driving seven live tool cards |
 
 Each page is a single self-contained file. Fonts (Sora, Inter) load from
 jsDelivr; everything else is inline, so a page opens straight from disk with no
 build step and no server.
 
-The four layouts are deliberately different. The hub is read, so it is
-editorial. The three boards are operated, so each is shaped by the variable
-that actually decides the choice: post type and specialty for jobs, date and
-rate for locums, date and CPD points for conferences.
+The layouts are deliberately different. The hub and Career Tools are read, so
+they are editorial. The three boards are operated, so each is shaped by the
+variable that actually decides the choice: post type and specialty for jobs,
+date and rate for locums, date and CPD points for conferences.
+
+Career Tools is built around its own claim. The stage and specialty selects
+feed one profile, and the ladder, the gaps, the next deadline and the live
+state of all seven tool cards re-render from it. Choosing "Qualified abroad"
+changes the ladder itself, adding IMC registration and Irish clinical
+experience ahead of the training rungs. Tools that do not apply at your stage
+dim and say why rather than disappearing.
+
+Career Tools reuses the homepage's own roadmap components (`.rd-step`,
+`.rd-check-row`, `.rd-next`) so the example there and the example on the
+homepage are visibly the same product.
 
 ## Design system
 
@@ -42,8 +54,9 @@ each hero encode the real make up of that board.
 
 The header, footer and shared CSS are copied into each page rather than linked,
 which follows the homepage's self-contained pattern and keeps every page
-openable on its own. It does mean a change to the header has to be made in five
-files. When this site gains a build step, the first job is to lift the shared
+openable on its own. It does mean a change to the header has to be made in six
+files, and the nav breakpoint bug below is exactly the kind of thing that
+costs. When this site gains a build step, the first job is to lift the shared
 block into `shared/site.css` and a header partial.
 
 ## Content rules
@@ -61,12 +74,31 @@ Carried over from the homepage and enforced on every page:
   a claim about the full board.
 - No em dashes.
 
+## On the no-account demo
+
+The locked product spec is auth first, with no no-signup live demo. The
+homepage resolves this by shipping an interactive stage picker whose output
+carries an "Example" badge, and the Career Tools page follows that precedent:
+the worked example runs without an account, and a roadmap tied to a real
+profile, with verified dates, needs one. Keep the badge for as long as the
+output is illustrative.
+
+## Fixed here, worth knowing
+
+The header nav had no room between 961 and 970 px: the links and both buttons
+overflowed the header by up to 39 px. The breakpoint that swaps in the burger
+was 960 px and is now 1000 px. This originated in the homepage and every page
+inherited it, so the fix is applied in all six files.
+
 ## Placeholders to replace before launch
 
 - `https://mednav.ie` and `/og-image.png` in every page head
 - The listing arrays (`OPPS`, `JOBS`, `SHIFTS`, `EVENTS`) are sample records
   mirroring the wireframes, not live feeds. Swap them for the aggregation feed
   and remove the "Sample of the live board" badge on the hub.
+- Career Tools: `SPECIALTIES`, `STAGES` and `STAGE_DATA` hold illustrative
+  ladders, gaps, scores and application dates. None of it is verified. Replace
+  with the criteria service, then drop the Example badge.
 - Day counts are computed from the browser's current date, so the sample rows
   read as closed or past once those 2026 dates pass.
 - Board sizes (142 jobs, 38 locums, 12 events), the composition bars and the

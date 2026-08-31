@@ -1,0 +1,1139 @@
+<!--
+  MedNav Career Tools page. Same design system as the homepage and the
+  Opportunities section. The layout is built around this page's actual claim:
+  set your stage and target once, and every tool on the page recalculates from
+  that one profile. Changing either select re-renders the ladder, the gaps, the
+  next deadline and the live state of all seven tool cards.
+
+  On the auth question: the locked spec is auth-first, no no-signup live demo.
+  The homepage resolves this by shipping an interactive stage picker whose
+  output carries an "Example" badge, and this page follows that precedent. The
+  worked example runs without an account; a roadmap tied to a real profile,
+  with verified dates, needs one.
+
+  TEMP: the ladders, gaps, scores and dates below are an illustrative example,
+  not verified data. Replace with the real criteria service before launch and
+  keep the Example badge only for as long as the output is illustrative.
+  TEMP: https://mednav.ie is a placeholder domain.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Career tools for doctors in Ireland | MedNav</title>
+<meta name="description" content="Roadmap, gap analyser, application readiness, shortlisting score and deadlines. Set your stage and target once and every tool recalculates. Free to start.">
+<link rel="canonical" href="https://mednav.ie/tools">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MedNav">
+<meta property="og:title" content="Career tools for doctors in Ireland">
+<meta property="og:description" content="Set your stage and your target once. Roadmap, gaps, readiness, shortlisting score and deadlines all recalculate from the same profile.">
+<meta property="og:url" content="https://mednav.ie/tools">
+<meta property="og:image" content="https://mednav.ie/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Career tools for doctors in Ireland",
+  "description": "Roadmap, gap analyser, application readiness, shortlisting score and deadlines, all working off one profile.",
+  "url": "https://mednav.ie/tools",
+  "isPartOf": { "@type": "WebSite", "name": "MedNav", "url": "https://mednav.ie/" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "MedNav", "item": "https://mednav.ie/" },
+    { "@type": "ListItem", "position": 2, "name": "Career Tools", "item": "https://mednav.ie/tools" }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Do I need an account to use the career tools?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The worked example on this page runs without one. A roadmap tied to your own profile needs a free account, because it is saved to you and kept current as colleges publish new criteria and dates." }
+    },
+    {
+      "@type": "Question",
+      "name": "Where do the scoring criteria come from?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Published entry criteria from RCPI, RCSI, ICGP, the College of Psychiatrists and HSE NDTP. Where a college has not published the current cycle's criteria yet, we mark the gap rather than estimate it." }
+    },
+    {
+      "@type": "Question",
+      "name": "What do the career tools cost?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Your roadmap, gap analyser, application readiness, shortlisting score, deadlines and both explorers are free with an account. Interview preparation question banks are priced per programme, so you only pay for the interview you are actually sitting." }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it work if I qualified outside Ireland?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Choose Qualified abroad and the ladder changes: IMC registration and Irish clinical experience come before the training rungs, because that is the route that actually applies." }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I change my target specialty later?",
+      "acceptedAnswer": { "@type": "Answer", "text": "At any time. Everything recalculates against the new target and nothing you have already recorded is lost, so you can compare two routes before committing to either." }
+    }
+  ]
+}
+</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/800.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/600.css">
+<style>
+
+:root{
+  --deep:#0b2e36; --pine:#12404c; --ink:#12333c;
+  --mint:#14b394; --mint-2:#3ed1a8; --mint-soft:#e0f5ec; --mint-text:#0e816a;
+  --paper:#f7faf8; --cream:#fdfbf5;
+  --coral:#ff7a59; --coral-soft:#fff1e6; --coral-text:#b8482a;
+  --amber:#ffc061; --amber-soft:#fff4e0; --amber-text:#8a5a10;
+  --line:rgba(11,46,54,.12); --txt-soft:#41606a;
+  --shadow:0 24px 60px rgba(11,46,54,.16);
+  --card-shadow:0 10px 26px rgba(11,46,54,.07);
+  --fd:'Sora',system-ui,sans-serif; --fb:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-padding-top:96px}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{font-family:var(--fb);background:var(--paper);color:var(--ink);font-size:16px;line-height:1.6;overflow-x:hidden}
+img,svg{display:block;max-width:100%}
+a{text-decoration:none;color:inherit}
+ul{list-style:none}
+button{font-family:inherit;cursor:pointer}
+input{font-family:inherit}
+::selection{background:var(--mint-2);color:var(--deep)}
+.container{max-width:1180px;margin:0 auto;padding:0 24px}
+.noise{position:fixed;inset:0;z-index:120;pointer-events:none;opacity:.045;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+.skip{position:absolute;left:-999px;top:8px;background:var(--deep);color:#fff;padding:10px 18px;border-radius:10px;z-index:200}
+.skip:focus{left:8px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+h1,h2,h3,h4,.logo-word{font-family:var(--fd)}
+h2.sec-title{font-size:clamp(28px,3.4vw,42px);line-height:1.12;color:var(--deep);font-weight:800;letter-spacing:-.01em}
+.sec-lede{color:var(--txt-soft);font-size:17px;max-width:58ch}
+.sec-head{max-width:680px;margin:0 auto 26px;text-align:center}
+.sec-head .sec-lede{margin:12px auto 0}
+/* ============ BUTTONS ============ */
+.btn{display:inline-flex;align-items:center;gap:10px;font-weight:600;font-size:15px;border-radius:14px;padding:14px 26px;border:1.5px solid transparent;transition:transform .25s ease,box-shadow .25s ease,background .25s,color .25s}
+.btn svg{transition:transform .25s}
+.btn:hover svg{transform:translateX(4px)}
+.btn-primary{background:var(--mint);color:#052a22}
+.btn-primary:hover{background:var(--mint-2);transform:translateY(-2px);box-shadow:0 12px 28px rgba(20,179,148,.35)}
+.btn-ghost{border-color:var(--deep);color:var(--deep);background:transparent}
+.btn-ghost:hover{background:var(--deep);color:#fff;transform:translateY(-2px)}
+:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+/* ============ HEADER ============ */
+header.site{position:sticky;top:0;z-index:100;background:rgba(247,250,248,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);transition:box-shadow .3s}
+header.site.scrolled{box-shadow:0 10px 30px rgba(11,46,54,.1)}
+.nav-in{display:flex;align-items:center;gap:30px;height:74px}
+.logo{display:flex;align-items:center;gap:11px;font-weight:800;font-size:22px;color:var(--deep);letter-spacing:-.02em}
+.logo-mark{width:38px;height:38px;flex:none}
+.nav-links{display:flex;gap:26px;margin-left:44px}
+.nav-links a{font-weight:600;font-size:15px;color:var(--ink);position:relative;padding:6px 0}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:0;height:2.5px;width:100%;background:var(--mint);border-radius:2px;transform:scaleX(0);transform-origin:left;transition:transform .3s ease}
+.nav-links a:hover::after,.nav-links a:focus-visible::after{transform:scaleX(1)}
+.nav-links a[aria-current="page"]{color:var(--mint-text)}
+.nav-links a[aria-current="page"]::after{transform:scaleX(1)}
+.nav-actions{display:flex;align-items:center;gap:12px;margin-left:auto}
+.nav-actions .btn{padding:11px 20px;font-size:14px}
+.nav-actions .btn-ghost{padding:10px 18px}
+.burger{display:none;margin-left:auto;background:none;border:0;width:44px;height:44px;position:relative;z-index:130}
+.burger span{position:absolute;left:10px;right:10px;height:2.5px;border-radius:2px;background:var(--deep);transition:.35s ease}
+.burger span:nth-child(1){top:15px}.burger span:nth-child(2){top:22px}.burger span:nth-child(3){top:29px}
+.burger.open span:nth-child(1){top:22px;transform:rotate(45deg)}
+.burger.open span:nth-child(2){opacity:0}
+.burger.open span:nth-child(3){top:22px;transform:rotate(-45deg)}
+.mobile-menu{position:fixed;inset:0;z-index:110;background:var(--paper);padding:20px 28px 40px;transform:translateY(-102%);transition:transform .5s cubic-bezier(.7,0,.3,1);display:flex;flex-direction:column;gap:6px;overflow:auto}
+.mobile-menu.open{transform:translateY(0)}
+.mobile-menu-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.mobile-close{background:none;border:1.5px solid var(--line);border-radius:12px;width:44px;height:44px;display:grid;place-items:center;color:var(--deep);flex:none}
+.mobile-close:hover{background:var(--deep);color:#fff;border-color:var(--deep)}
+.mobile-menu a.mlink{font-family:var(--fd);font-weight:700;font-size:26px;color:var(--deep);padding:12px 0;border-bottom:1px dashed var(--line)}
+.mobile-menu a.mlink[aria-current="page"]{color:var(--mint-text)}
+.mobile-menu .m-cta{margin-top:22px;display:flex;flex-direction:column;gap:12px}
+/* ============ HERO ============ */
+.hero{position:relative;padding:52px 0 84px;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 520'%3E%3Cpath d='M20 480 L150 480 L150 400 L300 400 L300 320 L450 320 L450 240 L600 240 L600 160 L760 160' stroke='%230b2e36' stroke-width='2' fill='none' opacity='0.16'/%3E%3Ccircle cx='150' cy='400' r='5' fill='%2314b394' opacity='0.4'/%3E%3Ccircle cx='300' cy='320' r='5' fill='%2314b394' opacity='0.4'/%3E%3Ccircle cx='450' cy='240' r='5' fill='%2314b394' opacity='0.4'/%3E%3Ccircle cx='600' cy='160' r='6' fill='%23ff7a59' opacity='0.55'/%3E%3C/svg%3E");
+  background-size:800px 520px;background-repeat:no-repeat;background-position:6% 26%;
+  -webkit-mask-image:radial-gradient(ellipse 70% 60% at 60% 30%,#000 30%,transparent 75%);
+  mask-image:radial-gradient(ellipse 70% 60% at 60% 30%,#000 30%,transparent 75%)}
+.hero::after{content:"";position:absolute;top:-160px;right:-160px;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,rgba(62,209,168,.18),transparent 65%);pointer-events:none}
+.crumb{position:relative;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--txt-soft);margin-bottom:22px}
+.crumb a:hover{color:var(--mint-text)}
+.crumb span[aria-current]{color:var(--deep)}
+.crumb i{width:4px;height:4px;border-radius:50%;background:var(--line)}
+.hero-grid{position:relative;display:grid;grid-template-columns:1.02fr .98fr;gap:56px;align-items:center}
+.hero h1{font-size:clamp(31px,4.1vw,49px);line-height:1.06;color:var(--deep);font-weight:800;letter-spacing:-.02em;margin:0 0 22px}
+.hl-line{display:block;overflow:hidden;padding-bottom:.08em}
+.hl-line>span{display:block;transform:translateY(112%);animation:rise .9s cubic-bezier(.2,.75,.2,1) forwards;animation-delay:var(--d,0s)}
+@keyframes rise{to{transform:translateY(0)}}
+.hl{color:var(--mint-text);position:relative;white-space:nowrap;font-family:var(--fd)}
+.hl svg{position:absolute;left:0;bottom:-.18em;width:100%;height:.32em;overflow:visible}
+.hl path{stroke:var(--amber);stroke-width:5;fill:none;stroke-linecap:round;stroke-dasharray:320;stroke-dashoffset:320;animation:draw 1s ease 1.05s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.lede{color:var(--txt-soft);font-size:18px;max-width:52ch}
+.hero-search{display:flex;gap:10px;margin-top:30px;max-width:520px;flex-wrap:wrap}
+.search-wrap{flex:1;min-width:240px;position:relative;display:flex;align-items:center}
+.search-wrap svg{position:absolute;left:16px;color:var(--txt-soft);pointer-events:none}
+.hero-search input{width:100%;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:14px 16px 14px 44px;font-size:15px;color:var(--ink);outline:none;transition:.25s;box-shadow:var(--card-shadow)}
+.hero-search input::placeholder{color:#8ba3a8}
+.hero-search input:focus{border-color:var(--mint)}
+.hero-quick{margin-top:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--txt-soft)}
+.hero-quick button{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600;color:var(--deep);transition:.2s}
+.hero-quick button:hover{border-color:var(--mint);color:var(--mint-text);transform:translateY(-1px)}
+.hero-stats{margin-top:34px;display:flex;gap:30px;flex-wrap:wrap}
+.hstat b{display:block;font-family:var(--fd);font-size:30px;font-weight:800;color:var(--deep);line-height:1.1;letter-spacing:-.02em}
+.hstat span{font-size:12.5px;font-weight:600;color:var(--txt-soft)}
+.hstat i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;vertical-align:middle}
+.hstat.j i{background:var(--mint)}
+.hstat.l i{background:var(--amber)}
+.hstat.c i{background:var(--coral)}
+.hero-proof{margin-top:26px;font-size:13px;color:var(--txt-soft);display:flex;align-items:center;gap:9px}
+.hero-proof svg{color:var(--mint);flex:none}
+.hero-proof b{color:var(--deep)}
+/* ============ BOARD ============ */
+.board-sec{padding:96px 0 40px}
+.board-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:28px}
+.board-head .sec-lede{margin-top:12px}
+.sample-badge{display:inline-flex;align-items:center;gap:7px;font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--amber-text);background:var(--amber-soft);border-radius:999px;padding:5px 12px;margin-bottom:14px}
+.board-shell{background:#fff;border:1px solid var(--line);border-radius:28px;box-shadow:var(--card-shadow);overflow:hidden}
+.board-bar{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;background:var(--paper);border-radius:14px;padding:4px;flex-wrap:wrap}
+.tab{border:0;background:transparent;font-family:var(--fd);font-weight:700;font-size:13px;color:var(--txt-soft);padding:9px 15px;border-radius:11px;transition:.22s;display:inline-flex;align-items:center;gap:7px}
+.tab em{font-style:normal;font-size:11px;font-weight:700;background:rgba(11,46,54,.08);border-radius:999px;padding:1px 7px;color:var(--txt-soft)}
+.tab:hover{color:var(--deep)}
+.tab.on{background:var(--deep);color:#fff;box-shadow:0 6px 16px rgba(11,46,54,.18)}
+.tab.on em{background:rgba(255,255,255,.16);color:#fff}
+.board-search{margin-left:auto;position:relative;display:flex;align-items:center;min-width:230px}
+.board-search svg{position:absolute;left:13px;color:var(--txt-soft);pointer-events:none}
+.board-search input{width:100%;border:1.5px solid var(--line);background:var(--paper);border-radius:12px;padding:10px 12px 10px 38px;font-size:13.5px;color:var(--ink);outline:none;transition:.25s}
+.board-search input:focus{border-color:var(--mint);background:#fff}
+.filter-bar{padding:14px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--paper)}
+.filter-label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-soft);margin-right:2px}
+.fchip{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:600;color:var(--deep);transition:.2s;display:inline-flex;align-items:center;gap:6px}
+.fchip:hover{border-color:var(--mint);transform:translateY(-1px)}
+.fchip.on{background:var(--deep);border-color:var(--deep);color:#fff}
+.fchip.on svg{color:var(--mint-2)}
+.fchip.soon.on{background:var(--coral);border-color:var(--coral);color:#fff}
+.fdiv{width:1px;height:22px;background:var(--line);margin:0 4px}
+.fclear{background:none;border:0;font-size:12.5px;font-weight:600;color:var(--mint-text);padding:7px 6px}
+.fclear:hover{text-decoration:underline}
+.board-count{padding:14px 22px 0;font-size:12.5px;color:var(--txt-soft);font-weight:500}
+.board-count b{color:var(--deep);font-weight:700}
+.board-list{padding:16px 22px 22px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.card{min-width:0;border:1px solid var(--line);border-radius:18px;padding:18px 20px;background:#fff;transition:transform .22s,box-shadow .22s,border-color .22s;position:relative}
+.card:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(11,46,54,.1);border-color:rgba(11,46,54,.2)}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:8px}
+.card h4{font-size:16px;line-height:1.35;color:var(--deep);font-weight:700;letter-spacing:-.01em}
+.card-badges{display:flex;gap:6px;flex:none;align-items:center}
+.type-tag{font-family:var(--fd);font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:4px 10px;white-space:nowrap}
+.type-job{background:var(--mint-soft);color:#0b7a63}
+.type-locum{background:var(--amber-soft);color:var(--amber-text)}
+.type-conf{background:var(--coral-soft);color:var(--coral-text)}
+.src-tag{font-size:10px;font-weight:700;color:var(--txt-soft);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:4px 8px;white-space:nowrap}
+.card-meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--txt-soft);margin-bottom:14px}
+.card-meta span{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%}
+.card-meta svg{color:#8ba3a8;flex:none}
+.card-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:13px;border-top:1px dashed var(--line)}
+.deadline{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--txt-soft)}
+.dpill{font-family:var(--fd);font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--paper);color:var(--txt-soft);border:1px solid var(--line)}
+.dpill.warm{background:var(--amber-soft);color:var(--amber-text);border-color:transparent}
+.dpill.hot{background:var(--coral);color:#fff;border-color:transparent}
+.rate{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--mint-text)}
+.rate-none{font-size:12.5px;color:#8ba3a8;font-weight:500;font-style:italic}
+.card-foot .card-link{margin-left:auto}
+.card-link{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--mint-text);white-space:nowrap}
+.card-link:hover{color:var(--deep)}
+.card-link svg{transition:transform .2s}
+.card:hover .card-link svg{transform:translate(2px,-2px)}
+.empty{padding:46px 22px;text-align:center;color:var(--txt-soft)}
+.empty b{display:block;font-family:var(--fd);color:var(--deep);font-size:16px;margin-bottom:6px}
+.board-foot{padding:20px 22px;border-top:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.board-foot p{font-size:12.5px;color:var(--txt-soft);max-width:56ch}
+.board-foot-links{display:flex;gap:10px;flex-wrap:wrap}
+.mini-link{display:inline-flex;align-items:center;gap:7px;font-family:var(--fd);font-size:12.5px;font-weight:700;color:var(--deep);background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 15px;transition:.2s}
+.mini-link:hover{border-color:var(--mint);color:var(--mint-text);transform:translateY(-2px)}
+@media(max-width:760px){
+  .board-search{margin-left:0;width:100%}
+  .card-foot{align-items:flex-start}
+}
+/* ============ ALERTS ============ */
+.alerts-sec{padding:96px 0}
+.alert-card{display:grid;grid-template-columns:1.05fr .95fr;border-radius:30px;overflow:hidden;box-shadow:var(--shadow);background:var(--deep);color:#fff}
+.alert-body{padding:52px 52px 46px}
+.alert-body h2{font-size:clamp(25px,3vw,36px);font-weight:800;line-height:1.15;margin-bottom:12px;font-family:var(--fd);letter-spacing:-.01em}
+.alert-body>p{color:#b9d8d0;max-width:46ch}
+.alert-form{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}
+.alert-form input{flex:1;min-width:210px;border-radius:14px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;padding:14px 18px;font-size:15px;outline:none;transition:.25s}
+.alert-form input::placeholder{color:#8fb5ac}
+.alert-form input:focus{border-color:var(--mint-2);background:rgba(255,255,255,.12)}
+.form-error{display:none;margin-top:10px;font-size:12.5px;font-weight:600;color:#ffb199}
+.form-error.show{display:block}
+.form-ok{display:none;margin-top:26px;background:rgba(62,209,168,.14);border:1px solid rgba(62,209,168,.5);color:#c9f5e7;border-radius:14px;padding:14px 18px;font-weight:600}
+.form-ok.show{display:flex;gap:10px;align-items:center;animation:pop .45s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.alert-note{margin-top:16px;font-size:12.5px;color:#8fb5ac}
+.alert-preview{background:rgba(255,255,255,.05);border-left:1px solid rgba(255,255,255,.12);padding:46px 44px;display:flex;flex-direction:column;justify-content:center}
+.ap-label{font-family:var(--fd);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8fb5ac;margin-bottom:14px}
+.ap-mail{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.28)}
+.ap-mail-top{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+.ap-mail-top b{font-family:var(--fd);font-size:12.5px;color:var(--deep)}
+.ap-mail-top span{margin-left:auto;font-size:10.5px;color:var(--txt-soft)}
+.ap-row{padding:13px 18px;border-bottom:1px dashed var(--line);display:flex;align-items:center;gap:11px}
+.ap-row:last-child{border-bottom:0}
+.ap-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.ap-row b{font-size:12.5px;color:var(--deep);font-weight:600;line-height:1.35}
+.ap-row small{margin-left:auto;font-size:10.5px;color:var(--txt-soft);font-weight:600;white-space:nowrap;flex:none}
+@media(max-width:940px){
+  .alert-card{grid-template-columns:1fr}
+  .alert-preview{border-left:0;border-top:1px solid rgba(255,255,255,.12)}
+}
+@media(max-width:640px){.alert-body{padding:38px 26px}.alert-preview{padding:34px 26px}}
+/* ============ FAQ ============ */
+.faq-sec{padding:0 0 100px}
+.faq-list{max-width:760px;margin:44px auto 0;border-top:1px solid var(--line)}
+.faq-item{border-bottom:1px solid var(--line)}
+.faq-item summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 4px;cursor:pointer;font-family:var(--fd);font-weight:700;font-size:16px;color:var(--deep)}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary:hover{color:var(--mint-text)}
+.faq-icon{flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;color:var(--deep);transition:transform .25s,background .25s,border-color .25s,color .25s}
+.faq-item[open] .faq-icon{background:var(--deep);border-color:var(--deep);color:#fff;transform:rotate(45deg)}
+.faq-item p{padding:0 34px 24px 4px;color:var(--txt-soft);font-size:15px;max-width:62ch}
+/* ============ FOOTER ============ */
+footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
+.f-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;gap:40px}
+.f-brand .logo{color:#fff}
+.f-brand p{font-size:14px;margin:18px 0 22px;max-width:34ch}
+.news-form{display:flex;gap:8px;max-width:340px}
+.news-form input{flex:1;border-radius:12px;border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);padding:11px 14px;color:#fff;font-size:14px;outline:none;transition:.25s}
+.news-form input:focus{border-color:var(--mint-2)}
+.news-form button{border:0;border-radius:12px;background:var(--mint);color:#052a22;font-weight:700;padding:11px 16px;transition:.25s}
+.news-form button:hover{background:var(--mint-2)}
+.news-ok{display:none;font-size:13px;color:var(--mint-2);font-weight:600;margin-top:10px}
+.news-ok.show{display:block}
+.f-col h5{color:#fff;font-family:var(--fd);font-size:14px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:18px}
+.f-col ul{display:grid;gap:11px}
+.f-col a{font-size:14px;transition:.2s;position:relative}
+.f-col a:hover{color:#fff;padding-left:12px}
+.f-col a::before{content:"\2192";position:absolute;left:-6px;opacity:0;transition:.2s;color:var(--mint-2)}
+.f-col a:hover::before{left:0;opacity:1}
+.f-bottom{border-top:1px solid rgba(255,255,255,.08);margin-top:60px;padding:24px 0;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;font-size:13px}
+.f-legal{display:flex;gap:22px;flex-wrap:wrap}
+.f-legal a:hover{color:#fff}
+.f-disclaimer{padding:0 0 26px;font-size:12px;color:#6d938c;max-width:900px}
+.to-top{position:fixed;right:26px;bottom:26px;width:50px;height:50px;border-radius:16px;border:0;background:var(--deep);color:var(--mint-2);display:grid;place-items:center;box-shadow:0 14px 34px rgba(11,46,54,.3);opacity:0;pointer-events:none;transform:translateY(14px);transition:.35s;z-index:90}
+.to-top.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+.to-top:hover{background:var(--mint);color:#052a22}
+[data-reveal]{opacity:0;transform:translateY(28px);transition:opacity .8s ease var(--d,0s),transform .8s cubic-bezier(.2,.7,.2,1) var(--d,0s)}
+[data-reveal].is-in{opacity:1;transform:none}
+/* ============ RESPONSIVE ============ */
+/* the nav needs more room than the 960px breakpoint gives it: between 961 and
+   970px the links and the two buttons overflow the header by up to 39px */
+@media(max-width:1000px){
+  .nav-links,.nav-actions .btn{display:none}
+  .burger{display:block}
+}
+@media(max-width:1020px){.f-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:960px){
+  .nav-links,.nav-actions .btn{display:none}
+  .burger{display:block}
+  .hero-grid{grid-template-columns:1fr;gap:64px}
+  .chip{display:none}
+}
+@media(max-width:560px){
+  .card-head{flex-direction:column-reverse;align-items:flex-start;gap:9px}
+}
+@media(max-width:640px){
+  .hero::before{display:none}
+  .f-grid{grid-template-columns:1fr}
+  .board-bar,.filter-bar,.board-list,.board-foot,.board-count{padding-left:16px;padding-right:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .hl-line>span{transform:none}
+  [data-reveal]{opacity:1;transform:none}
+  .hl path{stroke-dashoffset:0}
+  .is-in .mock-bar i{width:72%}
+}
+/* ============ ROADMAP COMPONENTS (from the homepage) ============ */
+.ms-example-badge{font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8a5a10;background:var(--amber-soft);border-radius:999px;padding:4px 10px}
+.rd-label{font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--txt-soft);margin-bottom:10px}
+.rd-ladder{border:1px solid var(--line);border-radius:16px;padding:6px 16px;margin-bottom:16px}
+.rd-step{display:flex;align-items:center;gap:10px;padding:11px 0;font-size:13.5px;font-weight:600;color:var(--deep);position:relative;opacity:0;transform:translateY(8px);transition:opacity .4s ease var(--rd,0s),transform .4s cubic-bezier(.2,.7,.2,1) var(--rd,0s)}
+.rd-step.in{opacity:1;transform:none}
+.rd-step+.rd-step{border-top:1px dashed #e2ede8}
+.rd-step .st{width:22px;height:22px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:11px}
+.rd-step.done .st{background:var(--mint-soft);color:#0b7a63}
+.rd-step.todo .st{background:#eef4f1;color:#9ab3ac}
+.rd-step.todo{color:#7d979c}
+.rd-step.next .st{background:var(--coral);color:#fff;position:relative}
+.rd-step.next .st::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(255,122,89,.5);animation:ring 1.8s ease-out infinite}
+.rd-step small{margin-left:auto;font-size:10.5px;color:#607b81;font-weight:600}
+.rd-step.next small{color:#c05539}
+.rd-check-card{background:var(--mint-soft);border-radius:16px;padding:14px 18px;margin-bottom:16px}
+.rd-check-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;font-weight:600;color:var(--deep);opacity:0;transform:translateY(8px);transition:opacity .4s ease var(--rd,0s),transform .4s cubic-bezier(.2,.7,.2,1) var(--rd,0s)}
+.rd-check-row small{margin-left:auto;font-size:10.5px;color:#607b81;font-weight:600;flex:none}
+.rd-check-row.in{opacity:1;transform:none}
+.rd-check-row .ck{width:18px;height:18px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:10px}
+.rd-check-row.have .ck{background:#0b7a63;color:#fff}
+.rd-check-row.missing .ck{background:var(--coral);color:#fff}
+.rd-check-row.missing{color:#7d979c}
+.rd-next{background:var(--deep);color:#e7f6f0;border-radius:14px;padding:14px 16px;font-size:13px;margin-bottom:20px;opacity:0;transform:translateY(8px);transition:opacity .4s ease .3s,transform .4s cubic-bezier(.2,.7,.2,1) .3s}
+.rd-next.in{opacity:1;transform:none}
+.rd-next-row{display:flex;justify-content:space-between;align-items:center}
+.rd-next-row b{font-family:var(--fd);font-size:13px}
+.rd-eta{background:rgba(62,209,168,.18);color:var(--mint-2);font-weight:700;border-radius:999px;padding:3px 10px;font-size:10.5px;white-space:nowrap}
+.rd-next-sub{color:#9fc4bb;font-size:11.5px;margin-top:4px}
+
+/* ============ CAREER TOOLS ============ */
+.ct-hero{position:relative;padding:56px 0 64px;text-align:center;overflow:hidden}
+.ct-hero::after{content:"";position:absolute;top:-200px;left:50%;width:820px;height:560px;transform:translateX(-50%);background:radial-gradient(ellipse at top,rgba(20,179,148,.13),transparent 70%);pointer-events:none}
+.ct-hero .container{position:relative}
+.ct-hero .crumb{justify-content:center}
+.ct-hero h1{font-size:clamp(32px,4.4vw,52px);line-height:1.08;color:var(--deep);font-weight:800;letter-spacing:-.02em;margin-bottom:20px}
+.ct-hero .lede{margin:0 auto;font-size:17px;max-width:52ch}
+.ct-cta{margin-top:30px;display:flex;gap:13px;justify-content:center;flex-wrap:wrap}
+.ct-note{margin-top:13px;font-size:12.5px;color:var(--txt-soft)}
+.ct-pills{margin-top:34px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.ct-pills span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 15px;font-size:12.5px;font-weight:600;color:var(--txt-soft);box-shadow:var(--card-shadow)}
+/* one profile, set once, drives every tool on the page */
+.profilebar{position:sticky;top:74px;z-index:50;background:var(--deep);color:#fff}
+.profilebar-in{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:15px 0}
+.pf-label{font-family:var(--fd);font-size:14.5px;font-weight:700;white-space:nowrap}
+.pf-select{position:relative;display:inline-flex}
+.pf-select select{appearance:none;-webkit-appearance:none;font-family:var(--fd);font-size:14px;font-weight:700;color:#052a22;background:var(--mint-2);border:0;border-radius:12px;padding:10px 40px 10px 16px;cursor:pointer;outline:none}
+.pf-select select:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.pf-select::after{content:"";position:absolute;right:17px;top:44%;width:7px;height:7px;border-right:2.5px solid #052a22;border-bottom:2.5px solid #052a22;transform:translateY(-50%) rotate(45deg);pointer-events:none}
+.pf-note{margin-left:auto;font-size:12px;color:#8fb5ac;display:flex;align-items:center;gap:8px}
+.pf-note i{width:7px;height:7px;border-radius:50%;background:var(--mint-2);flex:none;animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+/* the worked example */
+.demo-sec{padding:34px 0 20px}
+.rm-panel{background:#fff;border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);padding:30px 34px}
+.rm-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+.rm-head h2{font-family:var(--fd);font-size:17px;font-weight:700;color:var(--deep)}
+.rm-head p{font-size:12.5px;color:var(--txt-soft);margin-top:3px}
+.rm-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:30px}
+.rm-grid .rd-ladder{margin-bottom:0}
+.rd-step.current .st{background:var(--mint);color:#052a22}
+.rd-step.current{color:var(--deep)}
+.rm-after{margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.rm-after p{font-size:13px;color:var(--txt-soft)}
+.rm-after b{color:var(--deep)}
+/* tools */
+.tools-sec{padding:24px 0 40px}
+.tools-label{font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt-soft);margin:34px 0 12px}
+.tools-label:first-child{margin-top:0}
+.tools-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.tool{position:relative;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px 22px;box-shadow:var(--card-shadow);transition:transform .22s,box-shadow .22s,border-color .22s,opacity .3s}
+.tool:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(11,46,54,.11);border-color:rgba(11,46,54,.2)}
+.tool.primary{grid-column:1 / -1;flex-direction:row;align-items:center;gap:22px;border-color:var(--mint);border-width:1.5px;background:linear-gradient(120deg,var(--mint-soft),#fff 55%)}
+.tool.primary .tool-body{flex:1;min-width:0}
+.tool.na{opacity:.5;box-shadow:none}
+.tool.na:hover{transform:none;box-shadow:none;border-color:var(--line)}
+.tool-ic{width:38px;height:38px;border-radius:12px;background:var(--paper);color:var(--txt-soft);display:grid;place-items:center;margin-bottom:14px;flex:none}
+.tool.primary .tool-ic{width:48px;height:48px;border-radius:15px;background:var(--mint);color:#052a22;margin-bottom:0}
+.tool h3{font-size:15px;color:var(--deep);font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.tool.primary h3{font-size:19px}
+.tool h3 em{font-style:normal;font-family:var(--fd);font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--mint);color:#052a22;border-radius:999px;padding:3px 9px}
+.tool>p,.tool-body>p{font-size:13px;color:var(--txt-soft);margin-top:6px}
+/* block, not flex: flex gaps would land a space before every comma */
+.tool-live{margin-top:auto;padding-top:13px;font-size:12.5px;font-weight:600;color:var(--deep);line-height:1.55}
+.tool:not(.primary) .tool-live{border-top:1px dashed var(--line);margin-top:14px}
+.tool.primary .tool-live{margin-top:12px;padding-top:0;border:0}
+.tool-live .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--mint);margin-right:8px;vertical-align:middle}
+.tool.na .tool-live .dot{background:#b9c8c4}
+.tool-live .num{font-family:var(--fd);font-weight:800;color:var(--mint-text)}
+.tool-bar{display:block;width:100%;height:6px;border-radius:99px;background:#e9f0ed;overflow:hidden;margin-top:9px}
+.tool-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--mint),var(--mint-2));transition:width .5s cubic-bezier(.3,.9,.3,1)}
+.tool-domains{display:grid;gap:7px;margin-top:10px;width:100%}
+.tdom{display:grid;grid-template-columns:74px 1fr 30px;align-items:center;gap:9px;font-size:11px;color:var(--txt-soft);font-weight:600}
+.tdom b{font-family:var(--fd);color:var(--deep);font-size:11.5px;text-align:right;font-variant-numeric:tabular-nums}
+.tdom .tbar{height:5px;border-radius:99px;background:#e9f0ed;overflow:hidden}
+.tdom .tbar i{display:block;height:100%;border-radius:99px;background:var(--mint);transition:width .5s cubic-bezier(.3,.9,.3,1)}
+/* what is free */
+.pricing-sec{padding:60px 0 90px}
+.price-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:34px}
+.price-card{background:#fff;border:1px solid var(--line);border-radius:24px;padding:30px 32px;box-shadow:var(--card-shadow)}
+.price-card.free{border-color:var(--mint);border-width:1.5px}
+.price-tag{display:inline-flex;font-family:var(--fd);font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;border-radius:999px;padding:5px 12px;margin-bottom:14px}
+.price-card.free .price-tag{background:var(--mint-soft);color:#0b7a63}
+.price-card.paid .price-tag{background:var(--amber-soft);color:var(--amber-text)}
+.price-card h3{font-size:18px;color:var(--deep);font-weight:700;margin-bottom:8px}
+.price-card>p{font-size:13.5px;color:var(--txt-soft);margin-bottom:18px}
+.price-list{display:grid;gap:10px}
+.price-list li{display:flex;gap:11px;align-items:flex-start;font-size:13.5px;color:var(--ink);font-weight:500}
+.price-list svg{flex:none;margin-top:3px;color:var(--mint)}
+.price-card.paid .price-list svg{color:var(--amber-text)}
+@media(max-width:980px){
+  .tools-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rm-grid{grid-template-columns:1fr;gap:24px}
+  .price-grid{grid-template-columns:1fr}
+}
+@media(max-width:620px){
+  .tools-grid{grid-template-columns:minmax(0,1fr)}
+  .tool.primary{flex-direction:column;align-items:flex-start;gap:14px}
+  .rm-panel{padding:24px 20px}
+  .profilebar-in{gap:9px}
+  .pf-note{margin-left:0;width:100%}
+  .profilebar{position:static}
+}
+</style>
+</head>
+<body>
+<div class="noise" aria-hidden="true"></div>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site" id="siteHeader">
+  <div class="container nav-in">
+    <a class="logo" href="/" aria-label="MedNav home">
+      <svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect x="2" y="2" width="36" height="36" rx="11" fill="#0b2e36"/>
+        <path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="24" r="4" fill="#ffc061"/>
+      </svg>
+      <span class="logo-word">MedNav</span>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/pathways">Pathways</a>
+      <a href="/preparation">Preparation</a>
+      <a href="/tools" aria-current="page">Career Tools</a>
+      <a href="/opportunities">Opportunities</a>
+      <a href="/sources">Resources</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="btn btn-ghost" href="/sign-in">Sign in</a>
+      <a class="btn btn-primary" href="/sign-up">Create free account</a>
+      <button class="burger" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mobile-menu-head">
+    <a class="logo" href="/" aria-label="MedNav home">
+      <svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect x="2" y="2" width="36" height="36" rx="11" fill="#0b2e36"/>
+        <path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="24" r="4" fill="#ffc061"/>
+      </svg>
+      <span class="logo-word">MedNav</span>
+    </a>
+    <button class="mobile-close" id="mobileCloseBtn" aria-label="Close menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <a class="mlink" href="/pathways">Pathways</a>
+  <a class="mlink" href="/preparation">Preparation</a>
+  <a class="mlink" href="/tools" aria-current="page">Career Tools</a>
+  <a class="mlink" href="/opportunities">Opportunities</a>
+  <a class="mlink" href="/sources">Resources</a>
+  <div class="m-cta">
+    <a class="btn btn-primary" href="/sign-up">Create free account</a>
+    <a class="btn btn-ghost" href="/sign-in">Sign in</a>
+  </div>
+</div>
+
+<main id="main">
+
+<section class="ct-hero">
+  <div class="container">
+    <nav class="crumb" aria-label="Breadcrumb">
+      <a href="/">MedNav</a><i aria-hidden="true"></i><span aria-current="page">Career Tools</span>
+    </nav>
+    <h1>
+      <span class="hl-line"><span style="--d:.05s">Your route, <span class="hl">mapped<svg viewBox="0 0 220 20" preserveAspectRatio="none" aria-hidden="true"><path d="M4 14 C 60 6, 160 6, 216 12"/></svg></span>.</span></span>
+      <span class="hl-line"><span style="--d:.2s">And every tool to move along it.</span></span>
+    </h1>
+    <p class="lede">Seven tools, one profile. Tell MedNav your stage and your target once and the ladder, the gaps, the score and the deadlines all work off it. Change either one and everything recalculates.</p>
+    <div class="ct-cta">
+      <a class="btn btn-primary" href="/sign-up">Create free account
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <a class="btn btn-ghost" href="#try">Try it below</a>
+    </div>
+    <p class="ct-note">Free to start. No card required.</p>
+    <div class="ct-pills" aria-hidden="true">
+      <span>My roadmap</span><span>Gap analyser</span><span>Application readiness</span><span>Shortlisting score</span><span>Deadlines</span><span>Specialty explorer</span><span>Intern post explorer</span>
+    </div>
+  </div>
+</section>
+
+<div class="profilebar" id="try">
+  <div class="container profilebar-in">
+    <span class="pf-label">I am a</span>
+    <span class="pf-select">
+      <label class="sr-only" for="stage">Your stage</label>
+      <select id="stage"></select>
+    </span>
+    <span class="pf-label">aiming for</span>
+    <span class="pf-select">
+      <label class="sr-only" for="specialty">Your target specialty</label>
+      <select id="specialty"></select>
+    </span>
+    <span class="pf-note"><i aria-hidden="true"></i>No account needed. Everything below recalculates as you change these.</span>
+  </div>
+</div>
+
+<section class="demo-sec">
+  <div class="container">
+    <div class="rm-panel">
+      <div class="rm-head">
+        <div>
+          <h2 id="rmTitle">Your route to consultant</h2>
+          <p id="rmSub">Four rungs, and the one you are standing on.</p>
+        </div>
+        <span class="ms-example-badge">Example</span>
+      </div>
+      <div class="rm-grid">
+        <div>
+          <p class="rd-label">Your ladder</p>
+          <div class="rd-ladder" id="ladder"></div>
+        </div>
+        <div>
+          <div class="rd-next" id="nextStep"></div>
+          <p class="rd-label">Gaps at this stage</p>
+          <div class="rd-check-card" id="gaps"></div>
+        </div>
+      </div>
+      <div class="rm-after">
+        <p>This is an illustrative example. <b>Your</b> roadmap is built from your real record, and every date in it is checked against the college that published it.</p>
+        <a class="btn btn-primary" href="/sign-up">Build my real roadmap
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="tools-sec">
+  <div class="container">
+    <p class="tools-label">Your pathway</p>
+    <div class="tools-grid" id="pathwayTools"></div>
+    <p class="tools-label">Your readiness</p>
+    <div class="tools-grid" id="readinessTools"></div>
+  </div>
+</section>
+
+<section class="pricing-sec">
+  <div class="container">
+    <div class="sec-head" data-reveal>
+      <h2 class="sec-title">What costs nothing, and what does not</h2>
+      <p class="sec-lede">Knowing where you stand should not be behind a paywall. It is the interview prep that costs money, and only for the interview you are actually sitting.</p>
+    </div>
+    <div class="price-grid">
+      <div class="price-card free" data-reveal style="--d:.05s">
+        <span class="price-tag">Free with an account</span>
+        <h3>Everything on this page</h3>
+        <p>All seven tools, kept current as colleges publish new criteria and dates.</p>
+        <ul class="price-list">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Your roadmap, position and next step</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Gap analyser and application readiness</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Shortlisting score against published criteria</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Deadlines, checklists and both explorers</li>
+        </ul>
+      </div>
+      <div class="price-card paid" data-reveal style="--d:.12s">
+        <span class="price-tag">Paid, per programme</span>
+        <h3>Interview preparation</h3>
+        <p>Question banks built on the scoring criteria a specific programme publishes.</p>
+        <ul class="price-list">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Priced per programme, not as a subscription</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>You only pay for the interview you are sitting</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Nothing on this page is gated behind it</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="faq-sec" id="faq" style="padding:0 0 100px">
+  <div class="container">
+    <div class="sec-head" data-reveal>
+      <h2 class="sec-title">Before you create an account</h2>
+      <p class="sec-lede">What doctors ask about the tools.</p>
+    </div>
+    <div class="faq-list" data-reveal style="--d:.08s">
+      <details class="faq-item">
+        <summary>Do I need an account to use the career tools?
+          <span class="faq-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <p>The worked example on this page runs without one. A roadmap tied to your own profile needs a free account, because it is saved to you and kept current as colleges publish new criteria and dates.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Where do the scoring criteria come from?
+          <span class="faq-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <p>Published entry criteria from RCPI, RCSI, ICGP, the College of Psychiatrists and HSE NDTP. Where a college has not published the current cycle's criteria yet, we mark the gap rather than estimate it.</p>
+      </details>
+      <details class="faq-item">
+        <summary>What do the career tools cost?
+          <span class="faq-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <p>Your roadmap, gap analyser, application readiness, shortlisting score, deadlines and both explorers are free with an account. Interview preparation question banks are priced per programme, so you only pay for the interview you are actually sitting.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Does it work if I qualified outside Ireland?
+          <span class="faq-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <p>Yes. Choose Qualified abroad above and the ladder changes: IMC registration and Irish clinical experience come before the training rungs, because that is the route that actually applies.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Can I change my target specialty later?
+          <span class="faq-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <p>At any time. Everything recalculates against the new target and nothing you have already recorded is lost, so you can compare two routes before committing to either.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="alerts-sec" style="padding:0 0 96px">
+  <div class="container">
+    <div class="alert-card" data-reveal>
+      <div class="alert-body">
+        <h2>Stop guessing where you stand.</h2>
+        <p>Create your account, answer a few questions, and the example above becomes your own roadmap, with your gaps and your dates checked against the colleges that set them.</p>
+        <form class="alert-form" id="alertForm" novalidate>
+          <label class="sr-only" for="alertEmail">Email address</label>
+          <input type="email" id="alertEmail" placeholder="Your email" aria-describedby="alertError" required>
+          <button class="btn btn-primary" type="submit">Create free account
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </form>
+        <p class="form-error" id="alertError" role="alert">Enter a valid email address.</p>
+        <p class="form-ok" id="alertOk"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Check your inbox. Click the magic link to set your password and finish creating your account.</p>
+        <p class="alert-note">No card required. Nothing on this page is behind the paywall.</p>
+      </div>
+      <div class="alert-preview" aria-hidden="true">
+        <p class="ap-label">What you get in under a minute</p>
+        <div class="ap-mail">
+          <div class="ap-mail-top">
+            <svg width="17" height="17" viewBox="0 0 40 40" fill="none"><rect x="2" y="2" width="36" height="36" rx="11" fill="#0b2e36"/><path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="24" r="4" fill="#ffc061"/></svg>
+            <b id="apTitle">Your roadmap is ready</b><span>Free</span>
+          </div>
+          <div class="ap-row"><span class="ap-dot" style="background:#14b394"></span><b id="apLine1">Your position on the ladder</b><small>Set</small></div>
+          <div class="ap-row"><span class="ap-dot" style="background:#ffc061"></span><b id="apLine2">Your gaps, weighted</b><small>Scored</small></div>
+          <div class="ap-row"><span class="ap-dot" style="background:#ff7a59"></span><b id="apLine3">Your next deadline</b><small>Tracked</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site" id="footer">
+  <div class="container">
+    <div class="f-grid">
+      <div class="f-brand">
+        <a class="logo" href="/" aria-label="MedNav home">
+          <svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="11" fill="#12404c"/><path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="24" r="4" fill="#ffc061"/></svg>
+          <span class="logo-word">MedNav</span>
+        </a>
+        <p>Know exactly what to do next in your medical career, from wherever you are now, to consultant.</p>
+        <form class="news-form" id="newsForm" novalidate>
+          <label class="sr-only" for="newsEmail">Newsletter email</label>
+          <input type="email" id="newsEmail" placeholder="Application-window alerts, monthly" aria-describedby="newsEmailError" required>
+          <button type="submit" aria-label="Subscribe">&rarr;</button>
+        </form>
+        <p class="form-error" id="newsEmailError" role="alert">Enter a valid email address.</p>
+        <p class="news-ok" id="newsOk">You're on the list. We'll ping you when windows open.</p>
+      </div>
+      <div class="f-col">
+        <h5>Opportunities</h5>
+        <ul>
+          <li><a href="../opportunities/jobs.html">Jobs</a></li>
+          <li><a href="../opportunities/locums.html">Locums</a></li>
+          <li><a href="../opportunities/conferences.html">Conferences &amp; courses</a></li>
+          <li><a href="../opportunities/index.html#alerts">Job alerts</a></li>
+          <li><a href="/opportunities/submit">Submit an event</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h5>Career Tools</h5>
+        <ul>
+          <li><a href="/tools">Roadmap</a></li>
+          <li><a href="/tools">Gap analyser</a></li>
+          <li><a href="/tools">Shortlisting score</a></li>
+          <li><a href="/tools">Deadlines</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h5>Pathways</h5>
+        <ul>
+          <li><a href="/pathways/specialties">All specialties</a></li>
+          <li><a href="/pathways/programmes">All programmes</a></li>
+          <li><a href="/pathways/img">IMG pathways</a></li>
+          <li><a href="/pathways/return-to-ireland">Return to Ireland</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="/about">About MedNav</a></li>
+          <li><a href="/sources">Sources &amp; verification</a></li>
+          <li><a href="/blog">Blog</a></li>
+          <li><a href="/help">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="f-disclaimer">MedNav is an independent platform and is not affiliated with, or endorsed by, RCPI, RCSI, ICGP, the College of Psychiatrists, the IMC or the HSE. Listings are aggregated from public sources and linked, not hosted. Always verify details and criteria against the original posting before applying.</p>
+    <div class="f-bottom">
+      <span>&copy; <span id="yearNow">2026</span> MedNav. Built for Irish NCHDs.</span>
+      <div class="f-legal">
+        <a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/cookies">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+</button>
+
+
+<script>
+(function(){
+  "use strict";
+  var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- header, back to top ---------- */
+  var hdrEl = document.getElementById("siteHeader");
+  var toTopBtn = document.getElementById("toTop");
+  function onScrollHdr(){
+    hdrEl.classList.toggle("scrolled", window.scrollY > 8);
+    toTopBtn.classList.toggle("show", window.scrollY > 700);
+  }
+  window.addEventListener("scroll", onScrollHdr, {passive:true});
+  onScrollHdr();
+  toTopBtn.addEventListener("click", function(){ window.scrollTo({top:0, behavior: reducedMotion ? "auto" : "smooth"}); });
+
+  /* ---------- mobile menu ---------- */
+  var burgerBtn = document.getElementById("navToggle");
+  var mobilePanel = document.getElementById("mobileMenu");
+  function setMenu(open){
+    burgerBtn.classList.toggle("open", open);
+    mobilePanel.classList.toggle("open", open);
+    burgerBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    document.body.style.overflow = open ? "hidden" : "";
+    if (open){
+      var firstFocusable = mobilePanel.querySelector("a, button");
+      if (firstFocusable) firstFocusable.focus();
+    } else {
+      burgerBtn.focus();
+    }
+  }
+  burgerBtn.addEventListener("click", function(){ setMenu(!mobilePanel.classList.contains("open")); });
+  mobilePanel.querySelectorAll("a").forEach(function(linkEl){ linkEl.addEventListener("click", function(){ setMenu(false); }); });
+  document.getElementById("mobileCloseBtn").addEventListener("click", function(){ setMenu(false); });
+  document.addEventListener("keydown", function(ev){
+    if (!mobilePanel.classList.contains("open")) return;
+    if (ev.key === "Escape"){ setMenu(false); return; }
+    if (ev.key !== "Tab") return;
+    var focusables = Array.prototype.slice.call(mobilePanel.querySelectorAll("a, button"));
+    if (!focusables.length) return;
+    var first = focusables[0], last = focusables[focusables.length - 1];
+    if (ev.shiftKey && document.activeElement === first){ ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last){ ev.preventDefault(); first.focus(); }
+  });
+
+  /* ---------- reveal on scroll ---------- */
+  var revealEls = document.querySelectorAll("[data-reveal]");
+  if (reducedMotion || !("IntersectionObserver" in window)){
+    revealEls.forEach(function(el){ el.classList.add("is-in"); });
+  } else {
+    var revealObs = new IntersectionObserver(function(entries){
+      entries.forEach(function(entryItem){
+        if (entryItem.isIntersecting){ entryItem.target.classList.add("is-in"); revealObs.unobserve(entryItem.target); }
+      });
+    }, {threshold:.15, rootMargin:"0px 0px -40px 0px"});
+    revealEls.forEach(function(el){ revealObs.observe(el); });
+  }
+
+
+  /* ---------- the profile engine ----------
+     TEMP: illustrative ladders, gaps, scores and dates. Not verified data.
+     Replace with the criteria service and drop the Example badge when it is. */
+  var SPECIALTIES = {
+    "Cardiology":         {body:"RCPI", exam:"MRCPI", bst:"BST General Internal Medicine", hst:"HST Cardiology", window:"14 Nov", cscst:"31 Jan", peers:"General medicine, nephrology, respiratory"},
+    "General Practice":   {body:"ICGP", exam:"MICGP", bst:"GP training, years 1 and 2", hst:"GP training, years 3 and 4", window:"9 Jan", cscst:"31 May", peers:"Paediatrics, psychiatry, emergency medicine"},
+    "Psychiatry":         {body:"College of Psychiatrists", exam:"MRCPsych", bst:"BST Psychiatry", hst:"HST Psychiatry", window:"21 Nov", cscst:"31 Jan", peers:"General practice, paediatrics, neurology"},
+    "Emergency Medicine": {body:"RCSI", exam:"MRCEM", bst:"BST Emergency Medicine", hst:"HST Emergency Medicine", window:"7 Nov", cscst:"28 Feb", peers:"Anaesthesiology, acute medicine, ICU"},
+    "General Surgery":    {body:"RCSI", exam:"MRCS", bst:"Core Surgical Training", hst:"HST General Surgery", window:"31 Oct", cscst:"28 Feb", peers:"Trauma and orthopaedics, urology, ENT"}
+  };
+
+  var STAGES = [
+    {id:"student", label:"Final-year student",       phrase:"a final-year student"},
+    {id:"intern",  label:"Intern",                    phrase:"an intern"},
+    {id:"sho",     label:"SHO or BST trainee",        phrase:"an SHO or BST trainee"},
+    {id:"reg",     label:"Registrar or HST trainee",  phrase:"a registrar or HST trainee"},
+    {id:"img",     label:"Doctor qualified abroad",   phrase:"a doctor who qualified abroad"}
+  ];
+
+  /* readiness and shortlisting are separate measures: readiness is how much of
+     the application is assembled, shortlisting is how it would score */
+  var STAGE_DATA = {
+    student: {readiness:null, readinessNote:"Window not open yet", score:null,
+              domains:null, deadline:{what:"Intern match preferences", when:"5 Dec", who:"HSE NDTP"}},
+    intern:  {readiness:25, score:22, domains:[["Exams",20],["Audit and QI",10],["Teaching",0]],
+              deadline:null},
+    sho:     {readiness:62, score:58, domains:[["Exams",70],["Audit and QI",35],["Teaching",50]],
+              deadline:null},
+    reg:     {readiness:84, score:87, domains:[["Exams",100],["Audit and QI",85],["Teaching",75]],
+              deadline:null},
+    img:     {readiness:31, score:24, domains:[["Exams",15],["Audit and QI",20],["Teaching",30]],
+              deadline:{what:"IMC registration", when:"rolling", who:"Irish Medical Council"}}
+  };
+
+  function gapsFor(stageId, sp){
+    if (stageId === "student") return [
+      {t:"Right starting point for this route", have:true},
+      {t:"Intern match preferences", have:false, note:"not submitted"}
+    ];
+    if (stageId === "intern") return [
+      {t:sp.exam + " Part 1", have:false, note:"not held"},
+      {t:"Audit or QI project", have:false, note:"none recorded"},
+      {t:"Teaching evidence", have:false, note:"0 of 4"}
+    ];
+    if (stageId === "sho") return [
+      {t:sp.exam + " Part 1", have:true, note:"held"},
+      {t:sp.exam + " Part 2", have:false, note:"not held"},
+      {t:"Audit and QI", have:false, note:"1 of 2"},
+      {t:"Teaching evidence", have:false, note:"2 of 4"}
+    ];
+    if (stageId === "reg") return [
+      {t:sp.exam + " complete", have:true, note:"held"},
+      {t:"Audit and QI", have:true, note:"2 of 2"},
+      {t:"Research output", have:false, note:"1 of 2"},
+      {t:"CSCST portfolio", have:false, note:"in progress"}
+    ];
+    return [
+      {t:"IMC registration route", have:false, note:"not confirmed"},
+      {t:"Irish clinical experience", have:false, note:"none recorded"},
+      {t:sp.exam + " Part 1", have:false, note:"not held"}
+    ];
+  }
+
+  /* the ladder itself differs for a doctor who qualified abroad, which is the
+     whole point: same grade title, different route */
+  function ladderFor(stageId, sp){
+    if (stageId === "img") return ["IMC registration", "Irish clinical experience", sp.bst, sp.hst, "CSCST"];
+    return ["Intern year", sp.bst, sp.hst, "CSCST"];
+  }
+  function currentRung(stageId){
+    return {student:-1, intern:0, sho:1, reg:2, img:0}[stageId];
+  }
+  function nextStepFor(stageId, sp){
+    if (stageId === "student") return {what:"Intern match preferences", when:"5 Dec", who:"HSE NDTP", sub:"Rank your intern posts before the match closes."};
+    if (stageId === "intern")  return {what:sp.bst + " applications", when:sp.window, who:sp.body, sub:"The application that moves you off intern year."};
+    if (stageId === "sho")     return {what:sp.hst + " applications", when:sp.window, who:sp.body, sub:"Scored against criteria " + sp.body + " publishes."};
+    if (stageId === "reg")     return {what:"CSCST submission", when:sp.cscst, who:sp.body, sub:"The last rung before a consultant post."};
+    return {what:"IMC registration decision", when:"rolling", who:"Irish Medical Council", sub:"Route and division decide everything after it."};
+  }
+
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  var state = {stage:"sho", specialty:"Cardiology"};
+
+  /* ---------- tool definitions: each reads the profile and reports live ---------- */
+  var ICONS = {
+    map:'<path d="M9 4L3 7v13l6-3 6 3 6-3V4l-6 3z"/><path d="M9 4v13M15 7v13"/>',
+    compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+    search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/>',
+    list:'<path d="M4 7h10M4 12h10M4 17h6"/><circle cx="18.5" cy="16.5" r="3"/><path d="M20.8 18.8L22.5 20.5"/>',
+    clip:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 13l2 2 4-4"/>',
+    target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/>',
+    cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'
+  };
+
+  function toolsFor(p){
+    var sp = p.sp, sd = STAGE_DATA[p.stage], gaps = p.gaps;
+    var missing = gaps.filter(function(g){ return !g.have; }).length;
+    var isStudent = p.stage === "student";
+    var deadline = sd.deadline || {what:p.next.what, when:p.next.when, who:p.next.who};
+
+    var pathway = [
+      {ic:"map", primary:true, name:"My roadmap", badge:"Start here",
+       desc:"Your route, your position on it, and the one thing to do next. The tool the example above is running.",
+       live:'<span class="dot"></span><span class="num">' + p.ladder.length + " rungs</span> to consultant, you are on <b>" +
+            esc(p.cur < 0 ? "none of them yet" : p.ladder[p.cur]) + "</b>"},
+      {ic:"compass", name:"Specialty explorer",
+       desc:"For when the target is not settled yet. Compare routes on length, exams, competition and how the training runs.",
+       live:'<span class="dot"></span>Compare <b>' + esc(p.specialty) + "</b> against " + esc(sp.peers)},
+      {ic:"search", name:"Intern post explorer",
+       desc:"Rank intern posts by rotation mix, hospital and what each one sets you up for.",
+       na: !isStudent, naReason:"Final-year students only. You are past this rung.",
+       live: isStudent
+         ? '<span class="dot"></span>Rank <span class="num">47</span> intern posts before the match closes'
+         : '<span class="dot"></span>Not applicable at your stage'}
+    ];
+
+    var readiness = [
+      {ic:"list", name:"Gap analyser",
+       desc:"What is missing between where you are and what your target actually asks for.",
+       live: missing
+         ? '<span class="dot"></span><span class="num">' + missing + (missing === 1 ? " gap</span> at this stage, starting with " : " gaps</span> at this stage, starting with ") + "<b>" + esc(gaps.filter(function(g){ return !g.have; })[0].t) + "</b>"
+         : '<span class="dot"></span>Nothing missing at this stage'},
+      {ic:"clip", name:"Application readiness",
+       desc:"How much of the application is actually assembled, domain by domain.",
+       na: sd.readiness === null, naReason: sd.readinessNote,
+       live: sd.readiness === null
+         ? '<span class="dot"></span>' + esc(sd.readinessNote)
+         : '<span class="dot"></span><span class="num">' + sd.readiness + "%</span> assembled" +
+           '<span class="tool-bar"><i style="width:' + sd.readiness + '%"></i></span>'},
+      {ic:"target", name:"Shortlisting score",
+       desc:"How you would score today against the criteria your target publishes.",
+       na: sd.score === null, naReason:"No criteria to score against until you are on the ladder",
+       live: sd.score === null
+         ? '<span class="dot"></span>No criteria to score against yet'
+         : '<span class="dot"></span><span class="num">' + sd.score + "/100</span> against " + esc(sp.body) + " criteria" +
+           '<span class="tool-domains">' + sd.domains.map(function(d){
+             return '<span class="tdom"><span>' + esc(d[0]) + '</span><span class="tbar"><i style="width:' + d[1] + '%"></i></span><b>' + d[1] + "</b></span>";
+           }).join("") + "</span>"},
+      {ic:"cal", name:"Deadlines and checklists",
+       desc:"What is due, when, and what has to be in the folder before it closes.",
+       live:'<span class="dot"></span>Next: <b>' + esc(deadline.what) + "</b>, " + esc(deadline.when) + " · " + esc(deadline.who)}
+    ];
+    return {pathway:pathway, readiness:readiness};
+  }
+
+  function toolHTML(t){
+    return '<article class="tool' + (t.primary ? " primary" : "") + (t.na ? " na" : "") + '">' +
+      '<span class="tool-ic"><svg width="' + (t.primary ? 22 : 19) + '" height="' + (t.primary ? 22 : 19) +
+        '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[t.ic] + "</svg></span>" +
+      '<div class="tool-body">' +
+        "<h3>" + esc(t.name) + (t.badge ? "<em>" + esc(t.badge) + "</em>" : "") + "</h3>" +
+        "<p>" + esc(t.desc) + "</p>" +
+        '<div class="tool-live">' + (t.na && t.naReason ? '<span class="dot"></span>' + esc(t.naReason) : t.live) + "</div>" +
+      "</div>" +
+    "</article>";
+  }
+
+  function buildProfile(){
+    var sp = SPECIALTIES[state.specialty];
+    var ladder = ladderFor(state.stage, sp);
+    return {
+      stage: state.stage, specialty: state.specialty, sp: sp,
+      ladder: ladder, cur: currentRung(state.stage),
+      gaps: gapsFor(state.stage, sp), next: nextStepFor(state.stage, sp)
+    };
+  }
+
+  function render(){
+    var p = buildProfile();
+    var stage = STAGES.filter(function(s){ return s.id === state.stage; })[0];
+
+    document.getElementById("rmTitle").textContent = "Your route to consultant in " + state.specialty;
+    document.getElementById("rmSub").textContent = p.ladder.length +
+      " rungs to consultant, and where " + stage.phrase + " stands on them.";
+
+    /* ladder */
+    document.getElementById("ladder").innerHTML = p.ladder.map(function(rung, i){
+      var cls = i < p.cur ? "done" : (i === p.cur ? "current" : (i === p.cur + 1 ? "next" : "todo"));
+      var mark = cls === "done" ? "&#10003;" : (cls === "current" ? "&#9679;" : (cls === "next" ? "!" : "&#9675;"));
+      var note = cls === "done" ? "complete" : (cls === "current" ? "you are here" : (cls === "next" ? "next rung" : "ahead"));
+      return '<div class="rd-step ' + cls + '" style="--rd:' + (i * 0.06) + 's"><span class="st">' + mark + "</span>" +
+        esc(rung) + "<small>" + note + "</small></div>";
+    }).join("");
+
+    /* next step */
+    document.getElementById("nextStep").innerHTML =
+      '<div class="rd-next-row"><b>' + esc(p.next.what) + '</b><span class="rd-eta">' + esc(p.next.when) + "</span></div>" +
+      '<p class="rd-next-sub">' + esc(p.next.sub) + " Published by " + esc(p.next.who) + ".</p>";
+
+    /* gaps */
+    document.getElementById("gaps").innerHTML = p.gaps.map(function(g, i){
+      return '<div class="rd-check-row ' + (g.have ? "have" : "missing") + '" style="--rd:' + (i * 0.06) + 's">' +
+        '<span class="ck">' + (g.have ? "&#10003;" : "!") + "</span>" + esc(g.t) +
+        (g.note ? "<small>" + esc(g.note) + "</small>" : "") + "</div>";
+    }).join("");
+
+    /* animate the recalculation in, unless the viewer asked for less motion */
+    var steps = document.querySelectorAll(".rd-step, .rd-check-row, .rd-next");
+    if (reducedMotion){
+      steps.forEach(function(el){ el.classList.add("in"); });
+    } else {
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){ steps.forEach(function(el){ el.classList.add("in"); }); });
+      });
+    }
+
+    /* tools */
+    var t = toolsFor(p);
+    document.getElementById("pathwayTools").innerHTML = t.pathway.map(toolHTML).join("");
+    document.getElementById("readinessTools").innerHTML = t.readiness.map(toolHTML).join("");
+
+    /* the closing preview follows the same profile */
+    document.getElementById("apTitle").textContent = "Your " + state.specialty + " roadmap is ready";
+    document.getElementById("apLine1").textContent = p.cur < 0
+      ? "Starting at " + p.ladder[0] : "You are on " + p.ladder[p.cur];
+    var missing = p.gaps.filter(function(g){ return !g.have; }).length;
+    document.getElementById("apLine2").textContent = missing + (missing === 1 ? " gap weighted" : " gaps weighted");
+    document.getElementById("apLine3").textContent = p.next.what + ", " + p.next.when;
+  }
+
+  var stageSel = document.getElementById("stage");
+  STAGES.forEach(function(s){
+    var o = document.createElement("option");
+    o.value = s.id; o.textContent = s.label;
+    if (s.id === state.stage) o.selected = true;
+    stageSel.appendChild(o);
+  });
+  var specSel = document.getElementById("specialty");
+  Object.keys(SPECIALTIES).forEach(function(name){
+    var o = document.createElement("option");
+    o.value = name; o.textContent = name;
+    if (name === state.specialty) o.selected = true;
+    specSel.appendChild(o);
+  });
+  stageSel.addEventListener("change", function(){ state.stage = this.value; render(); });
+  specSel.addEventListener("change", function(){ state.specialty = this.value; render(); });
+
+  render();
+
+  /* ---------- forms ---------- */
+  function wireForm(formId, inputId, errorId, okId){
+    var formEl = document.getElementById(formId);
+    var inputEl = document.getElementById(inputId);
+    var errEl = document.getElementById(errorId);
+    inputEl.addEventListener("input", function(){
+      inputEl.removeAttribute("aria-invalid");
+      inputEl.style.borderColor = "";
+      errEl.classList.remove("show");
+    });
+    formEl.addEventListener("submit", function(ev){
+      ev.preventDefault();
+      if (!inputEl.value || inputEl.value.indexOf("@") < 1){
+        inputEl.setAttribute("aria-invalid", "true");
+        inputEl.style.borderColor = "#ff7a59";
+        errEl.classList.add("show");
+        inputEl.focus();
+        return;
+      }
+      formEl.style.display = "none";
+      document.getElementById(okId).classList.add("show");
+    });
+  }
+  wireForm("alertForm", "alertEmail", "alertError", "alertOk");
+  wireForm("newsForm", "newsEmail", "newsEmailError", "newsOk");
+
+  document.getElementById("yearNow").textContent = new Date().getFullYear();
+})();
+</script>
+</body>
+</html>

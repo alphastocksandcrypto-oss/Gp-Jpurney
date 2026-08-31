@@ -302,6 +302,12 @@ footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
 [data-reveal]{opacity:0;transform:translateY(28px);transition:opacity .8s ease var(--d,0s),transform .8s cubic-bezier(.2,.7,.2,1) var(--d,0s)}
 [data-reveal].is-in{opacity:1;transform:none}
 /* ============ RESPONSIVE ============ */
+/* the nav needs more room than the 960px breakpoint gives it: between 961 and
+   970px the links and the two buttons overflow the header by up to 39px */
+@media(max-width:1000px){
+  .nav-links,.nav-actions .btn{display:none}
+  .burger{display:block}
+}
 @media(max-width:1020px){.f-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:960px){
   .nav-links,.nav-actions .btn{display:none}
