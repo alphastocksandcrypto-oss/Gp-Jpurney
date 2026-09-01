@@ -1,0 +1,553 @@
+<!--
+  MedNav onboarding. The path the homepage promises: create a free account,
+  verify with a magic link, set a password, answer a few questions, and the
+  roadmap is built.
+
+  The last screen is the payoff: it computes the same readiness figure, the same
+  banded shortlisting score and the same gap count the dashboard will show, from
+  the answers just given. Then it hands those answers to the dashboard in the
+  URL, because the two are separate documents and cannot share storage across
+  origins.
+
+  KNOWN DUPLICATION: the scoring model below is a second copy of the one in
+  app/index.html. Two copies can drift. When this gets a build step, both should
+  import one module. Flagged in the README.
+
+  TEMP: no account is created and no email is sent. The magic-link screen has an
+  explicit demo control that says so, rather than pretending to wait for a click
+  that will never come.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create your account · MedNav</title>
+<meta name="description" content="Create a free MedNav account. A few questions and your roadmap, gaps and deadlines are built.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/800.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/600.css">
+<style>
+:root{
+  --deep:#0b2e36; --pine:#12404c; --ink:#12333c;
+  --mint:#14b394; --mint-2:#3ed1a8; --mint-soft:#e0f5ec;
+  --paper:#f7faf8; --cream:#fdfbf5;
+  --coral:#ff7a59; --coral-soft:#fff1e6; --amber:#ffc061; --amber-soft:#fff4e0;
+  --line:rgba(11,46,54,.12); --txt-soft:#41606a; --txt-mute:#7d949b;
+  --good-text:#0b7a63; --warn-text:#8a5a10; --crit-text:#b8482a;
+  --card-shadow:0 6px 18px rgba(11,46,54,.06);
+  --fd:'Sora',system-ui,sans-serif; --fb:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--fb);background:var(--paper);color:var(--ink);font-size:15px;line-height:1.55;overflow-x:hidden}
+body::after{content:"";position:fixed;inset:0;z-index:300;pointer-events:none;opacity:.035;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+img,svg{display:block;max-width:100%}
+a{text-decoration:none;color:inherit}
+ul{list-style:none}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+input{font-family:inherit}
+h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
+:focus-visible{outline:2px solid var(--mint);outline-offset:2px;border-radius:8px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.num{font-variant-numeric:tabular-nums}
+/* ============ SPLIT ============ */
+.wrap{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);min-height:100vh}
+.brand{position:relative;background:linear-gradient(160deg,#0b2e36,#12404c 70%);color:#fff;padding:34px 38px;display:flex;flex-direction:column;overflow:hidden}
+.brand::before{content:"";position:absolute;top:-140px;right:-120px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(62,209,168,.22),transparent 62%);pointer-events:none}
+.brand>*{position:relative}
+.brand-top{display:flex;align-items:center;gap:11px;margin-bottom:auto}
+.brand-top b{font-family:var(--fd);font-size:20px;font-weight:800;letter-spacing:-.02em}
+.brand-mid{padding:32px 0}
+.brand-mid h2{font-size:clamp(22px,2.4vw,29px);font-weight:800;line-height:1.2;margin-bottom:12px}
+.brand-mid p{color:#a9cdc3;font-size:14.5px;max-width:34ch}
+/* the ladder fills as the answers come in */
+.blad{margin-top:26px;display:grid;gap:0}
+.blad-item{display:flex;align-items:center;gap:12px;padding:9px 0;font-size:13px;font-weight:600;color:#7fa79f;transition:color .35s}
+.blad-item .k{width:22px;height:22px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:10px;background:rgba(255,255,255,.09);color:#7fa79f;transition:background .35s,color .35s,transform .35s}
+.blad-item.on{color:#fff}
+.blad-item.on .k{background:var(--mint-2);color:#052a22;transform:scale(1.08)}
+.blad-item.now{color:#fff}
+.blad-item.now .k{background:var(--coral);color:#fff}
+.brand-foot{font-size:12px;color:#7fa79f;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.brand-foot svg{color:var(--mint-2);flex:none}
+/* ============ PANEL ============ */
+.panel{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px}
+.step{width:100%;max-width:520px}
+.prog{display:flex;align-items:center;gap:10px;margin-bottom:26px}
+.prog-track{flex:1;height:5px;border-radius:99px;background:#e3ece9;overflow:hidden}
+.prog-track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--mint),var(--mint-2));transition:width .45s cubic-bezier(.3,.9,.3,1)}
+.prog span{font-size:11.5px;font-weight:700;color:var(--txt-mute);white-space:nowrap;font-variant-numeric:tabular-nums}
+.step h1{font-size:clamp(24px,3vw,31px);font-weight:800;color:var(--deep);line-height:1.15;margin-bottom:9px;text-wrap:balance}
+.step .sub{font-size:14.5px;color:var(--txt-soft);margin-bottom:24px;max-width:52ch}
+@keyframes stepIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.step.enter{animation:stepIn .36s cubic-bezier(.2,.7,.2,1)}
+.field{display:grid;gap:7px;margin-bottom:16px}
+.field label{font-size:12.5px;font-weight:700;color:var(--deep)}
+.field input{border:1.5px solid var(--line);background:#fff;border-radius:13px;padding:13px 15px;font-size:15px;color:var(--ink);outline:none;transition:border-color .2s;width:100%}
+.field input:focus{border-color:var(--mint)}
+.field input[aria-invalid="true"]{border-color:var(--coral)}
+.field .hint{font-size:12px;color:var(--txt-soft)}
+.err{display:none;font-size:12.5px;font-weight:600;color:var(--crit-text);margin-top:-8px;margin-bottom:14px}
+.err.show{display:block}
+.pw-wrap{position:relative;display:flex;align-items:center}
+.pw-wrap input{padding-right:64px}
+.pw-toggle{position:absolute;right:12px;font-size:12px;font-weight:700;color:var(--good-text);padding:6px 8px}
+.meter{display:flex;gap:4px;margin-top:9px}
+.meter i{flex:1;height:4px;border-radius:99px;background:#e3ece9;transition:background .3s}
+.meter i.on{background:var(--mint)}
+.meter-label{font-size:12px;color:var(--txt-soft);margin-top:7px}
+/* choices */
+.opts{display:grid;gap:9px;margin-bottom:20px}
+.opts.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:14px 16px;transition:border-color .18s,background .18s,transform .18s,box-shadow .18s}
+.opt:hover{border-color:var(--mint);transform:translateY(-1px)}
+.opt.on{border-color:var(--mint);background:var(--mint-soft);box-shadow:0 8px 20px rgba(20,179,148,.16)}
+.opt .tick{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);flex:none;display:grid;place-items:center;background:#fff;color:transparent;transition:.18s}
+.opt.on .tick{background:var(--mint);border-color:var(--mint);color:#052a22}
+.opt b{font-size:14px;font-weight:600;color:var(--deep);display:block}
+.opt small{display:block;font-size:12px;color:var(--txt-soft);margin-top:2px;font-weight:500}
+/* counters */
+.count{display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:9px}
+.count .cl{flex:1;min-width:0}
+.count b{font-size:14px;font-weight:600;color:var(--deep);display:block}
+.count small{display:block;font-size:12px;color:var(--txt-soft);margin-top:2px}
+.count .ctl{display:flex;align-items:center;gap:6px;flex:none}
+.count .ctl button{width:32px;height:32px;border-radius:10px;border:1.5px solid var(--line);display:grid;place-items:center;color:var(--deep);background:#fff;transition:.18s}
+.count .ctl button:hover:not(:disabled){border-color:var(--mint);color:var(--good-text)}
+.count .ctl button:disabled{opacity:.35;cursor:not-allowed}
+.count .ctl b{min-width:26px;text-align:center;font-family:var(--fd);font-size:16px;font-variant-numeric:tabular-nums}
+/* nav */
+.acts{display:flex;align-items:center;gap:10px;margin-top:26px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:14.5px;border-radius:13px;padding:13px 22px;border:1.5px solid transparent;transition:transform .2s,background .2s,color .2s,border-color .2s}
+.btn svg{flex:none;transition:transform .2s}
+.btn:hover svg{transform:translateX(3px)}
+.btn-primary{background:var(--mint);color:#052a22}
+.btn-primary:hover{background:var(--mint-2);transform:translateY(-2px)}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none;background:var(--mint)}
+.btn-ghost{border-color:var(--line);color:var(--deep);background:#fff}
+.btn-ghost:hover{border-color:var(--deep);transform:translateY(-2px)}
+.acts .skip{margin-left:auto;font-size:13px;color:var(--txt-soft);font-weight:600}
+.acts .skip:hover{color:var(--deep);text-decoration:underline}
+.fineprint{margin-top:16px;font-size:12px;color:var(--txt-mute);max-width:46ch}
+.demo-note{display:flex;gap:10px;align-items:flex-start;background:var(--amber-soft);color:var(--warn-text);border-radius:13px;padding:12px 15px;font-size:12.5px;font-weight:600;margin-bottom:20px}
+.demo-note svg{flex:none;margin-top:1px}
+/* summary */
+.sum-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.sum{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px 16px;box-shadow:var(--card-shadow);position:relative;overflow:hidden}
+.sum::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--mint),var(--mint-2))}
+.sum .k{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-mute)}
+.sum .v{font-family:var(--fd);font-size:25px;font-weight:800;color:var(--deep);line-height:1.1;margin-top:5px;font-variant-numeric:tabular-nums}
+.sum .v small{font-size:13px;color:var(--txt-soft)}
+.sum-list{background:#fff;border:1px solid var(--line);border-radius:16px;padding:6px 18px;box-shadow:var(--card-shadow);margin-bottom:18px}
+.sum-row{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+.sum-row:last-child{border-bottom:0}
+.sum-row .ic{width:22px;height:22px;border-radius:50%;flex:none;display:grid;place-items:center}
+.sum-row.have .ic{background:var(--mint-soft);color:var(--good-text)}
+.sum-row.miss .ic{background:var(--coral-soft);color:var(--crit-text)}
+.sum-row .r{margin-left:auto;font-size:12px;color:var(--txt-soft);font-weight:600;white-space:nowrap}
+@media(max-width:920px){
+  .wrap{grid-template-columns:minmax(0,1fr)}
+  .brand{padding:20px 22px;flex-direction:row;align-items:center;gap:16px}
+  .brand-top{margin-bottom:0}
+  .brand-mid,.brand-foot,.blad{display:none}
+  .panel{padding:28px 20px 48px;justify-content:flex-start}
+}
+@media(max-width:560px){
+  .opts.two{grid-template-columns:minmax(0,1fr)}
+  .sum-grid{grid-template-columns:minmax(0,1fr)}
+  .acts .btn{flex:1;justify-content:center}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="brand">
+    <div class="brand-top">
+      <svg width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect x="2" y="2" width="36" height="36" rx="11" fill="#12404c"/>
+        <path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="24" r="4" fill="#ffc061"/>
+      </svg>
+      <b>MedNav</b>
+    </div>
+    <div class="brand-mid">
+      <h2 id="brandH">Know exactly what to do next.</h2>
+      <p id="brandP">A few questions and MedNav maps your whole route, checks it against what the colleges actually publish, and tells you the one thing to do next.</p>
+      <div class="blad" id="blad"></div>
+    </div>
+    <p class="brand-foot">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>
+      Free to start. No card required. Nothing shared with a college or an employer.
+    </p>
+  </aside>
+
+  <main class="panel">
+    <div class="step" id="step" tabindex="-1"></div>
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var DASH = "../app/index.html";
+
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function ico(d, size){
+    return '<svg width="' + (size||14) + '" height="' + (size||14) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + "</svg>";
+  }
+  var I = {
+    tick:'<path d="M4 12.5l5 5L20 6.5"/>',
+    warn:'<path d="M12 8v5"/><circle cx="12" cy="16.4" r="1"/><circle cx="12" cy="12" r="9"/>',
+    arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+    back:'<path d="M19 12H5M11 18l-6-6 6-6"/>',
+    mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    minus:'<path d="M5 12h14"/>'
+  };
+
+  /* answers, in the shape the dashboard record expects */
+  var A = {
+    name:"", email:"", password:"",
+    stage:"", specialty:"", clinicalMonths:24,
+    examStages:0, auditComplete:0, teachingDone:0, teachingTarget:4, research:0, leadership:false
+  };
+
+  var SPEC = {
+    "Cardiology":         {target:"HST Cardiology",         body:"RCPI",  exam:"MRCPI"},
+    "General Practice":   {target:"GP training scheme",     body:"ICGP",  exam:"MICGP"},
+    "Psychiatry":         {target:"HST Psychiatry",         body:"College of Psychiatrists", exam:"MRCPsych"},
+    "Emergency Medicine": {target:"HST Emergency Medicine", body:"RCSI",  exam:"MRCEM"},
+    "General Surgery":    {target:"HST General Surgery",    body:"RCSI",  exam:"MRCS"}
+  };
+  var STAGES = [
+    {id:"student", label:"Final-year student",        sub:"Not yet on the ladder",              months:0},
+    {id:"intern",  label:"Intern",                    sub:"In your intern year now",            months:6},
+    {id:"sho",     label:"SHO or BST trainee",        sub:"Past intern, before higher training", months:24},
+    {id:"reg",     label:"Registrar or HST trainee",  sub:"In higher specialist training",      months:60},
+    {id:"img",     label:"Qualified outside Ireland", sub:"Registering or recently registered",  months:12}
+  ];
+
+  /* ---- the same model the dashboard uses. KNOWN DUPLICATION, see the header ---- */
+  function domains(){
+    return [
+      {id:"clinical",  name:"Clinical experience",      weight:20, maxPts:5,
+       ready: Math.min(100, Math.round(A.clinicalMonths / 28 * 100)),
+       pts:   A.clinicalMonths >= 24 ? 5 : (A.clinicalMonths >= 12 ? 3 : 0)},
+      {id:"exams",     name:"Exams and membership",     weight:15, maxPts:8,
+       ready: Math.round(A.examStages / 3 * 100),
+       pts:   A.examStages >= 3 ? 8 : (A.examStages >= 1 ? 3 : 0)},
+      {id:"auditqi",   name:"Audit and QI",             weight:25, maxPts:10,
+       ready: Math.round(A.auditComplete / 2 * 100),
+       pts:   A.auditComplete >= 2 ? 10 : (A.auditComplete >= 1 ? 5 : 0)},
+      {id:"teaching",  name:"Teaching",                 weight:20, maxPts:5,
+       ready: Math.round(A.teachingDone / A.teachingTarget * 100),
+       pts:   A.teachingDone >= 4 ? 5 : (A.teachingDone >= 2 ? 2 : 0)},
+      {id:"research",  name:"Research and publications", weight:15, maxPts:5,
+       ready: Math.min(100, Math.round(A.research / 2 * 100)),
+       pts:   A.research >= 2 ? 5 : (A.research >= 1 ? 2 : 0)},
+      {id:"leadership",name:"Leadership and management", weight:5, maxPts:2,
+       ready: A.leadership ? 100 : 0, pts: A.leadership ? 2 : 0}
+    ];
+  }
+  function readiness(){ var t = 0; domains().forEach(function(d){ t += d.ready * d.weight; }); return Math.round(t / 100); }
+  function pts(){ var t = 0; domains().forEach(function(d){ t += d.pts; }); return t; }
+  function maxPts(){ var t = 0; domains().forEach(function(d){ t += d.maxPts; }); return t; }
+  function losing(){ return domains().filter(function(d){ return d.maxPts - d.pts > 0; }).length; }
+
+  /* ================= STEPS ================= */
+  var STEPS = [
+    {
+      id:"account", label:"Account",
+      brandH:"Know exactly what to do next.",
+      brandP:"A few questions and MedNav maps your whole route, checks it against what the colleges actually publish, and tells you the one thing to do next.",
+      title:"Create your free account", sub:"Everything on your dashboard is free. Nothing here is shared with a college or an employer.",
+      body:function(){
+        return '<div class="field"><label for="fName">Your name</label>' +
+          '<input id="fName" autocomplete="name" placeholder="Jane Doyle" value="' + esc(A.name) + '"></div>' +
+          '<div class="field"><label for="fEmail">Your email</label>' +
+          '<input id="fEmail" type="email" autocomplete="email" placeholder="you@example.com" value="' + esc(A.email) + '" aria-describedby="eEmail"></div>' +
+          '<p class="err" id="eEmail">Enter an email address that includes an @.</p>' +
+          '<p class="fineprint">By creating an account you agree to the terms and the privacy notice. We send you application-window alerts and nothing else.</p>';
+      },
+      cta:"Create free account",
+      valid:function(){
+        var n = document.getElementById("fName"), e = document.getElementById("fEmail");
+        A.name = n.value.trim(); A.email = e.value.trim();
+        var ok = A.email.indexOf("@") > 0 && A.email.length > 4;
+        document.getElementById("eEmail").classList.toggle("show", !ok);
+        e.setAttribute("aria-invalid", ok ? "false" : "true");
+        if (!ok) e.focus();
+        if (ok && !A.name) A.name = A.email.split("@")[0];
+        return ok;
+      }
+    },
+    {
+      id:"verify", label:"Verify",
+      brandH:"One link, then you are in.",
+      brandP:"We verify by email rather than asking you to invent another password you will forget. The link lasts fifteen minutes.",
+      title:"Check your inbox", sub:"",
+      body:function(){
+        return '<p class="sub">We sent a magic link to <b>' + esc(A.email) + '</b>. Click it and you are verified.</p>' +
+          '<div class="demo-note">' + ico(I.warn, 15) +
+          "<span>This is a prototype. No account was created and no email was sent, so the button below stands in for clicking the link.</span></div>" +
+          '<p class="fineprint" style="margin-top:0">Wrong address? <button class="skip" data-goto="0" style="font-size:13px;color:var(--good-text);font-weight:700">Change it</button></p>';
+      },
+      cta:"I clicked the link",
+      valid:function(){ return true; }
+    },
+    {
+      id:"password", label:"Password",
+      brandH:"Set a password for next time.",
+      brandP:"So you can get back in without waiting on an email. Eight characters is the floor, and length beats punctuation.",
+      title:"Set a password", sub:"Eight characters or more. Length matters more than symbols.",
+      body:function(){
+        return '<div class="field"><label for="fPw">Password</label>' +
+          '<span class="pw-wrap"><input id="fPw" type="password" autocomplete="new-password" placeholder="At least 8 characters" value="' + esc(A.password) + '" aria-describedby="ePw">' +
+          '<button type="button" class="pw-toggle" id="pwToggle" aria-pressed="false">Show</button></span>' +
+          '<span class="meter" id="meter" aria-hidden="true"><i></i><i></i><i></i><i></i></span>' +
+          '<span class="meter-label" id="meterLabel">Strength: not set</span></div>' +
+          '<p class="err" id="ePw">Use at least 8 characters.</p>';
+      },
+      cta:"Continue",
+      valid:function(){
+        var el = document.getElementById("fPw");
+        A.password = el.value;
+        var ok = A.password.length >= 8;
+        document.getElementById("ePw").classList.toggle("show", !ok);
+        el.setAttribute("aria-invalid", ok ? "false" : "true");
+        if (!ok) el.focus();
+        return ok;
+      },
+      after:function(){
+        var el = document.getElementById("fPw"), meter = document.getElementById("meter"), label = document.getElementById("meterLabel");
+        function score(v){
+          var n = 0;
+          if (v.length >= 8) n++;
+          if (v.length >= 12) n++;
+          if (/[^A-Za-z]/.test(v)) n++;
+          if (/[A-Z]/.test(v) && /[a-z]/.test(v)) n++;
+          return n;
+        }
+        function paint(){
+          var n = score(el.value), bars = meter.children;
+          for (var i = 0; i < bars.length; i++) bars[i].classList.toggle("on", i < n);
+          label.textContent = "Strength: " + (el.value.length === 0 ? "not set" : ["too short","weak","fair","good","strong"][n]);
+        }
+        el.addEventListener("input", paint); paint();
+        document.getElementById("pwToggle").addEventListener("click", function(){
+          var showing = el.type === "text";
+          el.type = showing ? "password" : "text";
+          this.textContent = showing ? "Show" : "Hide";
+          this.setAttribute("aria-pressed", showing ? "false" : "true");
+          el.focus();
+        });
+      }
+    },
+    {
+      id:"stage", label:"Your stage",
+      brandH:"Two doctors, same grade, different routes.",
+      brandP:"An SHO who qualified in Ireland and one who qualified abroad do not have the same ladder. This is the question that decides yours.",
+      title:"Where are you now?", sub:"This sets your ladder. You can change it later without losing anything.",
+      body:function(){
+        return '<div class="opts">' + STAGES.map(function(s){
+          return '<button class="opt' + (A.stage === s.id ? " on" : "") + '" data-stage="' + s.id + '" aria-pressed="' + (A.stage === s.id) + '">' +
+            '<span class="tick">' + ico(I.tick, 11) + "</span><span><b>" + esc(s.label) + "</b><small>" + esc(s.sub) + "</small></span></button>";
+        }).join("") + "</div>";
+      },
+      cta:"Continue",
+      valid:function(){ return !!A.stage; }
+    },
+    {
+      id:"target", label:"Your target",
+      brandH:"Every specialty, one route to consultant.",
+      brandP:"Pick the one you are aiming for. If you are not sure yet, say so, and MedNav shows you the comparison instead of guessing.",
+      title:"What are you aiming for?", sub:"This decides the criteria you are scored against and the deadlines you are shown.",
+      body:function(){
+        var names = Object.keys(SPEC);
+        return '<div class="opts two">' + names.map(function(n){
+          return '<button class="opt' + (A.specialty === n ? " on" : "") + '" data-spec="' + esc(n) + '" aria-pressed="' + (A.specialty === n) + '">' +
+            '<span class="tick">' + ico(I.tick, 11) + "</span><span><b>" + esc(n) + "</b><small>" + esc(SPEC[n].body) + "</small></span></button>";
+        }).join("") + "</div>" +
+        '<button class="opt' + (A.specialty === "undecided" ? " on" : "") + '" data-spec="undecided" aria-pressed="' + (A.specialty === "undecided") + '">' +
+          '<span class="tick">' + ico(I.tick, 11) + '</span><span><b>Not decided yet</b><small>We will start you on the specialty explorer instead</small></span></button>';
+      },
+      cta:"Continue",
+      valid:function(){ return !!A.specialty; }
+    },
+    {
+      id:"evidence", label:"Your record",
+      brandH:"We score what you already have.",
+      brandP:"Colleges score in bands, so a half finished project counts for nothing. Tell us what is actually finished and we will show you the difference.",
+      title:"What have you already got?", sub:"Rough is fine. You can correct any of it from your dashboard in a second.",
+      body:function(){
+        var ex = A.specialty && SPEC[A.specialty] ? SPEC[A.specialty].exam : "membership";
+        return counterRow("examStages", ex + " stages passed", "Part 1, Part 2 written, and the clinical exam", 0, 3) +
+          counterRow("auditComplete", "Audit or QI projects finished", "Only count the ones that are actually complete", 0, 4) +
+          counterRow("teachingDone", "Teaching sessions logged", "Formal, timetabled teaching you can evidence", 0, 12) +
+          counterRow("research", "Research outputs", "Papers, posters or accepted abstracts", 0, 8) +
+          '<button class="opt' + (A.leadership ? " on" : "") + '" data-lead="1" aria-pressed="' + A.leadership + '" style="margin-top:9px">' +
+          '<span class="tick">' + ico(I.tick, 11) + '</span><span><b>A recognised leadership or management course</b><small>Optional, and the smallest of the scored domains</small></span></button>';
+      },
+      cta:"Build my roadmap",
+      valid:function(){ return true; }
+    },
+    {
+      id:"done", label:"Your roadmap",
+      brandH:"That is your roadmap built.",
+      brandP:"Everything from here is derived from what you just told us. Change any of it and the whole dashboard recalculates.",
+      title:"Here is where you stand", sub:"",
+      body:function(){
+        var spec = A.specialty === "undecided" ? null : SPEC[A.specialty];
+        var ds = domains();
+        return '<p class="sub">Against ' + (spec ? esc(spec.target) + " criteria published by " + esc(spec.body) : "a typical training route") +
+          ", computed from your answers. Nothing here is estimated.</p>" +
+          '<div class="sum-grid">' +
+            '<div class="sum"><p class="k">Readiness</p><p class="v">' + readiness() + '%</p></div>' +
+            '<div class="sum"><p class="k">Shortlisting</p><p class="v">' + pts() + '<small>/' + maxPts() + '</small></p></div>' +
+            '<div class="sum"><p class="k">Open gaps</p><p class="v">' + losing() + '<small>/6</small></p></div>' +
+          "</div>" +
+          '<div class="sum-list">' + ds.map(function(d){
+            var full = d.maxPts - d.pts === 0;
+            return '<div class="sum-row ' + (full ? "have" : "miss") + '"><span class="ic">' + ico(full ? I.tick : I.warn, 12) + "</span>" +
+              esc(d.name) + '<span class="r">' + d.pts + " of " + d.maxPts + " points</span></div>";
+          }).join("") + "</div>" +
+          '<p class="fineprint" style="max-width:none">The scoring bands used here are illustrative in this prototype. In the real product every band comes from the criteria the college published for the current cycle, and anything not yet published is marked rather than guessed.</p>';
+      },
+      cta:"Open my dashboard",
+      valid:function(){ return true; },
+      finish:true
+    }
+  ];
+
+  function counterRow(key, label, sub, min, max){
+    return '<div class="count" data-count-row="' + key + '"><span class="cl"><b>' + esc(label) + "</b><small>" + esc(sub) + "</small></span>" +
+      '<span class="ctl"><button type="button" data-step-down="' + key + '" aria-label="Decrease ' + esc(label) + '"' +
+        (A[key] <= min ? " disabled" : "") + ">" + ico(I.minus, 14) + "</button>" +
+      '<b class="num" data-val="' + key + '">' + A[key] + "</b>" +
+      '<button type="button" data-step-up="' + key + '" aria-label="Increase ' + esc(label) + '"' +
+        (A[key] >= max ? " disabled" : "") + ">" + ico(I.plus, 14) + "</button></span></div>";
+  }
+  var LIMITS = {examStages:[0,3], auditComplete:[0,4], teachingDone:[0,12], research:[0,8]};
+
+  /* ================= RENDER ================= */
+  var i = 0;
+  var stepEl = document.getElementById("step");
+
+  function render(){
+    var s = STEPS[i];
+    document.getElementById("brandH").textContent = s.brandH;
+    document.getElementById("brandP").textContent = s.brandP;
+    document.getElementById("blad").innerHTML = STEPS.map(function(x, n){
+      var cls = n < i ? "on" : (n === i ? "now" : "");
+      return '<div class="blad-item ' + cls + '"><span class="k">' + (n < i ? ico(I.tick, 11) : (n + 1)) + "</span>" + esc(x.label) + "</div>";
+    }).join("");
+
+    stepEl.innerHTML =
+      '<div class="prog"><span class="prog-track"><i style="width:' + Math.round((i) / (STEPS.length - 1) * 100) + '%"></i></span>' +
+      "<span>Step " + (i + 1) + " of " + STEPS.length + "</span></div>" +
+      "<h1>" + esc(s.title) + "</h1>" +
+      (s.sub ? '<p class="sub">' + esc(s.sub) + "</p>" : "") +
+      s.body() +
+      '<div class="acts">' +
+        (i > 0 ? '<button class="btn btn-ghost" id="backBtn">' + ico(I.back, 15) + "Back</button>" : "") +
+        '<button class="btn btn-primary" id="nextBtn">' + esc(s.cta) + ico(I.arrow, 15) + "</button>" +
+      "</div>";
+
+    stepEl.classList.remove("enter");
+    void stepEl.offsetWidth;
+    if (!reduced) stepEl.classList.add("enter");
+
+    if (s.after) s.after();
+    var back = document.getElementById("backBtn");
+    if (back) back.addEventListener("click", function(){ go(i - 1); });
+    document.getElementById("nextBtn").addEventListener("click", next);
+
+    var firstInput = stepEl.querySelector("input");
+    if (firstInput) firstInput.focus(); else stepEl.focus();
+    document.title = s.title + " · MedNav";
+  }
+
+  function go(n){ i = Math.max(0, Math.min(STEPS.length - 1, n)); render(); window.scrollTo({top:0, behavior: reduced ? "auto" : "smooth"}); }
+
+  function next(){
+    var s = STEPS[i];
+    if (s.valid && !s.valid()) return;
+    if (s.finish){ finish(); return; }
+    go(i + 1);
+  }
+
+  function finish(){
+    var spec = A.specialty === "undecided" ? null : SPEC[A.specialty];
+    var stage = STAGES.filter(function(x){ return x.id === A.stage; })[0] || STAGES[2];
+    var payload = {
+      name: A.name || "Doctor",
+      specialty: spec ? A.specialty : "Cardiology",
+      target: spec ? spec.target : "HST Cardiology",
+      body: spec ? spec.body : "RCPI",
+      exam: spec ? spec.exam : "MRCPI",
+      stage: A.stage,
+      stageLabel: stage.label,
+      clinicalMonths: A.clinicalMonths,
+      examStages: A.examStages,
+      auditComplete: A.auditComplete,
+      qiPct: 0,
+      teachingDone: A.teachingDone,
+      teachingTarget: A.teachingTarget,
+      research: A.research,
+      leadership: A.leadership,
+      deadlinesDone:{}, customMilestones:[], activity:[]
+    };
+    var b64 = window.btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    location.href = DASH + "?p=" + b64 + "#/today";
+  }
+
+  /* choices and counters */
+  stepEl.addEventListener("click", function(ev){
+    var st = ev.target.closest("[data-stage]");
+    if (st){ A.stage = st.getAttribute("data-stage");
+      var found = STAGES.filter(function(x){ return x.id === A.stage; })[0];
+      A.clinicalMonths = found ? found.months : 24;
+      render(); return; }
+
+    var sp = ev.target.closest("[data-spec]");
+    if (sp){ A.specialty = sp.getAttribute("data-spec"); render(); return; }
+
+    var ld = ev.target.closest("[data-lead]");
+    if (ld){ A.leadership = !A.leadership; render(); return; }
+
+    var up = ev.target.closest("[data-step-up]"), dn = ev.target.closest("[data-step-down]");
+    if (up || dn){
+      var key = (up || dn).getAttribute(up ? "data-step-up" : "data-step-down");
+      var lim = LIMITS[key] || [0, 99];
+      A[key] = Math.max(lim[0], Math.min(lim[1], A[key] + (up ? 1 : -1)));
+      render();
+      var again = document.querySelector('[data-step-' + (up ? "up" : "down") + '="' + key + '"]');
+      if (again && !again.disabled) again.focus();
+      return;
+    }
+
+    var goto = ev.target.closest("[data-goto]");
+    if (goto){ go(parseInt(goto.getAttribute("data-goto"), 10)); }
+  });
+
+  document.addEventListener("keydown", function(ev){
+    if (ev.key !== "Enter") return;
+    if (ev.target.tagName === "BUTTON") return;
+    ev.preventDefault();
+    next();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

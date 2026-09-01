@@ -56,6 +56,9 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
 body{font-family:var(--fb);background:var(--paper);color:var(--ink);font-size:15px;line-height:1.55;overflow-x:hidden}
+/* the marketing site's grain, so the app reads as the same product */
+body::after{content:"";position:fixed;inset:0;z-index:300;pointer-events:none;opacity:.035;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
 img,svg{display:block;max-width:100%}
 a{text-decoration:none;color:inherit}
 ul,ol{list-style:none}
@@ -71,7 +74,8 @@ h1,h2,h3,h4{font-family:var(--fd);letter-spacing:-.01em}
 .side-top{display:flex;align-items:center;gap:10px;padding:18px 18px 14px}
 .side-top .logo-mark{width:32px;height:32px;flex:none}
 .side-top b{font-family:var(--fd);font-size:18px;font-weight:800;letter-spacing:-.02em}
-.side-scope{margin:0 14px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:11px 13px}
+.side-scope{position:relative;margin:0 14px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:11px 13px 11px 15px;overflow:hidden}
+.side-scope::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--mint-2)}
 .side-scope span{display:block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#8fb5ac}
 .side-scope b{display:block;font-family:var(--fd);font-size:13.5px;font-weight:700;margin-top:3px}
 .side-scope em{display:block;font-style:normal;font-size:11.5px;color:#9fc4bb;margin-top:2px}
@@ -80,7 +84,9 @@ h1,h2,h3,h4{font-family:var(--fd);letter-spacing:-.01em}
 .nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:9px 12px;border-radius:11px;font-size:13.5px;font-weight:600;color:#a9cdc3;transition:background .18s,color .18s}
 .nav-item svg{flex:none;opacity:.85}
 .nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-item{position:relative}
 .nav-item.on{background:rgba(62,209,168,.16);color:#fff}
+.nav-item.on::before{content:"";position:absolute;left:-12px;top:50%;transform:translateY(-50%);width:3px;height:20px;border-radius:0 3px 3px 0;background:var(--mint-2)}
 .nav-item.on svg{opacity:1;color:var(--mint-2)}
 .nav-item .pill{margin-left:auto;font-family:var(--fd);font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 8px;background:rgba(255,255,255,.12);color:#cfe6e0}
 .nav-item .pill.alert{background:var(--coral);color:#fff}
@@ -89,12 +95,18 @@ h1,h2,h3,h4{font-family:var(--fd);letter-spacing:-.01em}
 .side-foot .who{min-width:0;flex:1}
 .side-foot .who b{display:block;font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .side-foot .who span{display:block;font-size:11px;color:#8fb5ac}
-.main{min-width:0;display:flex;flex-direction:column}
+.main{min-width:0;display:flex;flex-direction:column;position:relative}
+.main::before{content:"";position:absolute;top:0;left:0;right:0;height:420px;pointer-events:none;
+  background:radial-gradient(ellipse 70% 100% at 22% 0%,rgba(20,179,148,.10),transparent 70%)}
 .topbar{position:sticky;top:0;z-index:40;background:rgba(247,250,248,.93);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:13px 26px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .topbar h1{font-size:19px;font-weight:800;color:var(--deep)}
+.hello{font-family:var(--fd);font-size:clamp(21px,2.4vw,27px);font-weight:800;color:var(--deep);letter-spacing:-.02em;margin-bottom:3px}
+.hello-sub{font-size:13.5px;color:var(--txt-soft);margin-bottom:18px}
 .topbar .sub{font-size:12.5px;color:var(--txt-soft)}
 .topbar .right{margin-left:auto;display:flex;align-items:center;gap:9px}
-.view{padding:22px 26px 64px;max-width:1180px}
+.view{position:relative;padding:22px 26px 64px;max-width:1180px}
+@keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.view.enter{animation:viewIn .34s cubic-bezier(.2,.7,.2,1)}
 /* ============ PRIMITIVES ============ */
 .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px;border-radius:11px;padding:9px 16px;border:1.5px solid transparent;transition:transform .2s,background .2s,color .2s,border-color .2s;white-space:nowrap}
 .btn svg{flex:none}
@@ -109,7 +121,8 @@ h1,h2,h3,h4{font-family:var(--fd);letter-spacing:-.01em}
 .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .g4{grid-template-columns:repeat(4,minmax(0,1fr))}
-.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px 20px;box-shadow:var(--card-shadow)}
+.card{position:relative;background:#fff;border:1px solid var(--line);border-radius:20px;padding:19px 21px;box-shadow:var(--card-shadow);transition:box-shadow .24s,transform .24s,border-color .24s}
+a.card:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(11,46,54,.12);border-color:rgba(11,46,54,.2)}
 .card-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
 .card-head h2,.card-head h3{font-size:14.5px;font-weight:700;color:var(--deep)}
 .card-head .btn{margin-left:auto}
@@ -126,7 +139,7 @@ h1,h2,h3,h4{font-family:var(--fd);letter-spacing:-.01em}
 .chip.mute{background:var(--paper);color:var(--txt-soft);border:1px solid var(--line)}
 /* magnitude bars: one sequential hue, 4px rounded end on the baseline */
 .bar{height:8px;border-radius:99px;background:var(--bar-track);overflow:hidden}
-.bar i{display:block;height:100%;background:var(--bar);border-radius:0 4px 4px 0;transition:width .55s cubic-bezier(.3,.9,.3,1)}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--bar),var(--mint-2));border-radius:0 4px 4px 0;transition:width .7s cubic-bezier(.3,.9,.3,1)}
 .bar i[style*="width:0%"],.bar i[style*="width: 0%"]{border-radius:0}
 .bar.sm{height:6px}
 .barrow{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:baseline}
@@ -134,8 +147,10 @@ h1,h2,h3,h4{font-family:var(--fd);letter-spacing:-.01em}
 .barrow .val{font-size:12.5px;font-weight:700;color:var(--deep)}
 .barrow .bar{grid-column:1 / -1}
 .barrow .note{grid-column:1 / -1;font-size:11.5px;color:var(--txt-soft)}
-.stat{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px 18px;box-shadow:var(--card-shadow)}
-.stat .k{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-mute)}
+.stat{position:relative;background:#fff;border:1px solid var(--line);border-radius:20px;padding:17px 19px;box-shadow:var(--card-shadow);overflow:hidden}
+.stat::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--mint),var(--mint-2))}
+.stat .ic{position:absolute;right:15px;top:15px;width:28px;height:28px;border-radius:9px;background:var(--mint-soft);color:var(--good-text);display:grid;place-items:center}
+.stat .k{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-mute);padding-right:34px}
 .stat .v{font-family:var(--fd);font-size:28px;font-weight:800;color:var(--deep);line-height:1.1;margin:6px 0 2px;letter-spacing:-.02em}
 .stat .v small{font-size:14px;color:var(--txt-soft);font-weight:700}
 .stat .d{font-size:11.5px;color:var(--txt-soft);font-weight:500}
@@ -148,12 +163,12 @@ table.data tr:last-child td{border-bottom:0}
 table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:var(--deep);white-space:nowrap}
 /* ============ RING ============ */
 .ring-wrap{display:flex;align-items:center;gap:20px}
-.ring{position:relative;width:132px;height:132px;flex:none}
+.ring{position:relative;width:140px;height:140px;flex:none;filter:drop-shadow(0 6px 16px rgba(20,179,148,.22))}
 .ring svg{transform:rotate(-90deg)}
 .ring .track{stroke:var(--bar-track)}
-.ring .fill{stroke:var(--bar);stroke-linecap:round;transition:stroke-dasharray .7s cubic-bezier(.3,.9,.3,1)}
+.ring .fill{stroke-linecap:round;transition:stroke-dasharray .85s cubic-bezier(.3,.9,.3,1)}
 .ring .mid{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
-.ring .mid b{display:block;font-family:var(--fd);font-size:31px;font-weight:800;color:var(--deep);line-height:1;letter-spacing:-.02em}
+.ring .mid b{display:block;font-family:var(--fd);font-size:33px;font-weight:800;color:var(--deep);line-height:1;letter-spacing:-.02em}
 .ring .mid span{display:block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-mute);margin-top:4px}
 /* ============ LADDER ============ */
 .rungs{display:flex;gap:2px;margin-bottom:20px}
@@ -206,13 +221,22 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 .month:first-child{margin-top:0}
 .month::after{content:"";flex:1;height:1px;background:var(--line)}
 /* ============ NEXT MOVE ============ */
-.move{background:var(--deep);color:#fff;border-radius:20px;padding:22px 24px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.move{position:relative;overflow:hidden;background:linear-gradient(125deg,#0b2e36,#12404c 62%);color:#fff;border-radius:22px;padding:24px 26px;display:flex;align-items:center;gap:22px;flex-wrap:wrap;box-shadow:0 18px 40px rgba(11,46,54,.24)}
+.move::before{content:"";position:absolute;top:-120px;right:-90px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(62,209,168,.22),transparent 62%);pointer-events:none}
+.move>*{position:relative}
 .move .ic{width:46px;height:46px;border-radius:14px;background:rgba(62,209,168,.18);color:var(--mint-2);display:grid;place-items:center;flex:none}
 .move .body{flex:1;min-width:220px}
 .move .k{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mint-2)}
 .move h2{font-size:19px;font-weight:800;margin:5px 0 5px}
 .move p{font-size:13px;color:#a9cdc3;max-width:62ch}
 .move .btn-primary{flex:none}
+/* ============ ACTIVITY ============ */
+.feed-item{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed var(--line)}
+.feed-item:last-child{border-bottom:0}
+.feed-item .fi{width:26px;height:26px;border-radius:8px;background:var(--mint-soft);color:var(--good-text);display:grid;place-items:center;flex:none;margin-top:1px}
+.feed-item .ft{font-size:13px;font-weight:600;color:var(--ink);min-width:0}
+.feed-item .ft small{display:block;font-size:11.5px;color:var(--txt-soft);font-weight:500;margin-top:1px}
+.feed-item .fw{margin-left:auto;font-size:11.5px;color:var(--txt-mute);white-space:nowrap;flex:none}
 /* ============ TOAST ============ */
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,150%);z-index:200;background:var(--deep);color:#fff;border-radius:14px;padding:13px 20px;box-shadow:0 18px 40px rgba(11,46,54,.32);display:flex;align-items:center;gap:12px;font-size:13.5px;font-weight:600;max-width:calc(100vw - 32px);transition:transform .42s cubic-bezier(.3,.9,.3,1)}
 .toast.show{transform:translate(-50%,0)}
@@ -321,6 +345,8 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     specialty:"Cardiology",
     target:"HST Cardiology",
     body:"RCPI",
+    exam:"MRCPI",
+    stage:"sho",
     stageLabel:"SHO, 2 years post-intern",
     clinicalMonths:24,
     examStages:3,        /* Part 1, Part 2 written, PACES */
@@ -331,10 +357,27 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     research:1,          /* one case report submitted */
     leadership:false,
     deadlinesDone:{},
-    customMilestones:[]
+    customMilestones:[],
+    activity:[]
   };
   var KEY = "mednav.demo.v1";
   var S = load();
+  seedFromUrl();
+
+  /* onboarding hands the answers over in the URL, because the two are separate
+     documents and cannot share storage across origins */
+  function seedFromUrl(){
+    var m = /[?&]p=([^&#]+)/.exec(location.search || "");
+    if (!m) return;
+    try {
+      var raw = decodeURIComponent(m[1]).replace(/-/g, "+").replace(/_/g, "/");
+      var incoming = JSON.parse(decodeURIComponent(escape(window.atob(raw))));
+      for (var k in incoming) if (incoming.hasOwnProperty(k) && DEFAULTS.hasOwnProperty(k)) S[k] = incoming[k];
+      S.activity = [{t:"Account created and roadmap built", d:"From your onboarding answers", at:Date.now()}];
+      save();
+    } catch (e) { /* a malformed or truncated link just falls back to the demo record */ }
+    try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) {}
+  }
 
   function load(){
     var base = JSON.parse(JSON.stringify(DEFAULTS));
@@ -361,6 +404,15 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     if (n === 0) return "today";
     if (n === 1) return "tomorrow";
     return n + " days away";
+  }
+  function ago(ts){
+    var mins = Math.round((Date.now() - ts) / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return mins + (mins === 1 ? " min ago" : " mins ago");
+    var hrs = Math.round(mins / 60);
+    if (hrs < 24) return hrs + (hrs === 1 ? " hour ago" : " hours ago");
+    var d = Math.round(hrs / 24);
+    return d + (d === 1 ? " day ago" : " days ago");
   }
   function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
@@ -468,36 +520,41 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 
   /* ================= MILESTONES ================= */
   function milestones(){
+    /* derived, not a fixed history: a doctor who told onboarding they hold two
+       exam stages must not be shown a third as passed */
+    var qualified = S.stage !== "student";
+    var onLadder = S.clinicalMonths > 0;
     var m = [
-      {t:"Final medical degree", when:"Jun 2018", state:"done"},
-      {t:"Internship", when:"Aug 2019", state:"done"},
-      {t:"IMC registration", when:"Sep 2019", state:"done"},
-      {t:"MRCPI Part 1", when:"Feb 2021", state:"done"},
-      {t:"BST General Internal Medicine, year 1", when:"Aug 2021", state:"done"},
-      {t:"BST General Internal Medicine, year 2", when:"Aug 2022", state:"done"},
-      {t:"BST General Internal Medicine complete", when:"Aug 2023", state:"done"},
-      {t:"Advanced Life Support", when:"Jan 2024", state:"done"},
-      {t:"MRCPI Part 2 written", when:"Nov 2025", state:"done"},
-      {t:"PACES", when:"Mar 2026", state:"done"},
-      {t:"Full MRCPI membership", when:"Mar 2026", state:"done"},
-
-      {t:"Audit and QI project", state: S.auditComplete >= 1 ? "done" : "doing",
-       pct: S.auditComplete >= 1 ? 100 : S.qiPct, when: S.auditComplete >= 1 ? "Complete" : "Started Jan 2026",
-       act:"finishQI", cta:"Mark complete"},
-      {t:"Teaching sessions", state: S.teachingDone >= S.teachingTarget ? "done" : "doing",
-       pct: Math.round(S.teachingDone / S.teachingTarget * 100),
-       when: S.teachingDone + " of " + S.teachingTarget, act:"logTeaching", cta:"Log a session"},
-      {t:"Research output", state: S.research >= 2 ? "done" : (S.research >= 1 ? "doing" : "todo"),
-       pct: Math.min(100, Math.round(S.research / 2 * 100)), when: S.research + " of 2",
-       act:"addResearch", cta:"Record output"},
-      {t:"Leadership training", state: S.leadership ? "done" : "todo", when:"Optional",
-       act:"doLeadership", cta:"Mark complete"},
-
-      {t:"HST Cardiology application", state:"todo", when:"Opens Oct"},
-      {t:"Interview preparation", state:"todo", when:"From Nov"},
-      {t:"HST Cardiology interview", state:"todo", when:"Jan 2027"},
-      {t:"CSCST", state:"todo", when:"Future"}
+      {t:"Final medical degree", when:"Complete", state: qualified ? "done" : "todo"},
+      {t:"Internship", when: onLadder ? "Complete" : "Not started", state: onLadder ? "done" : "todo"},
+      {t:"IMC registration", when: onLadder ? "Complete" : "Not started", state: onLadder ? "done" : "todo"}
     ];
+    [S.exam + " Part 1", S.exam + " Part 2 written", S.exam + " clinical exam"].forEach(function(label, n){
+      m.push({t:label, when: S.examStages > n ? "Passed" : "Not held", state: S.examStages > n ? "done" : "todo"});
+    });
+    m.push({t:"Advanced Life Support", when: onLadder ? "Held" : "Not held", state: onLadder ? "done" : "todo"});
+    m.push({t:"Basic specialist training, year 1", when: S.clinicalMonths >= 12 ? "Complete" : "In progress",
+            state: S.clinicalMonths >= 12 ? "done" : "todo"});
+    m.push({t:"Basic specialist training, year 2", when: S.clinicalMonths >= 24 ? "Complete" : "In progress",
+            state: S.clinicalMonths >= 24 ? "done" : "todo"});
+
+    m.push({t:"Audit and QI project", state: S.auditComplete >= 1 ? "done" : "doing",
+     pct: S.auditComplete >= 1 ? 100 : S.qiPct, when: S.auditComplete >= 1 ? "Complete" : S.qiPct + "% done",
+     act:"finishQI", cta:"Mark complete"});
+    m.push({t:"Teaching sessions", state: S.teachingDone >= S.teachingTarget ? "done" : "doing",
+     pct: Math.round(S.teachingDone / S.teachingTarget * 100),
+     when: S.teachingDone + " of " + S.teachingTarget, act:"logTeaching", cta:"Log a session"});
+    m.push({t:"Research output", state: S.research >= 2 ? "done" : (S.research >= 1 ? "doing" : "todo"),
+     pct: Math.min(100, Math.round(S.research / 2 * 100)), when: S.research + " of 2",
+     act:"addResearch", cta:"Record output"});
+    m.push({t:"Leadership training", state: S.leadership ? "done" : "todo", when:"Optional",
+     act:"doLeadership", cta:"Mark complete"});
+
+    m.push({t: S.target + " application", state:"todo", when:"Opens Oct"});
+    m.push({t:"Interview preparation", state:"todo", when:"From Nov"});
+    m.push({t: S.target + " interview", state:"todo", when:"Jan 2027"});
+    m.push({t:"CSCST", state:"todo", when:"Future"});
+
     (S.customMilestones || []).forEach(function(c){ m.push({t:c, state:"todo", when:"Custom", custom:true}); });
     return m;
   }
@@ -522,8 +579,8 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
   /* ================= LADDER ================= */
   function rungs(){
     return [
-      {t:"Internship", sub:"Aug 2020", state:"done"},
-      {t:"BST GIM", sub:"Aug 2023", state:"done"},
+      {t:"Internship", sub: S.clinicalMonths > 0 ? "Complete" : "Not started", state: S.clinicalMonths > 0 ? "done" : "todo"},
+      {t:"Basic training", sub: S.clinicalMonths >= 24 ? "Complete" : S.clinicalMonths + " months", state: S.clinicalMonths >= 24 ? "done" : "todo"},
       {t:S.target, sub:"Not yet applied", state:"here"},
       {t:"CSCST", sub:"About 2033", state:"todo"},
       {t:"Consultant", sub:"Typical 11 years", state:"todo"}
@@ -531,18 +588,53 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
   }
 
   /* ================= COMPONENTS ================= */
+  var uid = 0;
+  /* rings, bars and figures all render at zero and are animated to their real
+     value after paint, so a recalculation is visible rather than instantaneous */
   function ring(pct, label){
-    var r = 52, c = 2 * Math.PI * r;
-    return '<div class="ring"><svg width="132" height="132" viewBox="0 0 132 132" role="img" aria-label="' + pct + '% ' + esc(label) + '">' +
-      '<circle class="track" cx="66" cy="66" r="' + r + '" fill="none" stroke-width="12"/>' +
-      '<circle class="fill" cx="66" cy="66" r="' + r + '" fill="none" stroke-width="12" stroke-dasharray="' +
-        (c * pct / 100).toFixed(1) + " " + c.toFixed(1) + '"/>' +
+    var r = 54, c = 2 * Math.PI * r, id = "rg" + (++uid);
+    return '<div class="ring"><svg width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="' + pct + '% ' + esc(label) + '">' +
+      '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="1" y2="1">' +
+        '<stop offset="0" stop-color="#14b394"/><stop offset="1" stop-color="#3ed1a8"/></linearGradient></defs>' +
+      '<circle class="track" cx="70" cy="70" r="' + r + '" fill="none" stroke-width="13"/>' +
+      '<circle class="fill" cx="70" cy="70" r="' + r + '" fill="none" stroke-width="13" stroke="url(#' + id + ')" ' +
+        'stroke-dasharray="0 ' + c.toFixed(1) + '" data-dash="' + (c * pct / 100).toFixed(1) + " " + c.toFixed(1) + '"/>' +
       "</svg>" +
-      '<span class="mid"><span><b class="num">' + pct + '%</b><span>' + esc(label) + "</span></span></span></div>";
+      '<span class="mid"><span><b class="num" data-count="' + pct + '" data-suffix="%">0%</b><span>' + esc(label) + "</span></span></span></div>";
   }
   function chip(s){ return '<span class="chip ' + s.k + '">' + ico(s.icon, 12) + esc(s.label) + "</span>"; }
-  function bar(pct){ return '<div class="bar"><i style="width:' + pct + '%"></i></div>'; }
-  function stat(k, v, d){ return '<div class="stat"><p class="k">' + esc(k) + '</p><p class="v num">' + v + '</p><p class="d">' + d + "</p></div>"; }
+  function bar(pct){ return '<div class="bar"><i style="width:0%" data-w="' + pct + '"></i></div>'; }
+  function stat(k, v, d, icon){
+    return '<div class="stat">' + (icon ? '<span class="ic">' + ico(icon, 15) + "</span>" : "") +
+      '<p class="k">' + esc(k) + '</p><p class="v num">' + v + '</p><p class="d">' + d + "</p></div>";
+  }
+  function counter(n, suffix){ return '<span data-count="' + n + '"' + (suffix ? ' data-suffix="' + suffix + '"' : "") + ">0" + (suffix || "") + "</span>"; }
+
+  function animateAll(){
+    var root = document.getElementById("view");
+    root.querySelectorAll(".bar i[data-w]").forEach(function(el){
+      var w = el.getAttribute("data-w") + "%";
+      if (reduced){ el.style.width = w; return; }
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.style.width = w; }); });
+    });
+    root.querySelectorAll(".ring .fill[data-dash]").forEach(function(el){
+      var d = el.getAttribute("data-dash");
+      if (reduced){ el.setAttribute("stroke-dasharray", d); return; }
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.setAttribute("stroke-dasharray", d); }); });
+    });
+    root.querySelectorAll("[data-count]").forEach(function(el){
+      var target = parseFloat(el.getAttribute("data-count")), suffix = el.getAttribute("data-suffix") || "";
+      if (!isFinite(target)) return;
+      if (reduced){ el.textContent = target + suffix; return; }
+      var started = null, dur = 620;
+      requestAnimationFrame(function step(ts){
+        if (started === null) started = ts;
+        var pr = Math.min((ts - started) / dur, 1), eased = 1 - Math.pow(1 - pr, 3);
+        el.textContent = Math.round(target * eased) + suffix;
+        if (pr < 1) requestAnimationFrame(step);
+      });
+    });
+  }
   function actBtn(act, label, primary){
     return '<button class="btn btn-sm ' + (primary ? "btn-primary" : "btn-ghost") + '" data-act="' + act + '">' + esc(label) + "</button>";
   }
@@ -556,7 +648,11 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
       var lv = levers(), top = lv[0], nd = nextDeadline(), ms = milestones();
       var done = ms.filter(function(m){ return m.state === "done"; }).length;
       var open = deadlines().filter(function(d){ return !d.done && d.days >= 0; }).slice(0, 3);
-      var h = "";
+      var hr = new Date().getHours();
+      var greet = hr < 12 ? "Good morning" : (hr < 18 ? "Good afternoon" : "Good evening");
+      var h = '<p class="hello">' + greet + ", " + esc(S.name.split(/\s+/)[0]) + ".</p>" +
+        '<p class="hello-sub">' + (top ? "One thing would move you further than anything else today."
+                                      : "Nothing is outstanding. Keep the evidence dated.") + "</p>";
 
       h += '<div class="move">' +
         '<span class="ic">' + ico(I.bolt, 22) + "</span>" +
@@ -566,10 +662,10 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
         (top ? actBtn(top.act, top.cta, true) : "") + "</div>";
 
       h += '<div class="grid g4" style="margin-top:16px">' +
-        stat("Application readiness", readiness() + "%", "Weighted across 6 domains") +
-        stat("Shortlisting score", scorePts() + "<small>/" + scoreMax() + "</small>", "Against published " + esc(S.body) + " criteria") +
-        stat("Milestones", done + "<small>/" + ms.length + "</small>", Math.round(done / ms.length * 100) + "% of your route") +
-        stat("Next deadline", nd ? nd.days + "<small> days</small>" : "None", nd ? esc(nd.t) : "Nothing open") + "</div>";
+        stat("Application readiness", counter(readiness(), "%"), "Weighted across 6 domains", I.clip) +
+        stat("Shortlisting score", counter(scorePts()) + "<small>/" + scoreMax() + "</small>", "Against published " + esc(S.body) + " criteria", I.target) +
+        stat("Milestones", counter(done) + "<small>/" + ms.length + "</small>", Math.round(done / ms.length * 100) + "% of your route", I.chart) +
+        stat("Next deadline", nd ? counter(nd.days) + "<small> days</small>" : "None", nd ? esc(nd.t) : "Nothing open", I.cal) + "</div>";
 
       h += '<div class="grid g2" style="margin-top:14px">';
       h += '<div class="card"><div class="card-head"><h2>What is closing</h2><a class="btn-link aside" href="#/deadlines">All deadlines</a></div>';
@@ -589,6 +685,16 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 
       h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Your ladder</h2><a class="btn-link aside" href="#/roadmap">Open roadmap</a></div>' +
         rungsHTML() + "</div>";
+
+      var acts = (S.activity || []).slice(0, 6);
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Recent activity</h2>' +
+        '<span class="aside">' + (acts.length ? "Only what you actually did" : "") + "</span></div>";
+      h += acts.length ? acts.map(function(a){
+        return '<div class="feed-item"><span class="fi">' + ico(I.tick, 13) + "</span>" +
+          '<span class="ft">' + esc(a.t) + (a.d ? "<small>" + esc(a.d) + "</small>" : "") + "</span>" +
+          '<span class="fw">' + esc(ago(a.at)) + "</span></div>";
+      }).join("") : '<p class="empty">Nothing logged yet. Anything you mark complete shows up here with what it changed.</p>';
+      h += "</div>";
       return h;
     }
   };
@@ -618,11 +724,15 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
         '<a class="btn btn-sm btn-ghost" href="#/gaps">Open gap analyser</a>' +
         '<a class="btn btn-sm btn-primary" href="#/score">See how it scores</a></div></div>';
 
+      var onLadder = S.clinicalMonths > 0;
       var trail = [
-        {k:"done", t:"Internship", when:"Aug 2020"},
-        {k:"flag", t:"MRCPI Part 1 passed", when:"Feb 2021"},
-        {k:"done", t:"BST General Internal Medicine", when:"Aug 2023"},
-        {k:"flag", t:"MRCPI Part 2 and PACES passed", when:"Mar 2026"},
+        {k: onLadder ? "done" : "todo", t:"Internship", when: onLadder ? "Complete" : "Not started"},
+        {k:"flag", t: S.examStages >= 1 ? S.exam + " Part 1 passed" : S.exam + " Part 1 not held",
+         when: S.examStages >= 1 ? "Passed" : "Outstanding"},
+        {k: S.clinicalMonths >= 24 ? "done" : "todo", t:"Basic specialist training",
+         when: S.clinicalMonths >= 24 ? "Complete" : S.clinicalMonths + " months in"},
+        {k:"flag", t: S.examStages >= 3 ? "Full " + S.exam + " membership" : S.exam + " not yet complete",
+         when: S.examStages + " of 3 stages"},
         {k:"here", t:S.target + ", not yet applied", when:"Applications close 8 Nov"},
         {k:"flag", t:"Interview", when:"Jan 2027"},
         {k:"todo", t:"CSCST", when:"About 2033"},
@@ -929,7 +1039,12 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     var id = currentId(), v = VIEWS[id];
     document.getElementById("viewTitle").textContent = v.title;
     document.getElementById("viewSub").textContent = v.sub;
-    document.getElementById("view").innerHTML = v.render();
+    var host = document.getElementById("view");
+    host.innerHTML = v.render();
+    host.classList.remove("enter");
+    void host.offsetWidth;
+    if (!reduced) host.classList.add("enter");
+    animateAll();
     renderNav(id);
     document.getElementById("scopeTarget").textContent = S.target;
     document.getElementById("scopeStage").textContent = S.stageLabel;
@@ -979,6 +1094,7 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     reset: function(){
       try { window.localStorage.removeItem(KEY); } catch (e) {}
       S = load();
+      S.activity = [];
       return "Demo record reset";
     },
     printReport: function(){ window.print(); return null; },
@@ -1012,6 +1128,20 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     var bits = [];
     if (dScore) bits.push("shortlisting score <em>" + (dScore > 0 ? "+" : "") + dScore + "</em>");
     if (dReady) bits.push("readiness <em>" + (dReady > 0 ? "+" : "") + dReady + "%</em>");
+
+    if (name !== "reset"){
+      S.activity = S.activity || [];
+      S.activity.unshift({
+        t: msg,
+        d: (dScore ? "Shortlisting score " + (dScore > 0 ? "+" : "") + dScore : "") +
+           (dScore && dReady ? ", " : "") +
+           (dReady ? "readiness " + (dReady > 0 ? "+" : "") + dReady + "%" : ""),
+        at: Date.now()
+      });
+      S.activity = S.activity.slice(0, 20);
+      save();
+      render();
+    }
     toast(esc(msg) + (bits.length ? ". " + bits.join(", ") : "."));
   }
 

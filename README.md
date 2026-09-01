@@ -12,6 +12,7 @@ Static marketing site for MedNav, the Irish medical career navigation platform.
 | `opportunities/locums.html` | Locum shifts | Grouped by starting month |
 | `opportunities/conferences.html` | Conferences, courses and CPD | Agenda timeline with a CPD planner |
 | `tools/index.html` | Career Tools | One profile driving seven live tool cards |
+| `onboarding/index.html` | Onboarding | Seven steps, split brand panel |
 | `app/index.html` | Dashboard (signed in) | App shell, nine views over one record |
 
 Each page is a single self-contained file. Fonts (Sora, Inter) load from
@@ -33,6 +34,26 @@ dim and say why rather than disappearing.
 Career Tools reuses the homepage's own roadmap components (`.rd-step`,
 `.rd-check-row`, `.rd-next`) so the example there and the example on the
 homepage are visibly the same product.
+
+## Onboarding
+
+`onboarding/index.html` is the path the homepage promises: create an account,
+verify by magic link, set a password, answer three questions about where you
+are, what you are aiming for and what you already hold.
+
+The last screen is the payoff. It computes the same readiness figure, the same
+banded shortlisting score and the same gap count the dashboard will show, from
+the answers just given, then hands those answers to the dashboard.
+
+Because onboarding and the dashboard are separate documents and cannot share
+storage across origins, the profile travels in the URL as base64 JSON
+(`?p=...`). The dashboard reads it, merges only keys it recognises, saves, and
+strips the parameter from the address bar.
+
+**Known duplication:** the scoring model exists twice, in `onboarding/` and in
+`app/`. Two copies can drift, and the two figures agreeing is the whole point.
+When this gets a build step, both should import one module. Until then, any
+change to a weight or a band has to be made in both files.
 
 ## The dashboard
 
@@ -151,3 +172,8 @@ inherited it, so the fix is applied in all six files.
   before any of it is shown to a real doctor.
 - Dashboard actions that are honestly stubbed and say so: calendar export,
   reminders and sign out.
+- Onboarding creates no account and sends no email. The magic-link step has an
+  explicit demo control that says so rather than pretending to wait.
+- Milestones and the roadmap trail now derive from the record, so a doctor who
+  says they hold two exam stages is not shown a third as passed. The historical
+  dates that used to be hardcoded are gone.
