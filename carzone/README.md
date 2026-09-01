@@ -4,8 +4,8 @@ A working prototype of the platform described in the PRD: an Arabic and
 English parts, tires and fitting service for Kuwait, built around one idea,
 that you tell it the car once and everything after that is filtered to it.
 
-Open `index.html` in a browser. There is no build step and no server. Fonts
-come from jsDelivr; everything else, including every illustration, is in the
+Open `index.html` in a browser. There is no build step and no server. One
+Google Fonts request; everything else, including every illustration, is in the
 four files below.
 
 | File | What is in it |
@@ -15,6 +15,7 @@ four files below.
 | `assets/data.js` | Vehicles, catalogue, services, symptoms, B2B, geography |
 | `assets/art.js` | Every drawing: icons, parts, the three vehicle elevations |
 | `assets/app.js` | State, fitment engine, router, views, dialogs |
+| `build-single.js` | Optional. Inlines the four files into one shareable HTML |
 
 One document, hash routed (`#/shop/batteries`, `#/p/VAR-H8-AGM`, `#/pro`).
 State lives in memory and is mirrored to `localStorage` where the browser
@@ -50,29 +51,36 @@ Land Cruiser takes group H8 / 49" instead of showing ninety batteries, and why
 
 ### Colour
 
-Warm paper and warm near black, one accent, and semantic colour that never
-decorates. The usual navy and the usual six-hue gradient set are both absent
-on purpose.
+The ground is cool and the country is not, which is the idea: the interface
+is the measured counterpart to the fifty degrees the catalogue is about. Cool
+grey green paper, a near black carrying the same green cast so the neutrals
+read as one family, and a single warm signal that only ever lands on a primary
+action or one detail of a drawing.
 
 ```
---paper #F4F1EA   --card #FBF9F5   --inset #EAE5DA   --rule #DED7C8
---ink   #14120E   --ink-1 #2A261F  --ink-2 #6B6353   --ink-3 #968D7B
---flame #CC4A1E   --go #1F6B4F     --stop #9A2820    --hold #8A6412
+--paper #EAEDE9   --card #F6F8F5   --inset #DEE3DC   --rule #CDD4CB
+--ink   #121613   --ink-1 #242A26  --ink-2 #5A635C   --ink-3 #8A938C
+--flame #C6371F   --go #1B6B4A     --stop #96261B    --hold #7E5A10
 ```
 
 Contrast computed rather than eyeballed, against `--paper`:
 
 | Token | Ratio | Use |
 | --- | --- | --- |
+| `--ink-1` | 12.3:1 | body copy |
 | `--ink-2` | 5.3:1 | secondary text |
-| `--flame-1` `#A83A16` | 5.7:1 | accent **text** |
-| `--flame` `#CC4A1E` | 4.1:1 | fills only, never small text |
-| `--go` | 5.8:1 | fits, in stock, healthy |
+| `--flame-1` `#A32E14` | 6.0:1 | accent **text** |
+| `--flame` `#C6371F` | 4.5:1 | fills only, never small text |
+| `--go` | 5.6:1 | fits, in stock, healthy |
 | `--stop` | 6.9:1 | does not fit, urgent |
-| `--hold` | 4.7:1 | watch this |
+| `--hold` | 5.3:1 | watch this |
 
-White on `--flame` is 4.6:1. On ink surfaces the accent lifts to `--flame-up`
-`#E8703F`, 6.1:1. Following the dataviz method, status is **an icon plus a
+White on `--flame` is 5.3:1. On ink surfaces the accent lifts to `--flame-up`
+`#E86A45`, 5.8:1. Every wash pairs with its own ink above 5:1.
+
+The warm cream and terracotta pairing this started from is a house style a lot
+of generated interfaces land on, so it was replaced. The temperature contrast
+that came out of the swap says something the old palette did not. Following the dataviz method, status is **an icon plus a
 word plus a colour**, never colour alone, which is why "Fits" and "Does not
 fit" both carry a glyph and a label.
 
@@ -194,6 +202,14 @@ than ported, and the reasons matter more than the changes:
 - **Countdown timers, pulsing dots, marquees and the floating animation went.**
   Urgency in this category is real (the car will not start) and is better
   served by a delivery cutoff computed from the actual clock.
+
+## Sharing it as one file
+
+`node build-single.js` inlines the four files into `dist/carzone-kuwait.html`,
+for a context where a folder of assets cannot travel. `--fragment` emits the
+same thing without the document wrapper, for a host that supplies its own
+`<head>` and `<body>`. The four source files remain the thing you edit;
+`dist/` is generated and is not committed.
 
 ## Known gaps
 
