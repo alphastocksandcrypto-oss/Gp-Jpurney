@@ -11,6 +11,8 @@ Static marketing site for MedNav, the Irish medical career navigation platform.
 | `opportunities/jobs.html` | NCHD and consultant posts | Facet rail beside results |
 | `opportunities/locums.html` | Locum shifts | Grouped by starting month |
 | `opportunities/conferences.html` | Conferences, courses and CPD | Agenda timeline with a CPD planner |
+| `preparation/exams.html` | Exams index | Exam families as stage sequences |
+| `preparation/interviews.html` | Interviews index | Scoring weights on the front of the card |
 | `tools/index.html` | Career Tools | One profile driving seven live tool cards |
 | `onboarding/index.html` | Onboarding | Seven steps, split brand panel |
 | `app/index.html` | Dashboard (signed in) | App shell, nine views over one record |
@@ -34,6 +36,37 @@ dim and say why rather than disappearing.
 Career Tools reuses the homepage's own roadmap components (`.rd-step`,
 `.rd-check-row`, `.rd-next`) so the example there and the example on the
 homepage are visibly the same product.
+
+## The Preparation pages
+
+Two reference indexes, each shaped by the fact that actually makes its subject
+hard to plan.
+
+**Exams.** A membership exam is not one event but a sequence of stages, each
+with its own format, fee and sitting window, and the sequence can run three
+years. So the card carries the whole sequence rather than one row per sitting,
+and a stage lights up when its applications are open.
+
+**Interviews.** The useful fact is what the panel weights, so the weighting is
+the body of the card rather than a footnote. Each card also splits the score
+into what you build in advance and what you do on the day, which is the figure
+that tells a doctor whether preparation or portfolio is the better use of the
+next month.
+
+Weights are magnitude, so those bars are sequential on the single mint hue. A
+six-colour categorical set repeated across ten cards would need a legend on
+every card and would collapse for deutan vision on the amber and coral hues.
+
+### What is real on those pages, and what is not
+
+Exam names, colleges, stage structures, programme names and interview formats
+are real. **Fees, sitting dates, closing dates, domain weights, station counts
+and window months are illustrative** and must be replaced with each college's
+published values before launch.
+
+No pass rates appear on the exams page, deliberately. Publishing a pass rate
+for a named college's exam without verifying it against that college's own
+reporting is exactly the confident guess this product exists to avoid.
 
 ## Onboarding
 
@@ -172,6 +205,9 @@ inherited it, so the fix is applied in all six files.
   before any of it is shown to a real doctor.
 - Dashboard actions that are honestly stubbed and say so: calendar export,
   reminders and sign out.
+- Preparation pages: every fee, date, weight and station count is illustrative.
+  Replace from the colleges' published documents, and mark anything not yet
+  published rather than carrying last year's number forward.
 - Onboarding creates no account and sends no email. The magic-link step has an
   explicit demo control that says so rather than pretending to wait.
 - Milestones and the roadmap trail now derive from the record, so a doctor who

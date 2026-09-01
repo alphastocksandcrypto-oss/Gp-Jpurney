@@ -1,0 +1,969 @@
+<!--
+  MedNav exams index. Same design system as the rest of the site. The layout is
+  shaped by the thing that actually makes exams hard to plan: a membership exam
+  is not one event but a sequence of stages, each with its own format, fee and
+  sitting window, and the sequence can take years. So the card carries the whole
+  sequence rather than one row per sitting.
+
+  Exam names, colleges and stage structures below are real. Fees, sitting dates
+  and closing dates are ILLUSTRATIVE and must be replaced with the values each
+  college publishes for the current cycle before this is shown to anyone. No
+  pass rates appear anywhere on this page, deliberately: we are not publishing
+  statistics about a named institution that we have not verified.
+
+  TEMP: https://mednav.ie is a placeholder domain.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Every postgraduate medical exam in Ireland | MedNav</title>
+<meta name="description" content="Every membership and fellowship exam on the Irish training ladder, stage by stage, with format, fee and sitting windows. MRCPI, MRCS, MRCEM, MRCPsych, MICGP and more.">
+<link rel="canonical" href="https://mednav.ie/preparation/exams">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MedNav">
+<meta property="og:title" content="Every postgraduate medical exam in Ireland">
+<meta property="og:description" content="Every membership and fellowship exam on the Irish training ladder, stage by stage, with format, fee and sitting windows.">
+<meta property="og:url" content="https://mednav.ie/preparation/exams">
+<meta property="og:image" content="https://mednav.ie/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Every postgraduate medical exam in Ireland",
+  "description": "Membership and fellowship exams on the Irish training ladder, stage by stage.",
+  "url": "https://mednav.ie/preparation/exams",
+  "isPartOf": { "@type": "WebSite", "name": "MedNav", "url": "https://mednav.ie/" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "MedNav", "item": "https://mednav.ie/" },
+    { "@type": "ListItem", "position": 2, "name": "Preparation", "item": "https://mednav.ie/preparation" },
+    { "@type": "ListItem", "position": 3, "name": "Exams", "item": "https://mednav.ie/preparation/exams" }
+  ]
+}
+</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/800.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/600.css">
+<style>
+
+:root{
+  --deep:#0b2e36; --pine:#12404c; --ink:#12333c;
+  --mint:#14b394; --mint-2:#3ed1a8; --mint-soft:#e0f5ec; --mint-text:#0e816a;
+  --paper:#f7faf8; --cream:#fdfbf5;
+  --coral:#ff7a59; --coral-soft:#fff1e6; --coral-text:#b8482a;
+  --amber:#ffc061; --amber-soft:#fff4e0; --amber-text:#8a5a10;
+  --line:rgba(11,46,54,.12); --txt-soft:#41606a;
+  --shadow:0 24px 60px rgba(11,46,54,.16);
+  --card-shadow:0 10px 26px rgba(11,46,54,.07);
+  --fd:'Sora',system-ui,sans-serif; --fb:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-padding-top:96px}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{font-family:var(--fb);background:var(--paper);color:var(--ink);font-size:16px;line-height:1.6;overflow-x:hidden}
+img,svg{display:block;max-width:100%}
+a{text-decoration:none;color:inherit}
+ul{list-style:none}
+button{font-family:inherit;cursor:pointer}
+input{font-family:inherit}
+::selection{background:var(--mint-2);color:var(--deep)}
+.container{max-width:1180px;margin:0 auto;padding:0 24px}
+.noise{position:fixed;inset:0;z-index:120;pointer-events:none;opacity:.045;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+.skip{position:absolute;left:-999px;top:8px;background:var(--deep);color:#fff;padding:10px 18px;border-radius:10px;z-index:200}
+.skip:focus{left:8px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+h1,h2,h3,h4,.logo-word{font-family:var(--fd)}
+h2.sec-title{font-size:clamp(28px,3.4vw,42px);line-height:1.12;color:var(--deep);font-weight:800;letter-spacing:-.01em}
+.sec-lede{color:var(--txt-soft);font-size:17px;max-width:58ch}
+.sec-head{max-width:680px;margin:0 auto 26px;text-align:center}
+.sec-head .sec-lede{margin:12px auto 0}
+/* ============ BUTTONS ============ */
+.btn{display:inline-flex;align-items:center;gap:10px;font-weight:600;font-size:15px;border-radius:14px;padding:14px 26px;border:1.5px solid transparent;transition:transform .25s ease,box-shadow .25s ease,background .25s,color .25s}
+.btn svg{transition:transform .25s}
+.btn:hover svg{transform:translateX(4px)}
+.btn-primary{background:var(--mint);color:#052a22}
+.btn-primary:hover{background:var(--mint-2);transform:translateY(-2px);box-shadow:0 12px 28px rgba(20,179,148,.35)}
+.btn-ghost{border-color:var(--deep);color:var(--deep);background:transparent}
+.btn-ghost:hover{background:var(--deep);color:#fff;transform:translateY(-2px)}
+:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+/* ============ HEADER ============ */
+header.site{position:sticky;top:0;z-index:100;background:rgba(247,250,248,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);transition:box-shadow .3s}
+header.site.scrolled{box-shadow:0 10px 30px rgba(11,46,54,.1)}
+.nav-in{display:flex;align-items:center;gap:30px;height:74px}
+.logo{display:flex;align-items:center;gap:11px;font-weight:800;font-size:22px;color:var(--deep);letter-spacing:-.02em}
+.logo-mark{width:38px;height:38px;flex:none}
+.nav-links{display:flex;gap:26px;margin-left:44px}
+.nav-links a{font-weight:600;font-size:15px;color:var(--ink);position:relative;padding:6px 0}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:0;height:2.5px;width:100%;background:var(--mint);border-radius:2px;transform:scaleX(0);transform-origin:left;transition:transform .3s ease}
+.nav-links a:hover::after,.nav-links a:focus-visible::after{transform:scaleX(1)}
+.nav-links a[aria-current="page"]{color:var(--mint-text)}
+.nav-links a[aria-current="page"]::after{transform:scaleX(1)}
+.nav-actions{display:flex;align-items:center;gap:12px;margin-left:auto}
+.nav-actions .btn{padding:11px 20px;font-size:14px}
+.nav-actions .btn-ghost{padding:10px 18px}
+.burger{display:none;margin-left:auto;background:none;border:0;width:44px;height:44px;position:relative;z-index:130}
+.burger span{position:absolute;left:10px;right:10px;height:2.5px;border-radius:2px;background:var(--deep);transition:.35s ease}
+.burger span:nth-child(1){top:15px}.burger span:nth-child(2){top:22px}.burger span:nth-child(3){top:29px}
+.burger.open span:nth-child(1){top:22px;transform:rotate(45deg)}
+.burger.open span:nth-child(2){opacity:0}
+.burger.open span:nth-child(3){top:22px;transform:rotate(-45deg)}
+.mobile-menu{position:fixed;inset:0;z-index:110;background:var(--paper);padding:20px 28px 40px;transform:translateY(-102%);transition:transform .5s cubic-bezier(.7,0,.3,1);display:flex;flex-direction:column;gap:6px;overflow:auto}
+.mobile-menu.open{transform:translateY(0)}
+.mobile-menu-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.mobile-close{background:none;border:1.5px solid var(--line);border-radius:12px;width:44px;height:44px;display:grid;place-items:center;color:var(--deep);flex:none}
+.mobile-close:hover{background:var(--deep);color:#fff;border-color:var(--deep)}
+.mobile-menu a.mlink{font-family:var(--fd);font-weight:700;font-size:26px;color:var(--deep);padding:12px 0;border-bottom:1px dashed var(--line)}
+.mobile-menu a.mlink[aria-current="page"]{color:var(--mint-text)}
+.mobile-menu .m-cta{margin-top:22px;display:flex;flex-direction:column;gap:12px}
+/* ============ HERO ============ */
+.hero{position:relative;padding:52px 0 84px;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 520'%3E%3Cpath d='M20 480 L150 480 L150 400 L300 400 L300 320 L450 320 L450 240 L600 240 L600 160 L760 160' stroke='%230b2e36' stroke-width='2' fill='none' opacity='0.16'/%3E%3Ccircle cx='150' cy='400' r='5' fill='%2314b394' opacity='0.4'/%3E%3Ccircle cx='300' cy='320' r='5' fill='%2314b394' opacity='0.4'/%3E%3Ccircle cx='450' cy='240' r='5' fill='%2314b394' opacity='0.4'/%3E%3Ccircle cx='600' cy='160' r='6' fill='%23ff7a59' opacity='0.55'/%3E%3C/svg%3E");
+  background-size:800px 520px;background-repeat:no-repeat;background-position:6% 26%;
+  -webkit-mask-image:radial-gradient(ellipse 70% 60% at 60% 30%,#000 30%,transparent 75%);
+  mask-image:radial-gradient(ellipse 70% 60% at 60% 30%,#000 30%,transparent 75%)}
+.hero::after{content:"";position:absolute;top:-160px;right:-160px;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,rgba(62,209,168,.18),transparent 65%);pointer-events:none}
+.crumb{position:relative;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--txt-soft);margin-bottom:22px}
+.crumb a:hover{color:var(--mint-text)}
+.crumb span[aria-current]{color:var(--deep)}
+.crumb i{width:4px;height:4px;border-radius:50%;background:var(--line)}
+.hero-grid{position:relative;display:grid;grid-template-columns:1.02fr .98fr;gap:56px;align-items:center}
+.hero h1{font-size:clamp(31px,4.1vw,49px);line-height:1.06;color:var(--deep);font-weight:800;letter-spacing:-.02em;margin:0 0 22px}
+.hl-line{display:block;overflow:hidden;padding-bottom:.08em}
+.hl-line>span{display:block;transform:translateY(112%);animation:rise .9s cubic-bezier(.2,.75,.2,1) forwards;animation-delay:var(--d,0s)}
+@keyframes rise{to{transform:translateY(0)}}
+.hl{color:var(--mint-text);position:relative;white-space:nowrap;font-family:var(--fd)}
+.hl svg{position:absolute;left:0;bottom:-.18em;width:100%;height:.32em;overflow:visible}
+.hl path{stroke:var(--amber);stroke-width:5;fill:none;stroke-linecap:round;stroke-dasharray:320;stroke-dashoffset:320;animation:draw 1s ease 1.05s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.lede{color:var(--txt-soft);font-size:18px;max-width:52ch}
+.hero-search{display:flex;gap:10px;margin-top:30px;max-width:520px;flex-wrap:wrap}
+.search-wrap{flex:1;min-width:240px;position:relative;display:flex;align-items:center}
+.search-wrap svg{position:absolute;left:16px;color:var(--txt-soft);pointer-events:none}
+.hero-search input{width:100%;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:14px 16px 14px 44px;font-size:15px;color:var(--ink);outline:none;transition:.25s;box-shadow:var(--card-shadow)}
+.hero-search input::placeholder{color:#8ba3a8}
+.hero-search input:focus{border-color:var(--mint)}
+.hero-quick{margin-top:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--txt-soft)}
+.hero-quick button{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600;color:var(--deep);transition:.2s}
+.hero-quick button:hover{border-color:var(--mint);color:var(--mint-text);transform:translateY(-1px)}
+.hero-stats{margin-top:34px;display:flex;gap:30px;flex-wrap:wrap}
+.hstat b{display:block;font-family:var(--fd);font-size:30px;font-weight:800;color:var(--deep);line-height:1.1;letter-spacing:-.02em}
+.hstat span{font-size:12.5px;font-weight:600;color:var(--txt-soft)}
+.hstat i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;vertical-align:middle}
+.hstat.j i{background:var(--mint)}
+.hstat.l i{background:var(--amber)}
+.hstat.c i{background:var(--coral)}
+.hero-proof{margin-top:26px;font-size:13px;color:var(--txt-soft);display:flex;align-items:center;gap:9px}
+.hero-proof svg{color:var(--mint);flex:none}
+.hero-proof b{color:var(--deep)}
+/* ============ BOARD ============ */
+.board-sec{padding:96px 0 40px}
+.board-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:28px}
+.board-head .sec-lede{margin-top:12px}
+.sample-badge{display:inline-flex;align-items:center;gap:7px;font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--amber-text);background:var(--amber-soft);border-radius:999px;padding:5px 12px;margin-bottom:14px}
+.board-shell{background:#fff;border:1px solid var(--line);border-radius:28px;box-shadow:var(--card-shadow);overflow:hidden}
+.board-bar{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;background:var(--paper);border-radius:14px;padding:4px;flex-wrap:wrap}
+.tab{border:0;background:transparent;font-family:var(--fd);font-weight:700;font-size:13px;color:var(--txt-soft);padding:9px 15px;border-radius:11px;transition:.22s;display:inline-flex;align-items:center;gap:7px}
+.tab em{font-style:normal;font-size:11px;font-weight:700;background:rgba(11,46,54,.08);border-radius:999px;padding:1px 7px;color:var(--txt-soft)}
+.tab:hover{color:var(--deep)}
+.tab.on{background:var(--deep);color:#fff;box-shadow:0 6px 16px rgba(11,46,54,.18)}
+.tab.on em{background:rgba(255,255,255,.16);color:#fff}
+.board-search{margin-left:auto;position:relative;display:flex;align-items:center;min-width:230px}
+.board-search svg{position:absolute;left:13px;color:var(--txt-soft);pointer-events:none}
+.board-search input{width:100%;border:1.5px solid var(--line);background:var(--paper);border-radius:12px;padding:10px 12px 10px 38px;font-size:13.5px;color:var(--ink);outline:none;transition:.25s}
+.board-search input:focus{border-color:var(--mint);background:#fff}
+.filter-bar{padding:14px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--paper)}
+.filter-label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-soft);margin-right:2px}
+.fchip{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:600;color:var(--deep);transition:.2s;display:inline-flex;align-items:center;gap:6px}
+.fchip:hover{border-color:var(--mint);transform:translateY(-1px)}
+.fchip.on{background:var(--deep);border-color:var(--deep);color:#fff}
+.fchip.on svg{color:var(--mint-2)}
+.fchip.soon.on{background:var(--coral);border-color:var(--coral);color:#fff}
+.fdiv{width:1px;height:22px;background:var(--line);margin:0 4px}
+.fclear{background:none;border:0;font-size:12.5px;font-weight:600;color:var(--mint-text);padding:7px 6px}
+.fclear:hover{text-decoration:underline}
+.board-count{padding:14px 22px 0;font-size:12.5px;color:var(--txt-soft);font-weight:500}
+.board-count b{color:var(--deep);font-weight:700}
+.board-list{padding:16px 22px 22px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.card{min-width:0;border:1px solid var(--line);border-radius:18px;padding:18px 20px;background:#fff;transition:transform .22s,box-shadow .22s,border-color .22s;position:relative}
+.card:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(11,46,54,.1);border-color:rgba(11,46,54,.2)}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:8px}
+.card h4{font-size:16px;line-height:1.35;color:var(--deep);font-weight:700;letter-spacing:-.01em}
+.card-badges{display:flex;gap:6px;flex:none;align-items:center}
+.type-tag{font-family:var(--fd);font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:4px 10px;white-space:nowrap}
+.type-job{background:var(--mint-soft);color:#0b7a63}
+.type-locum{background:var(--amber-soft);color:var(--amber-text)}
+.type-conf{background:var(--coral-soft);color:var(--coral-text)}
+.src-tag{font-size:10px;font-weight:700;color:var(--txt-soft);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:4px 8px;white-space:nowrap}
+.card-meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--txt-soft);margin-bottom:14px}
+.card-meta span{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%}
+.card-meta svg{color:#8ba3a8;flex:none}
+.card-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:13px;border-top:1px dashed var(--line)}
+.deadline{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--txt-soft)}
+.dpill{font-family:var(--fd);font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--paper);color:var(--txt-soft);border:1px solid var(--line)}
+.dpill.warm{background:var(--amber-soft);color:var(--amber-text);border-color:transparent}
+.dpill.hot{background:var(--coral);color:#fff;border-color:transparent}
+.rate{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--mint-text)}
+.rate-none{font-size:12.5px;color:#8ba3a8;font-weight:500;font-style:italic}
+.card-foot .card-link{margin-left:auto}
+.card-link{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--mint-text);white-space:nowrap}
+.card-link:hover{color:var(--deep)}
+.card-link svg{transition:transform .2s}
+.card:hover .card-link svg{transform:translate(2px,-2px)}
+.empty{padding:46px 22px;text-align:center;color:var(--txt-soft)}
+.empty b{display:block;font-family:var(--fd);color:var(--deep);font-size:16px;margin-bottom:6px}
+.board-foot{padding:20px 22px;border-top:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.board-foot p{font-size:12.5px;color:var(--txt-soft);max-width:56ch}
+.board-foot-links{display:flex;gap:10px;flex-wrap:wrap}
+.mini-link{display:inline-flex;align-items:center;gap:7px;font-family:var(--fd);font-size:12.5px;font-weight:700;color:var(--deep);background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 15px;transition:.2s}
+.mini-link:hover{border-color:var(--mint);color:var(--mint-text);transform:translateY(-2px)}
+@media(max-width:760px){
+  .board-search{margin-left:0;width:100%}
+  .card-foot{align-items:flex-start}
+}
+/* ============ ALERTS ============ */
+.alerts-sec{padding:96px 0}
+.alert-card{display:grid;grid-template-columns:1.05fr .95fr;border-radius:30px;overflow:hidden;box-shadow:var(--shadow);background:var(--deep);color:#fff}
+.alert-body{padding:52px 52px 46px}
+.alert-body h2{font-size:clamp(25px,3vw,36px);font-weight:800;line-height:1.15;margin-bottom:12px;font-family:var(--fd);letter-spacing:-.01em}
+.alert-body>p{color:#b9d8d0;max-width:46ch}
+.alert-form{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}
+.alert-form input{flex:1;min-width:210px;border-radius:14px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;padding:14px 18px;font-size:15px;outline:none;transition:.25s}
+.alert-form input::placeholder{color:#8fb5ac}
+.alert-form input:focus{border-color:var(--mint-2);background:rgba(255,255,255,.12)}
+.form-error{display:none;margin-top:10px;font-size:12.5px;font-weight:600;color:#ffb199}
+.form-error.show{display:block}
+.form-ok{display:none;margin-top:26px;background:rgba(62,209,168,.14);border:1px solid rgba(62,209,168,.5);color:#c9f5e7;border-radius:14px;padding:14px 18px;font-weight:600}
+.form-ok.show{display:flex;gap:10px;align-items:center;animation:pop .45s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.alert-note{margin-top:16px;font-size:12.5px;color:#8fb5ac}
+.alert-preview{background:rgba(255,255,255,.05);border-left:1px solid rgba(255,255,255,.12);padding:46px 44px;display:flex;flex-direction:column;justify-content:center}
+.ap-label{font-family:var(--fd);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8fb5ac;margin-bottom:14px}
+.ap-mail{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.28)}
+.ap-mail-top{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+.ap-mail-top b{font-family:var(--fd);font-size:12.5px;color:var(--deep)}
+.ap-mail-top span{margin-left:auto;font-size:10.5px;color:var(--txt-soft)}
+.ap-row{padding:13px 18px;border-bottom:1px dashed var(--line);display:flex;align-items:center;gap:11px}
+.ap-row:last-child{border-bottom:0}
+.ap-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.ap-row b{font-size:12.5px;color:var(--deep);font-weight:600;line-height:1.35}
+.ap-row small{margin-left:auto;font-size:10.5px;color:var(--txt-soft);font-weight:600;white-space:nowrap;flex:none}
+@media(max-width:940px){
+  .alert-card{grid-template-columns:1fr}
+  .alert-preview{border-left:0;border-top:1px solid rgba(255,255,255,.12)}
+}
+@media(max-width:640px){.alert-body{padding:38px 26px}.alert-preview{padding:34px 26px}}
+/* ============ FAQ ============ */
+.faq-sec{padding:0 0 100px}
+.faq-list{max-width:760px;margin:44px auto 0;border-top:1px solid var(--line)}
+.faq-item{border-bottom:1px solid var(--line)}
+.faq-item summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 4px;cursor:pointer;font-family:var(--fd);font-weight:700;font-size:16px;color:var(--deep)}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary:hover{color:var(--mint-text)}
+.faq-icon{flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;color:var(--deep);transition:transform .25s,background .25s,border-color .25s,color .25s}
+.faq-item[open] .faq-icon{background:var(--deep);border-color:var(--deep);color:#fff;transform:rotate(45deg)}
+.faq-item p{padding:0 34px 24px 4px;color:var(--txt-soft);font-size:15px;max-width:62ch}
+/* ============ FOOTER ============ */
+footer.site{background:#08222a;color:#9fc0ba;padding:76px 0 0}
+.f-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;gap:40px}
+.f-brand .logo{color:#fff}
+.f-brand p{font-size:14px;margin:18px 0 22px;max-width:34ch}
+.news-form{display:flex;gap:8px;max-width:340px}
+.news-form input{flex:1;border-radius:12px;border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);padding:11px 14px;color:#fff;font-size:14px;outline:none;transition:.25s}
+.news-form input:focus{border-color:var(--mint-2)}
+.news-form button{border:0;border-radius:12px;background:var(--mint);color:#052a22;font-weight:700;padding:11px 16px;transition:.25s}
+.news-form button:hover{background:var(--mint-2)}
+.news-ok{display:none;font-size:13px;color:var(--mint-2);font-weight:600;margin-top:10px}
+.news-ok.show{display:block}
+.f-col h5{color:#fff;font-family:var(--fd);font-size:14px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:18px}
+.f-col ul{display:grid;gap:11px}
+.f-col a{font-size:14px;transition:.2s;position:relative}
+.f-col a:hover{color:#fff;padding-left:12px}
+.f-col a::before{content:"\2192";position:absolute;left:-6px;opacity:0;transition:.2s;color:var(--mint-2)}
+.f-col a:hover::before{left:0;opacity:1}
+.f-bottom{border-top:1px solid rgba(255,255,255,.08);margin-top:60px;padding:24px 0;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;font-size:13px}
+.f-legal{display:flex;gap:22px;flex-wrap:wrap}
+.f-legal a:hover{color:#fff}
+.f-disclaimer{padding:0 0 26px;font-size:12px;color:#6d938c;max-width:900px}
+.to-top{position:fixed;right:26px;bottom:26px;width:50px;height:50px;border-radius:16px;border:0;background:var(--deep);color:var(--mint-2);display:grid;place-items:center;box-shadow:0 14px 34px rgba(11,46,54,.3);opacity:0;pointer-events:none;transform:translateY(14px);transition:.35s;z-index:90}
+.to-top.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+.to-top:hover{background:var(--mint);color:#052a22}
+[data-reveal]{opacity:0;transform:translateY(28px);transition:opacity .8s ease var(--d,0s),transform .8s cubic-bezier(.2,.7,.2,1) var(--d,0s)}
+[data-reveal].is-in{opacity:1;transform:none}
+/* ============ RESPONSIVE ============ */
+/* the nav needs more room than the 960px breakpoint gives it: between 961 and
+   970px the links and the two buttons overflow the header by up to 39px */
+@media(max-width:1000px){
+  .nav-links,.nav-actions .btn{display:none}
+  .burger{display:block}
+}
+@media(max-width:1020px){.f-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:960px){
+  .nav-links,.nav-actions .btn{display:none}
+  .burger{display:block}
+  .hero-grid{grid-template-columns:1fr;gap:64px}
+  .chip{display:none}
+}
+@media(max-width:560px){
+  .card-head{flex-direction:column-reverse;align-items:flex-start;gap:9px}
+}
+@media(max-width:640px){
+  .hero::before{display:none}
+  .f-grid{grid-template-columns:1fr}
+  .board-bar,.filter-bar,.board-list,.board-foot,.board-count{padding-left:16px;padding-right:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .hl-line>span{transform:none}
+  [data-reveal]{opacity:1;transform:none}
+  .hl path{stroke-dashoffset:0}
+  .is-in .mock-bar i{width:72%}
+}
+
+/* ============ LISTING PAGE ============ */
+.page-hero{position:relative;padding:36px 0 38px;background:linear-gradient(180deg,var(--cream),var(--paper));border-bottom:1px solid var(--line);overflow:hidden}
+.page-hero::after{content:"";position:absolute;top:-220px;right:-140px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(20,179,148,.13),transparent 65%);pointer-events:none}
+.page-hero .container{position:relative}
+.page-hero h1{font-size:clamp(27px,3.5vw,41px);line-height:1.1;color:var(--deep);font-weight:800;letter-spacing:-.02em;text-wrap:balance;max-width:20ch}
+.page-hero .lede{margin-top:12px;font-size:16px;max-width:58ch}
+.hero-facts{margin-top:22px;display:flex;gap:9px;flex-wrap:wrap}
+/* inline-block, not inline-flex: flex gaps would push the text apart at every
+   element boundary and leave a space before each comma */
+.fact{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 15px;font-size:12.5px;font-weight:600;color:var(--txt-soft);box-shadow:var(--card-shadow)}
+.fact b{font-family:var(--fd);color:var(--deep);font-variant-numeric:tabular-nums}
+.fact i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;vertical-align:middle}
+/* composition bar: what is actually on the board, not decoration */
+.split{margin-top:28px;max-width:600px}
+.split-label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-soft);margin-bottom:9px}
+.split-bar{display:flex;height:13px;border-radius:99px;overflow:hidden;background:var(--line);gap:2px}
+.split-bar i{display:block;height:100%;width:0;transition:width .9s cubic-bezier(.3,.9,.3,1) var(--d,0s)}
+.is-in .split-bar i{width:var(--w)}
+.split-key{margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--txt-soft);font-weight:600}
+.split-key span{display:inline-flex;align-items:center;gap:7px}
+.split-key i{width:9px;height:9px;border-radius:3px;flex:none}
+.split-key b{color:var(--deep);font-variant-numeric:tabular-nums}
+.work-sec{padding:30px 0 86px}
+.results-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.results-bar p{font-size:13.5px;color:var(--txt-soft)}
+.results-bar p b{color:var(--deep);font-weight:700;font-variant-numeric:tabular-nums}
+.sort{margin-left:auto;display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--txt-soft);font-weight:600}
+.sort select{font-family:inherit;font-size:13px;font-weight:600;color:var(--deep);background:#fff;border:1.5px solid var(--line);border-radius:11px;padding:8px 11px;cursor:pointer;outline:none}
+.sort select:focus{border-color:var(--mint)}
+.applied{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.applied .fchip{padding:6px 8px 6px 13px;font-size:12px;gap:8px}
+.applied .fchip b{font-weight:600}
+.applied .x{display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:rgba(11,46,54,.08);color:var(--txt-soft)}
+.applied .fchip:hover .x{background:var(--coral);color:#fff}
+.results{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.grade-tag{font-family:var(--fd);font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:4px 10px;white-space:nowrap;background:var(--paper);border:1px solid var(--line);color:var(--txt-soft)}
+.loadmore{margin-top:24px;text-align:center}
+.loadmore p{font-size:12.5px;color:var(--txt-soft);margin-top:12px}
+.note-panel{margin-top:28px;background:var(--cream);border:1px solid var(--line);border-radius:20px;padding:22px 26px}
+.note-panel p{font-size:13px;color:var(--txt-soft);max-width:70ch}
+.note-panel p+p{margin-top:9px}
+.note-panel b{color:var(--deep)}
+.xlinks{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
+
+/* ============ FILTER BAR ============ */
+.filterbar{position:sticky;top:74px;z-index:50;background:rgba(247,250,248,.93);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:13px 0}
+.filterbar-in{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.filterbar .filter-label{margin-right:0}
+.fsearch{position:relative;display:flex;align-items:center;min-width:210px;flex:1;max-width:280px}
+.fsearch svg{position:absolute;left:13px;color:var(--txt-soft);pointer-events:none}
+.fsearch input{width:100%;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px 9px 38px;font-size:13.5px;color:var(--ink);outline:none;transition:.25s}
+.fsearch input:focus{border-color:var(--mint)}
+/* a sticky bar this tall would eat a phone screen, so it only sticks on wide viewports */
+@media(max-width:820px){
+  .filterbar{position:static;background:var(--paper)}
+}
+
+/* ============ PREPARATION ============ */
+.xlinks .mini-link{background:#fff}
+.honest{margin-top:26px;background:var(--cream);border:1px solid var(--line);border-radius:20px;padding:22px 26px}
+.honest h3{font-size:15px;color:var(--deep);font-weight:700;margin-bottom:8px}
+.honest p{font-size:13px;color:var(--txt-soft);max-width:74ch}
+.honest p+p{margin-top:8px}
+.honest b{color:var(--deep)}
+
+/* ============ EXAM FAMILIES ============ */
+/* an exam is not one event, it is a sequence, so the card carries the sequence */
+.exam{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px 22px;box-shadow:var(--card-shadow);transition:transform .22s,box-shadow .22s,border-color .22s}
+.exam+.exam{margin-top:14px}
+.exam:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(11,46,54,.1);border-color:rgba(11,46,54,.2)}
+.exam-head{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.exam-head h3{font-size:17px;color:var(--deep);font-weight:700;letter-spacing:-.01em}
+.exam-head .r{margin-left:auto;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.exam-sub{font-size:13px;color:var(--txt-soft);margin-bottom:16px;max-width:70ch}
+.stages{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:10px}
+.stage{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:13px 15px}
+.stage.open{border-color:var(--mint);background:linear-gradient(150deg,var(--mint-soft),#fff 70%)}
+.stage-n{font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt-mute)}
+.stage b{display:block;font-size:14px;color:var(--deep);font-weight:700;margin:3px 0 5px}
+.stage small{display:block;font-size:11.5px;color:var(--txt-soft);line-height:1.5}
+.stage-when{display:flex;align-items:center;gap:7px;margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);font-size:11.5px;font-weight:600;color:var(--txt-soft);flex-wrap:wrap}
+.stage.open .stage-when{color:var(--good-text)}
+.stage-when svg{flex:none}
+.exam-foot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:15px;padding-top:14px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--txt-soft)}
+.exam-foot b{color:var(--deep);font-weight:700}
+.exam-foot .r{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;min-width:0}
+.exam-foot .card-link{white-space:normal}
+@media(max-width:820px){ .stages{grid-template-columns:minmax(0,1fr)} }
+</style>
+</head>
+<body>
+<div class="noise" aria-hidden="true"></div>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site" id="siteHeader">
+  <div class="container nav-in">
+    <a class="logo" href="/" aria-label="MedNav home">
+      <svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect x="2" y="2" width="36" height="36" rx="11" fill="#0b2e36"/>
+        <path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="24" r="4" fill="#ffc061"/>
+      </svg>
+      <span class="logo-word">MedNav</span>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/pathways">Pathways</a>
+      <a href="/preparation" aria-current="page">Preparation</a>
+      <a href="/tools">Career Tools</a>
+      <a href="/opportunities">Opportunities</a>
+      <a href="/sources">Resources</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="btn btn-ghost" href="/sign-in">Sign in</a>
+      <a class="btn btn-primary" href="/sign-up">Create free account</a>
+      <button class="burger" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mobile-menu-head">
+    <a class="logo" href="/" aria-label="MedNav home">
+      <svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect x="2" y="2" width="36" height="36" rx="11" fill="#0b2e36"/>
+        <path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="24" r="4" fill="#ffc061"/>
+      </svg>
+      <span class="logo-word">MedNav</span>
+    </a>
+    <button class="mobile-close" id="mobileCloseBtn" aria-label="Close menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <a class="mlink" href="/pathways">Pathways</a>
+  <a class="mlink" href="/preparation" aria-current="page">Preparation</a>
+  <a class="mlink" href="/tools">Career Tools</a>
+  <a class="mlink" href="/opportunities">Opportunities</a>
+  <a class="mlink" href="/sources">Resources</a>
+  <div class="m-cta">
+    <a class="btn btn-primary" href="/sign-up">Create free account</a>
+    <a class="btn btn-ghost" href="/sign-in">Sign in</a>
+  </div>
+</div>
+
+<main id="main">
+
+<section class="page-hero">
+  <div class="container">
+    <nav class="crumb" aria-label="Breadcrumb">
+      <a href="/">MedNav</a><i aria-hidden="true"></i><a href="/preparation">Preparation</a><i aria-hidden="true"></i><span aria-current="page">Exams</span>
+    </nav>
+    <h1>Every exam on the Irish ladder</h1>
+    <p class="lede">A membership exam is not one event. It is a sequence of stages, each with its own format, fee and sitting window, and the whole thing can take three years. Here is every sequence, end to end.</p>
+    <div class="hero-facts">
+      <span class="fact"><i style="background:var(--mint)" aria-hidden="true"></i><b id="famCount">0</b> exam routes</span>
+      <span class="fact"><i style="background:var(--coral)" aria-hidden="true"></i><span id="openFact">0</span></span>
+      <span class="fact">Rechecked <b>2 Aug 2026</b></span>
+      <span class="fact">From <b>RCPI</b>, <b>RCSI</b>, <b>ICGP</b> and the specialty colleges</span>
+    </div>
+    <div class="split" data-reveal>
+      <p class="split-label">How the stages break down</p>
+      <div class="split-bar" role="img" aria-label="Of 26 stages across all routes, 12 are written, 9 clinical or OSCE, and 5 are workplace assessment">
+        <i style="--w:46%;--d:.05s;background:var(--mint)"></i>
+        <i style="--w:35%;--d:.15s;background:var(--coral)"></i>
+        <i style="--w:19%;--d:.25s;background:var(--amber)"></i>
+      </div>
+      <div class="split-key" aria-hidden="true">
+        <span><i style="background:var(--mint)"></i>Written <b>12</b></span>
+        <span><i style="background:var(--coral)"></i>Clinical or OSCE <b>9</b></span>
+        <span><i style="background:var(--amber)"></i>Workplace based <b>5</b></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="filterbar">
+  <div class="container filterbar-in">
+    <div class="fsearch">
+      <label class="sr-only" for="q">Search exams</label>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+      <input type="search" id="q" placeholder="Exam, college or specialty" autocomplete="off">
+    </div>
+    <span class="filter-label">College</span>
+    <div id="collegeChips" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+    <span class="fdiv" aria-hidden="true"></span>
+    <button class="fchip" id="openChip" type="button" aria-pressed="false">Applications open now</button>
+    <button class="fclear" id="clearFilters" type="button">Clear all</button>
+  </div>
+</div>
+
+<section class="work-sec">
+  <div class="container">
+    <div class="results-bar">
+      <p id="resultCount" aria-live="polite"></p>
+      <div class="sort">
+        <label for="sort">Sort</label>
+        <select id="sort">
+          <option value="soonest">Next sitting first</option>
+          <option value="cost">Total fee, lowest first</option>
+          <option value="name">Name</option>
+        </select>
+      </div>
+    </div>
+    <div class="applied" id="applied"></div>
+    <div id="results"></div>
+
+    <div class="honest">
+      <h3>What is verified here, and what is not</h3>
+      <p><b>Exam names, colleges and stage structures are real.</b> Fees, sitting dates and closing dates in this prototype are illustrative and are not the colleges' published values.</p>
+      <p><b>No pass rates appear on this page, on purpose.</b> Publishing a pass rate for a named college's exam without verifying it against that college's own reporting would be exactly the kind of confident guess this product exists to avoid.</p>
+      <p><b>Always book through the college.</b> MedNav does not take exam applications or fees, and is not affiliated with any of the colleges listed.</p>
+      <div class="xlinks">
+        <a class="mini-link" href="interviews.html">Interviews index<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="mini-link" href="/tools">Career tools<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="mini-link" href="../opportunities/conferences.html">Courses and CPD<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alerts-sec" id="alerts" style="padding:0 0 96px">
+  <div class="container">
+    <div class="alert-card" data-reveal>
+      <div class="alert-body">
+        <h2>Exam windows close quietly.</h2>
+        <p>Applications for a sitting usually close two months before the exam, and nobody sends you a reminder. Tell us which exam you are working towards and we will.</p>
+        <form class="alert-form" id="alertForm" novalidate>
+          <label class="sr-only" for="alertEmail">Email address</label>
+          <input type="email" id="alertEmail" placeholder="Your email" aria-describedby="alertError" required>
+          <button class="btn btn-primary" type="submit">Get sitting alerts
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </form>
+        <p class="form-error" id="alertError" role="alert">Enter a valid email address.</p>
+        <p class="form-ok" id="alertOk"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Check your inbox. Click the magic link to finish your account and pick your exams.</p>
+        <p class="alert-note">Two emails per sitting at most: one when applications open, one before they close.</p>
+      </div>
+      <div class="alert-preview" aria-hidden="true">
+        <p class="ap-label">Your exam sequence</p>
+        <div class="ap-mail">
+          <div class="ap-mail-top">
+            <svg width="17" height="17" viewBox="0 0 40 40" fill="none"><rect x="2" y="2" width="36" height="36" rx="11" fill="#0b2e36"/><path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="24" r="4" fill="#ffc061"/></svg>
+            <b>MRCPI General Medicine</b><span>3 stages</span>
+          </div>
+          <div class="ap-row"><span class="ap-dot" style="background:#14b394"></span><b>Part 1 written</b><small>Passed</small></div>
+          <div class="ap-row"><span class="ap-dot" style="background:#14b394"></span><b>Part 2 written</b><small>Passed</small></div>
+          <div class="ap-row"><span class="ap-dot" style="background:#ff7a59"></span><b>Part 2 clinical</b><small>Applications open</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site" id="footer">
+  <div class="container">
+    <div class="f-grid">
+      <div class="f-brand">
+        <a class="logo" href="/" aria-label="MedNav home">
+          <svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="11" fill="#12404c"/><path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="24" r="4" fill="#ffc061"/></svg>
+          <span class="logo-word">MedNav</span>
+        </a>
+        <p>Know exactly what to do next in your medical career, from wherever you are now, to consultant.</p>
+        <form class="news-form" id="newsForm" novalidate>
+          <label class="sr-only" for="newsEmail">Newsletter email</label>
+          <input type="email" id="newsEmail" placeholder="Application-window alerts, monthly" aria-describedby="newsEmailError" required>
+          <button type="submit" aria-label="Subscribe">&rarr;</button>
+        </form>
+        <p class="form-error" id="newsEmailError" role="alert">Enter a valid email address.</p>
+        <p class="news-ok" id="newsOk">You're on the list. We'll ping you when windows open.</p>
+      </div>
+      <div class="f-col">
+        <h5>Opportunities</h5>
+        <ul>
+          <li><a href="../opportunities/jobs.html">Jobs</a></li>
+          <li><a href="../opportunities/locums.html">Locums</a></li>
+          <li><a href="../opportunities/conferences.html">Conferences &amp; courses</a></li>
+          <li><a href="../opportunities/index.html#alerts">Job alerts</a></li>
+          <li><a href="/opportunities/submit">Submit an event</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h5>Career Tools</h5>
+        <ul>
+          <li><a href="/tools">Roadmap</a></li>
+          <li><a href="/tools">Gap analyser</a></li>
+          <li><a href="/tools">Shortlisting score</a></li>
+          <li><a href="/tools">Deadlines</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h5>Pathways</h5>
+        <ul>
+          <li><a href="/pathways/specialties">All specialties</a></li>
+          <li><a href="/pathways/programmes">All programmes</a></li>
+          <li><a href="/pathways/img">IMG pathways</a></li>
+          <li><a href="/pathways/return-to-ireland">Return to Ireland</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="/about">About MedNav</a></li>
+          <li><a href="/sources">Sources &amp; verification</a></li>
+          <li><a href="/blog">Blog</a></li>
+          <li><a href="/help">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="f-disclaimer">MedNav is an independent platform and is not affiliated with, or endorsed by, RCPI, RCSI, ICGP, the College of Psychiatrists, the IMC or the HSE. Listings are aggregated from public sources and linked, not hosted. Always verify details and criteria against the original posting before applying.</p>
+    <div class="f-bottom">
+      <span>&copy; <span id="yearNow">2026</span> MedNav. Built for Irish NCHDs.</span>
+      <div class="f-legal">
+        <a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/cookies">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+</button>
+
+
+<script>
+(function(){
+  "use strict";
+  var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- header, back to top ---------- */
+  var hdrEl = document.getElementById("siteHeader");
+  var toTopBtn = document.getElementById("toTop");
+  function onScrollHdr(){
+    hdrEl.classList.toggle("scrolled", window.scrollY > 8);
+    toTopBtn.classList.toggle("show", window.scrollY > 700);
+  }
+  window.addEventListener("scroll", onScrollHdr, {passive:true});
+  onScrollHdr();
+  toTopBtn.addEventListener("click", function(){ window.scrollTo({top:0, behavior: reducedMotion ? "auto" : "smooth"}); });
+
+  /* ---------- mobile menu ---------- */
+  var burgerBtn = document.getElementById("navToggle");
+  var mobilePanel = document.getElementById("mobileMenu");
+  function setMenu(open){
+    burgerBtn.classList.toggle("open", open);
+    mobilePanel.classList.toggle("open", open);
+    burgerBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    document.body.style.overflow = open ? "hidden" : "";
+    if (open){
+      var firstFocusable = mobilePanel.querySelector("a, button");
+      if (firstFocusable) firstFocusable.focus();
+    } else {
+      burgerBtn.focus();
+    }
+  }
+  burgerBtn.addEventListener("click", function(){ setMenu(!mobilePanel.classList.contains("open")); });
+  mobilePanel.querySelectorAll("a").forEach(function(linkEl){ linkEl.addEventListener("click", function(){ setMenu(false); }); });
+  document.getElementById("mobileCloseBtn").addEventListener("click", function(){ setMenu(false); });
+  document.addEventListener("keydown", function(ev){
+    if (!mobilePanel.classList.contains("open")) return;
+    if (ev.key === "Escape"){ setMenu(false); return; }
+    if (ev.key !== "Tab") return;
+    var focusables = Array.prototype.slice.call(mobilePanel.querySelectorAll("a, button"));
+    if (!focusables.length) return;
+    var first = focusables[0], last = focusables[focusables.length - 1];
+    if (ev.shiftKey && document.activeElement === first){ ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last){ ev.preventDefault(); first.focus(); }
+  });
+
+  /* ---------- reveal on scroll ---------- */
+  var revealEls = document.querySelectorAll("[data-reveal]");
+  if (reducedMotion || !("IntersectionObserver" in window)){
+    revealEls.forEach(function(el){ el.classList.add("is-in"); });
+  } else {
+    var revealObs = new IntersectionObserver(function(entries){
+      entries.forEach(function(entryItem){
+        if (entryItem.isIntersecting){ entryItem.target.classList.add("is-in"); revealObs.unobserve(entryItem.target); }
+      });
+    }, {threshold:.15, rootMargin:"0px 0px -40px 0px"});
+    revealEls.forEach(function(el){ revealObs.observe(el); });
+  }
+
+
+  /* ---------- the exams ----------
+     Names, colleges and stage structures are real. Fees and dates are
+     ILLUSTRATIVE and must be replaced with each college's published values. */
+  var EXAMS = [
+    {name:"MRCPI General Medicine", college:"RCPI", abbr:"RCPI", spec:"General medicine and the medical specialties",
+     note:"Required for entry to higher specialist training in the medical specialties.",
+     stages:[
+       {t:"Part 1", fmt:"Written, 2 papers", fee:520, sit:"2026-11-12", close:"2026-09-15"},
+       {t:"Part 2 written", fmt:"Written, 2 papers", fee:640, sit:"2027-01-21", close:"2026-11-20"},
+       {t:"Part 2 clinical", fmt:"Clinical, 5 stations", fee:1120, sit:"2027-04-15", close:"2027-02-12"}
+     ]},
+    {name:"MRCPI Paediatrics", college:"RCPI", abbr:"RCPI", spec:"Paediatrics",
+     note:"The paediatric stream of the RCPI membership examination.",
+     stages:[
+       {t:"Part 1", fmt:"Written, 2 papers", fee:520, sit:"2026-11-12", close:"2026-09-15"},
+       {t:"Part 2 written", fmt:"Written, 2 papers", fee:640, sit:"2027-02-04", close:"2026-12-04"},
+       {t:"Part 2 clinical", fmt:"Clinical, 6 stations", fee:1120, sit:"2027-05-13", close:"2027-03-12"}
+     ]},
+    {name:"MRCPI Obstetrics and Gynaecology", college:"RCPI", abbr:"RCPI", spec:"Obstetrics and gynaecology",
+     note:"Run jointly with the Institute of Obstetricians and Gynaecologists.",
+     stages:[
+       {t:"Part 1", fmt:"Written, 2 papers", fee:520, sit:"2026-10-08", close:"2026-09-03"},
+       {t:"Part 2", fmt:"Written and clinical", fee:980, sit:"2027-03-11", close:"2027-01-14"}
+     ]},
+    {name:"MRCS", college:"RCSI", abbr:"RCSI", spec:"Surgery, all specialties",
+     note:"Required to complete core surgical training and to apply for higher surgical training.",
+     stages:[
+       {t:"Part A", fmt:"Written, single best answer", fee:560, sit:"2027-01-13", close:"2026-11-18"},
+       {t:"Part B", fmt:"OSCE, 17 stations", fee:1090, sit:"2027-05-06", close:"2027-03-04"}
+     ]},
+    {name:"MRCEM", college:"RCEM", abbr:"RCEM", spec:"Emergency medicine",
+     note:"The membership route for emergency medicine, sat across three stages.",
+     stages:[
+       {t:"Primary", fmt:"Written, single best answer", fee:410, sit:"2026-12-02", close:"2026-10-07"},
+       {t:"Intermediate SBA", fmt:"Written, single best answer", fee:450, sit:"2027-03-03", close:"2027-01-07"},
+       {t:"OSCE", fmt:"OSCE, 16 stations", fee:990, sit:"2027-06-16", close:"2027-04-14"}
+     ]},
+    {name:"MRCPsych", college:"College of Psychiatrists of Ireland", abbr:"CPsychI", spec:"Psychiatry",
+     note:"Required to progress from basic to higher specialist training in psychiatry.",
+     stages:[
+       {t:"Paper A", fmt:"Written, 150 questions", fee:480, sit:"2026-10-21", close:"2026-09-09"},
+       {t:"Paper B", fmt:"Written, 150 questions", fee:480, sit:"2027-02-17", close:"2026-12-16"},
+       {t:"CASC", fmt:"Clinical, 16 stations", fee:1240, sit:"2027-05-19", close:"2027-03-17"}
+     ]},
+    {name:"MICGP", college:"ICGP", abbr:"ICGP", spec:"General practice",
+     note:"The exit examination for the GP training scheme, sat in the final years of training.",
+     stages:[
+       {t:"MCQ", fmt:"Written, applied knowledge", fee:390, sit:"2026-11-25", close:"2026-10-14"},
+       {t:"Clinical competency test", fmt:"Clinical, simulated consultations", fee:870, sit:"2027-04-22", close:"2027-02-24"},
+       {t:"Practice based assessment", fmt:"Workplace based portfolio", fee:0, sit:"2027-06-30", close:"2027-05-05"}
+     ]},
+    {name:"FFARCSI", college:"College of Anaesthesiologists of Ireland", abbr:"CAI", spec:"Anaesthesiology",
+     note:"The fellowship examination for anaesthesiology, sat in two parts several years apart.",
+     stages:[
+       {t:"Primary", fmt:"Written and viva", fee:730, sit:"2026-12-09", close:"2026-10-21"},
+       {t:"Final", fmt:"Written, viva and clinical", fee:1180, sit:"2027-05-26", close:"2027-03-24"}
+     ]},
+    {name:"FRCR Clinical Radiology", college:"Faculty of Radiologists, RCSI", abbr:"Radiologists", spec:"Radiology",
+     note:"Sat in two parts across specialist training in clinical radiology.",
+     stages:[
+       {t:"First FRCR", fmt:"Written, physics and anatomy", fee:640, sit:"2026-11-04", close:"2026-09-16"},
+       {t:"Final FRCR", fmt:"Written, reporting and viva", fee:1310, sit:"2027-04-28", close:"2027-02-25"}
+     ]},
+    {name:"MRCP(UK)", college:"Royal Colleges of Physicians UK", abbr:"MRCP(UK)", spec:"General medicine, UK route",
+     note:"Commonly held alongside or instead of MRCPI, and accepted for many Irish training routes.",
+     stages:[
+       {t:"Part 1", fmt:"Written, 2 papers", fee:610, sit:"2026-11-18", close:"2026-09-29"},
+       {t:"Part 2 written", fmt:"Written, 2 papers", fee:680, sit:"2027-01-28", close:"2026-12-01"},
+       {t:"PACES", fmt:"Clinical, 5 stations", fee:1290, sit:"2027-03-25", close:"2027-01-20"}
+     ]}
+  ];
+
+  var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var today = new Date(); today.setHours(0,0,0,0);
+  function day(iso){ var p = iso.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
+  function until(iso){ return Math.round((day(iso) - today) / 86400000); }
+  function fmtD(iso){ var d = day(iso); return d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear(); }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function money(n){ return n === 0 ? "No separate fee" : "€" + n; }
+
+  /* a stage is open when its sitting is ahead and applications have not closed */
+  EXAMS.forEach(function(e){
+    e.stages.forEach(function(st){
+      st.closeDays = until(st.close);
+      st.sitDays = until(st.sit);
+      st.open = st.closeDays >= 0 && st.sitDays >= 0;
+    });
+    e.totalFee = e.stages.reduce(function(t, st){ return t + st.fee; }, 0);
+    var ahead = e.stages.filter(function(st){ return st.sitDays >= 0; });
+    e.nextSit = ahead.length ? Math.min.apply(null, ahead.map(function(st){ return st.sitDays; })) : 99999;
+    e.anyOpen = e.stages.some(function(st){ return st.open; });
+  });
+
+  document.getElementById("famCount").textContent = EXAMS.length;
+  var openNow = EXAMS.filter(function(e){ return e.anyOpen; }).length;
+  document.getElementById("openFact").innerHTML = openNow
+    ? "<b>" + openNow + "</b> with applications open"
+    : "No applications open right now";
+
+  var COLLEGES = EXAMS.map(function(e){ return e.abbr; })
+    .filter(function(v, i, a){ return a.indexOf(v) === i; });
+  function fullName(code){
+    var hit = EXAMS.filter(function(e){ return e.abbr === code; })[0];
+    return hit ? hit.college : code;
+  }
+
+  var state = {colleges:[], q:"", openOnly:false, sort:"soonest"};
+
+  function matches(e){
+    if (state.colleges.length && state.colleges.indexOf(e.abbr) < 0) return false;
+    if (state.openOnly && !e.anyOpen) return false;
+    if (state.q){
+      var hay = (e.name + " " + e.college + " " + e.abbr + " " + e.spec + " " + e.note + " " +
+                 e.stages.map(function(s){ return s.t + " " + s.fmt; }).join(" ")).toLowerCase();
+      var terms = state.q.toLowerCase().split(/\s+/).filter(Boolean);
+      for (var i = 0; i < terms.length; i++){ if (hay.indexOf(terms[i]) < 0) return false; }
+    }
+    return true;
+  }
+
+  var ICO_CLOCK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>';
+
+  function stageHTML(st, n){
+    var when;
+    if (st.sitDays < 0) when = "Sitting has passed";
+    else if (st.open) when = "Applications close " + fmtD(st.close) + ", in " + st.closeDays + (st.closeDays === 1 ? " day" : " days");
+    else if (st.closeDays < 0) when = "Applications closed, sitting " + fmtD(st.sit);
+    else when = "Applications open later";
+    return '<div class="stage' + (st.open ? " open" : "") + '">' +
+      '<span class="stage-n">Stage ' + n + "</span>" +
+      "<b>" + esc(st.t) + "</b>" +
+      "<small>" + esc(st.fmt) + "<br>" + money(st.fee) + " · sitting " + fmtD(st.sit) + "</small>" +
+      '<span class="stage-when">' + ICO_CLOCK + esc(when) + "</span></div>";
+  }
+
+  function examHTML(e){
+    return '<article class="exam">' +
+      '<div class="exam-head"><h3>' + esc(e.name) + "</h3>" +
+      '<span class="r">' + (e.anyOpen ? '<span class="type-tag type-job">Applications open</span>' : "") +
+      '<span class="src-tag" title="' + esc(e.college) + '">' + esc(e.abbr) + "</span></span></div>" +
+      '<p class="exam-sub">' + esc(e.spec) + ". Run by " + esc(e.college) + ". " + esc(e.note) + "</p>" +
+      '<div class="stages" style="--n:' + e.stages.length + '">' +
+        e.stages.map(function(st, i){ return stageHTML(st, i + 1); }).join("") + "</div>" +
+      '<div class="exam-foot"><span><b>' + e.stages.length + "</b> stages</span>" +
+        "<span>Fees total <b>€" + e.totalFee + "</b> if sat once each</span>" +
+        (e.nextSit < 99999 ? "<span>Next sitting in <b>" + e.nextSit + "</b> days</span>" : "<span>No sitting scheduled</span>") +
+        '<span class="r"><a class="card-link" href="#" aria-label="Exam details for ' + esc(e.name) +
+        ' on ' + esc(e.college) + '">Exam details' +
+        ' <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M8 16L18 6M9 6h9v9"/></svg></a></span></div>' +
+      "</article>";
+  }
+
+  function render(){
+    var rows = EXAMS.filter(matches);
+    if (state.sort === "cost") rows.sort(function(a,b){ return a.totalFee - b.totalFee; });
+    else if (state.sort === "name") rows.sort(function(a,b){ return a.name.localeCompare(b.name); });
+    else rows.sort(function(a,b){ return a.nextSit - b.nextSit; });
+
+    var host = document.getElementById("results");
+    host.innerHTML = rows.length ? rows.map(examHTML).join("")
+      : '<div class="empty"><b>No exams match those filters.</b><p>Try clearing the college, or turn off the applications filter. Most sittings only open twice a year.</p></div>';
+
+    var stages = rows.reduce(function(t, e){ return t + e.stages.length; }, 0);
+    document.getElementById("resultCount").innerHTML = "Showing <b>" + rows.length + "</b> of " + EXAMS.length +
+      " exam routes, <b>" + stages + "</b> stages in total.";
+
+    var chips = state.colleges.map(function(c){
+      return '<button class="fchip on" type="button" data-remove="college|' + esc(c) + '"><b>' + esc(c) +
+        '</b><span class="x" aria-hidden="true">&times;</span><span class="sr-only">Remove filter</span></button>';
+    });
+    if (state.openOnly) chips.push('<button class="fchip on" type="button" data-remove="open|"><b>Applications open now</b><span class="x" aria-hidden="true">&times;</span><span class="sr-only">Remove filter</span></button>');
+    if (state.q) chips.push('<button class="fchip on" type="button" data-remove="q|"><b>&ldquo;' + esc(state.q) + '&rdquo;</b><span class="x" aria-hidden="true">&times;</span><span class="sr-only">Clear search</span></button>');
+    document.getElementById("applied").innerHTML = chips.join("");
+    document.querySelectorAll("[data-remove]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var bits = btn.getAttribute("data-remove").split("|");
+        if (bits[0] === "q"){ state.q = ""; document.getElementById("q").value = ""; }
+        else if (bits[0] === "open"){ setOpen(false); }
+        else { state.colleges = state.colleges.filter(function(x){ return x !== bits[1]; }); syncColleges(); }
+        render();
+      });
+    });
+  }
+
+  var host = document.getElementById("collegeChips");
+  COLLEGES.forEach(function(c){
+    var btn = document.createElement("button");
+    btn.type = "button"; btn.className = "fchip"; btn.setAttribute("data-college", c);
+    btn.setAttribute("aria-pressed", "false");
+    btn.textContent = c;
+    btn.title = fullName(c);
+    btn.setAttribute("aria-label", fullName(c));
+    btn.addEventListener("click", function(){
+      var i = state.colleges.indexOf(c);
+      if (i < 0) state.colleges.push(c); else state.colleges.splice(i, 1);
+      syncColleges(); render();
+    });
+    host.appendChild(btn);
+  });
+  function syncColleges(){
+    document.querySelectorAll("[data-college]").forEach(function(b){
+      var on = state.colleges.indexOf(b.getAttribute("data-college")) > -1;
+      b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+  var openChip = document.getElementById("openChip");
+  function setOpen(v){ state.openOnly = v; openChip.classList.toggle("on", v); openChip.setAttribute("aria-pressed", v ? "true" : "false"); }
+  openChip.addEventListener("click", function(){ setOpen(!state.openOnly); render(); });
+  document.getElementById("q").addEventListener("input", function(){ state.q = this.value.trim(); render(); });
+  document.getElementById("sort").addEventListener("change", function(){ state.sort = this.value; render(); });
+  document.getElementById("clearFilters").addEventListener("click", function(){
+    state.colleges = []; state.q = ""; setOpen(false);
+    document.getElementById("q").value = ""; syncColleges(); render();
+  });
+
+  render();
+
+  /* ---------- forms ---------- */
+  function wireForm(formId, inputId, errorId, okId){
+    var formEl = document.getElementById(formId);
+    var inputEl = document.getElementById(inputId);
+    var errEl = document.getElementById(errorId);
+    inputEl.addEventListener("input", function(){
+      inputEl.removeAttribute("aria-invalid");
+      inputEl.style.borderColor = "";
+      errEl.classList.remove("show");
+    });
+    formEl.addEventListener("submit", function(ev){
+      ev.preventDefault();
+      if (!inputEl.value || inputEl.value.indexOf("@") < 1){
+        inputEl.setAttribute("aria-invalid", "true");
+        inputEl.style.borderColor = "#ff7a59";
+        errEl.classList.add("show");
+        inputEl.focus();
+        return;
+      }
+      formEl.style.display = "none";
+      document.getElementById(okId).classList.add("show");
+    });
+  }
+  wireForm("alertForm", "alertEmail", "alertError", "alertOk");
+  wireForm("newsForm", "newsEmail", "newsEmailError", "newsOk");
+
+  document.getElementById("yearNow").textContent = new Date().getFullYear();
+})();
+</script>
+</body>
+</html>
