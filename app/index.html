@@ -1,0 +1,1072 @@
+<!--
+  MedNav dashboard, the signed-in application. Same design tokens as the
+  marketing site, but this is operated rather than read, so the craft is
+  information design: a persistent rail, dense cards, tabular figures, and
+  status carried by icon plus label rather than colour alone.
+
+  The point of the whole thing: one record, and every view derives from it.
+  Logging a teaching session moves readiness, the shortlisting score, the gap
+  list, the progress tracker and the next-best-action on Today, all at once,
+  and the toast names the actual delta it caused.
+
+  Chart colour, per the dataviz method:
+    - Magnitude bars are sequential: one mint hue, never a status colour. A
+      status/critical palette on adjacent amber and coral hues collapsed for
+      deutan vision (delta E 3.5 to 5.7 once darkened enough to be visible on
+      this light surface), so status moved off the fill entirely.
+    - Status is an icon plus a word plus a text colour, all three, never one.
+      #0b7a63 / #8a5a10 / #b8482a all clear WCAG AA on their soft tints.
+    - Deadline rails keep a status colour but always carry the icon and the
+      days-away figure beside them.
+
+  TEMP: this is a single demo record for "Jane Doyle" held in localStorage, not
+  a real account. Swap STATE for the user service. Dates are computed from the
+  browser's clock, so the sample cycle reads as past once 2026-27 goes by.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard · MedNav</title>
+<meta name="description" content="Your MedNav dashboard: roadmap, gaps, readiness, shortlisting score, deadlines and progress, all derived from one record.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/800.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@latest/600.css">
+<style>
+:root{
+  --deep:#0b2e36; --pine:#12404c; --ink:#12333c;
+  --mint:#14b394; --mint-2:#3ed1a8; --mint-soft:#e0f5ec;
+  --paper:#f7faf8; --cream:#fdfbf5;
+  --coral:#ff7a59; --coral-soft:#fff1e6;
+  --amber:#ffc061; --amber-soft:#fff4e0;
+  --line:rgba(11,46,54,.12); --txt-soft:#41606a; --txt-mute:#7d949b;
+  /* status text, all AA on their soft tints and on paper */
+  --good-text:#0b7a63; --warn-text:#8a5a10; --crit-text:#b8482a;
+  /* the one sequential hue every magnitude bar uses */
+  --bar:#14b394; --bar-track:#e9f0ed;
+  --card-shadow:0 6px 18px rgba(11,46,54,.06);
+  --fd:'Sora',system-ui,sans-serif; --fb:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--fb);background:var(--paper);color:var(--ink);font-size:15px;line-height:1.55;overflow-x:hidden}
+img,svg{display:block;max-width:100%}
+a{text-decoration:none;color:inherit}
+ul,ol{list-style:none}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+input,select{font-family:inherit}
+h1,h2,h3,h4{font-family:var(--fd);letter-spacing:-.01em}
+:focus-visible{outline:2px solid var(--mint);outline-offset:2px;border-radius:6px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.num{font-variant-numeric:tabular-nums}
+/* ============ SHELL ============ */
+.app{display:grid;grid-template-columns:238px minmax(0,1fr);min-height:100vh}
+.side{background:var(--deep);color:#fff;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.side-top{display:flex;align-items:center;gap:10px;padding:18px 18px 14px}
+.side-top .logo-mark{width:32px;height:32px;flex:none}
+.side-top b{font-family:var(--fd);font-size:18px;font-weight:800;letter-spacing:-.02em}
+.side-scope{margin:0 14px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:11px 13px}
+.side-scope span{display:block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#8fb5ac}
+.side-scope b{display:block;font-family:var(--fd);font-size:13.5px;font-weight:700;margin-top:3px}
+.side-scope em{display:block;font-style:normal;font-size:11.5px;color:#9fc4bb;margin-top:2px}
+.side-nav{flex:1;overflow-y:auto;padding:4px 12px 12px}
+.nav-group{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6f9a92;padding:14px 12px 7px}
+.nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:9px 12px;border-radius:11px;font-size:13.5px;font-weight:600;color:#a9cdc3;transition:background .18s,color .18s}
+.nav-item svg{flex:none;opacity:.85}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-item.on{background:rgba(62,209,168,.16);color:#fff}
+.nav-item.on svg{opacity:1;color:var(--mint-2)}
+.nav-item .pill{margin-left:auto;font-family:var(--fd);font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 8px;background:rgba(255,255,255,.12);color:#cfe6e0}
+.nav-item .pill.alert{background:var(--coral);color:#fff}
+.side-foot{border-top:1px solid rgba(255,255,255,.1);padding:12px 14px;display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--mint-2);color:#052a22;display:grid;place-items:center;font-family:var(--fd);font-weight:800;font-size:12.5px;flex:none}
+.side-foot .who{min-width:0;flex:1}
+.side-foot .who b{display:block;font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side-foot .who span{display:block;font-size:11px;color:#8fb5ac}
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:40;background:rgba(247,250,248,.93);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:13px 26px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.topbar h1{font-size:19px;font-weight:800;color:var(--deep)}
+.topbar .sub{font-size:12.5px;color:var(--txt-soft)}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:9px}
+.view{padding:22px 26px 64px;max-width:1180px}
+/* ============ PRIMITIVES ============ */
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px;border-radius:11px;padding:9px 16px;border:1.5px solid transparent;transition:transform .2s,background .2s,color .2s,border-color .2s;white-space:nowrap}
+.btn svg{flex:none}
+.btn-primary{background:var(--mint);color:#052a22}
+.btn-primary:hover{background:var(--mint-2);transform:translateY(-1px)}
+.btn-ghost{border-color:var(--line);color:var(--deep);background:#fff}
+.btn-ghost:hover{border-color:var(--deep);transform:translateY(-1px)}
+.btn-sm{font-size:12.5px;padding:7px 13px;border-radius:10px}
+.btn-link{color:var(--good-text);font-size:12.5px;font-weight:600;padding:0;border-radius:4px}
+.btn-link:hover{text-decoration:underline}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px 20px;box-shadow:var(--card-shadow)}
+.card-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.card-head h2,.card-head h3{font-size:14.5px;font-weight:700;color:var(--deep)}
+.card-head .btn{margin-left:auto}
+.card-head .aside{margin-left:auto;font-size:12px;color:var(--txt-soft);font-weight:600}
+.lede{font-size:13px;color:var(--txt-soft)}
+.sec-label{font-family:var(--fd);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt-mute);margin:26px 0 11px}
+.sec-label:first-child{margin-top:0}
+/* status: icon + word + colour, never colour alone */
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.chip svg{flex:none}
+.chip.good{background:var(--mint-soft);color:var(--good-text)}
+.chip.warn{background:var(--amber-soft);color:var(--warn-text)}
+.chip.crit{background:var(--coral-soft);color:var(--crit-text)}
+.chip.mute{background:var(--paper);color:var(--txt-soft);border:1px solid var(--line)}
+/* magnitude bars: one sequential hue, 4px rounded end on the baseline */
+.bar{height:8px;border-radius:99px;background:var(--bar-track);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--bar);border-radius:0 4px 4px 0;transition:width .55s cubic-bezier(.3,.9,.3,1)}
+.bar i[style*="width:0%"],.bar i[style*="width: 0%"]{border-radius:0}
+.bar.sm{height:6px}
+.barrow{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:baseline}
+.barrow .lbl{font-size:13px;font-weight:600;color:var(--ink)}
+.barrow .val{font-size:12.5px;font-weight:700;color:var(--deep)}
+.barrow .bar{grid-column:1 / -1}
+.barrow .note{grid-column:1 / -1;font-size:11.5px;color:var(--txt-soft)}
+.stat{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px 18px;box-shadow:var(--card-shadow)}
+.stat .k{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-mute)}
+.stat .v{font-family:var(--fd);font-size:28px;font-weight:800;color:var(--deep);line-height:1.1;margin:6px 0 2px;letter-spacing:-.02em}
+.stat .v small{font-size:14px;color:var(--txt-soft);font-weight:700}
+.stat .d{font-size:11.5px;color:var(--txt-soft);font-weight:500}
+.empty{padding:34px 20px;text-align:center;color:var(--txt-soft);font-size:13px}
+.empty b{display:block;font-family:var(--fd);color:var(--deep);font-size:15px;margin-bottom:5px}
+table.data{width:100%;border-collapse:collapse;font-size:13px}
+table.data th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-mute);padding:0 10px 8px 0;border-bottom:1px solid var(--line)}
+table.data td{padding:10px 10px 10px 0;border-bottom:1px dashed var(--line);vertical-align:middle}
+table.data tr:last-child td{border-bottom:0}
+table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:var(--deep);white-space:nowrap}
+/* ============ RING ============ */
+.ring-wrap{display:flex;align-items:center;gap:20px}
+.ring{position:relative;width:132px;height:132px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring .track{stroke:var(--bar-track)}
+.ring .fill{stroke:var(--bar);stroke-linecap:round;transition:stroke-dasharray .7s cubic-bezier(.3,.9,.3,1)}
+.ring .mid{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring .mid b{display:block;font-family:var(--fd);font-size:31px;font-weight:800;color:var(--deep);line-height:1;letter-spacing:-.02em}
+.ring .mid span{display:block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-mute);margin-top:4px}
+/* ============ LADDER ============ */
+.rungs{display:flex;gap:2px;margin-bottom:20px}
+.rung{flex:1;min-width:0;text-align:center}
+.rung .dot{height:9px;border-radius:99px;background:var(--bar-track);margin-bottom:9px;transition:background .3s}
+.rung.done .dot{background:var(--mint)}
+.rung.here .dot{background:var(--deep)}
+.rung b{display:block;font-size:11.5px;font-weight:700;color:var(--txt-mute);line-height:1.3}
+.rung.done b{color:var(--good-text)}
+.rung.here b{color:var(--deep)}
+.rung span{display:block;font-size:10.5px;color:var(--txt-mute);margin-top:2px}
+.trail{position:relative;padding-left:30px}
+.trail::before{content:"";position:absolute;left:9px;top:8px;bottom:8px;width:2px;background:var(--line);border-radius:2px}
+.trail-item{position:relative;padding:0 0 14px}
+.trail-item:last-child{padding-bottom:0}
+.trail-item .knob{position:absolute;left:-30px;top:4px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:10px;background:var(--bar-track);color:var(--txt-mute);border:2px solid var(--paper)}
+.trail-item.done .knob{background:var(--mint-soft);color:var(--good-text)}
+.trail-item.here .knob{background:var(--deep);color:#fff}
+.trail-item.flag .knob{background:#fff;border-color:var(--line);color:var(--txt-soft);width:16px;height:16px;left:-28px;top:5px}
+.trail-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 15px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.trail-item.here .trail-card{border-color:var(--mint);border-width:1.5px;background:linear-gradient(110deg,var(--mint-soft),#fff 60%)}
+.trail-card b{font-size:13.5px;font-weight:700;color:var(--deep)}
+.trail-card .when{margin-left:auto;font-size:11.5px;color:var(--txt-soft);font-weight:600;white-space:nowrap}
+.trail-flagline{font-size:12px;color:var(--txt-soft);font-weight:600;padding:2px 0 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* ============ LISTS ============ */
+.row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
+.row:last-child{border-bottom:0}
+.row .t{font-size:13.5px;font-weight:600;color:var(--ink);min-width:0}
+.row .t small{display:block;font-size:11.5px;color:var(--txt-soft);font-weight:500;margin-top:1px}
+.row .r{margin-left:auto;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.gap-item{border:1px solid var(--line);border-radius:15px;padding:15px 17px;background:#fff}
+.gap-item+.gap-item{margin-top:10px}
+.gap-top{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:7px}
+.gap-top b{font-size:14px;font-weight:700;color:var(--deep)}
+.gap-top .r{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.gap-meta{font-size:12px;color:var(--txt-soft);display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.gap-meta b{color:var(--deep);font-weight:700}
+.gap-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dl{border-left:3px solid var(--line);background:#fff;border-radius:0 14px 14px 0;padding:12px 16px;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.dl+.dl{margin-top:8px}
+.dl.crit{border-left-color:var(--coral)}
+.dl.warn{border-left-color:var(--amber)}
+.dl.good{border-left-color:var(--mint)}
+.dl.done{opacity:.55}
+.dl-top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.dl-top b{font-size:13.5px;font-weight:600;color:var(--deep)}
+.dl-top .away{margin-left:auto;font-size:12px;font-weight:700;white-space:nowrap}
+.dl-sub{font-size:11.5px;color:var(--txt-soft);margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.month{font-family:var(--fd);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt-mute);margin:20px 0 10px;display:flex;align-items:center;gap:12px}
+.month:first-child{margin-top:0}
+.month::after{content:"";flex:1;height:1px;background:var(--line)}
+/* ============ NEXT MOVE ============ */
+.move{background:var(--deep);color:#fff;border-radius:20px;padding:22px 24px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.move .ic{width:46px;height:46px;border-radius:14px;background:rgba(62,209,168,.18);color:var(--mint-2);display:grid;place-items:center;flex:none}
+.move .body{flex:1;min-width:220px}
+.move .k{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mint-2)}
+.move h2{font-size:19px;font-weight:800;margin:5px 0 5px}
+.move p{font-size:13px;color:#a9cdc3;max-width:62ch}
+.move .btn-primary{flex:none}
+/* ============ TOAST ============ */
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,150%);z-index:200;background:var(--deep);color:#fff;border-radius:14px;padding:13px 20px;box-shadow:0 18px 40px rgba(11,46,54,.32);display:flex;align-items:center;gap:12px;font-size:13.5px;font-weight:600;max-width:calc(100vw - 32px);transition:transform .42s cubic-bezier(.3,.9,.3,1)}
+.toast.show{transform:translate(-50%,0)}
+.toast .tick{width:22px;height:22px;border-radius:50%;background:var(--mint);color:#052a22;display:grid;place-items:center;flex:none}
+.toast em{font-style:normal;color:var(--mint-2);font-weight:700}
+/* ============ FORMS ============ */
+.field{display:grid;gap:6px;margin-bottom:14px}
+.field label{font-size:12px;font-weight:700;color:var(--deep)}
+.field input,.field select{border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:10px 13px;font-size:13.5px;color:var(--ink);outline:none;width:100%}
+.field input:focus,.field select:focus{border-color:var(--mint)}
+.field .hint{font-size:11.5px;color:var(--txt-soft)}
+/* ============ RESPONSIVE ============ */
+@media(max-width:1000px){ .g4{grid-template-columns:repeat(2,minmax(0,1fr))} .g3{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:sticky;top:0;z-index:60;height:auto;flex-direction:row;align-items:center;gap:10px;padding:0 12px;overflow:hidden}
+  .side-top{padding:12px 4px 12px 8px}
+  .side-top b{display:none}
+  .side-scope{display:none}
+  .side-nav{display:flex;gap:4px;overflow-x:auto;padding:8px 0;flex:1;-webkit-overflow-scrolling:touch}
+  .side-nav::-webkit-scrollbar{display:none}
+  .nav-group{display:none}
+  .nav-item{white-space:nowrap;padding:8px 12px}
+  .nav-item svg{display:none}
+  .side-foot{border-top:0;border-left:1px solid rgba(255,255,255,.1);padding:10px 4px 10px 12px}
+  .side-foot .who{display:none}
+  .topbar{padding:12px 16px;top:58px}
+  .view{padding:18px 16px 60px}
+}
+@media(max-width:660px){
+  .g2,.g3,.g4{grid-template-columns:minmax(0,1fr)}
+  .ring-wrap{flex-direction:column;align-items:flex-start}
+  .rungs{overflow-x:auto;gap:10px}
+  .rung{min-width:88px}
+  .move{padding:18px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="side">
+  <div class="side-top">
+    <svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+      <rect x="2" y="2" width="36" height="36" rx="11" fill="#12404c"/>
+      <path d="M12 28 L20 10 L28 28" stroke="#3ed1a8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="20" cy="24" r="4" fill="#ffc061"/>
+    </svg>
+    <b>MedNav</b>
+  </div>
+  <div class="side-scope">
+    <span>Working towards</span>
+    <b id="scopeTarget">HST Cardiology</b>
+    <em id="scopeStage">SHO, 2 years post-intern</em>
+  </div>
+  <nav class="side-nav" id="nav" aria-label="Dashboard"></nav>
+  <div class="side-foot">
+    <span class="avatar" id="avatar" aria-hidden="true">JD</span>
+    <span class="who"><b id="whoName">Jane Doyle</b><span>Free account</span></span>
+    <button class="btn btn-sm btn-ghost" id="signOut" style="padding:6px 10px" title="Sign out (demo only)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M15 17l5-5-5-5M20 12H9M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h5"/></svg>
+      <span class="sr-only">Sign out</span>
+    </button>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div>
+      <h1 id="viewTitle">Today</h1>
+      <p class="sub" id="viewSub">Everything below is derived from one record.</p>
+    </div>
+    <div class="right">
+      <button class="btn btn-sm btn-ghost" id="resetBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" aria-hidden="true"><path d="M4 12a8 8 0 108-8 8 8 0 00-5.7 2.4L4 9"/><path d="M4 4v5h5"/></svg>
+        Reset demo
+      </button>
+      <a class="btn btn-sm btn-primary" href="#/profile">Edit profile</a>
+    </div>
+  </header>
+  <main class="view" id="view" tabindex="-1"></main>
+</div>
+
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="tick" aria-hidden="true">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
+  </span>
+  <span id="toastText"></span>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ================= RECORD =================
+     TEMP: one demo record. Swap for the user service. Everything in the app
+     derives from this object, which is the whole point of the dashboard. */
+  var DEFAULTS = {
+    name:"Jane Doyle",
+    specialty:"Cardiology",
+    target:"HST Cardiology",
+    body:"RCPI",
+    stageLabel:"SHO, 2 years post-intern",
+    clinicalMonths:24,
+    examStages:3,        /* Part 1, Part 2 written, PACES */
+    auditComplete:0,
+    qiPct:60,
+    teachingDone:2,
+    teachingTarget:4,
+    research:1,          /* one case report submitted */
+    leadership:false,
+    deadlinesDone:{},
+    customMilestones:[]
+  };
+  var KEY = "mednav.demo.v1";
+  var S = load();
+
+  function load(){
+    var base = JSON.parse(JSON.stringify(DEFAULTS));
+    try {
+      var raw = window.localStorage.getItem(KEY);
+      if (raw){ var saved = JSON.parse(raw); for (var k in saved) if (saved.hasOwnProperty(k)) base[k] = saved[k]; }
+    } catch (e) { /* private window, blocked storage, or a preview context */ }
+    return base;
+  }
+  function save(){
+    try { window.localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+  }
+
+  /* ================= DATES ================= */
+  var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var MON_LONG = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var today = new Date(); today.setHours(0,0,0,0);
+  function day(iso){ var p = iso.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
+  function until(iso){ return Math.round((day(iso) - today) / 86400000); }
+  function fmt(iso){ var d = day(iso); return d.getDate() + " " + MON[d.getMonth()]; }
+  function fmtLong(iso){ var d = day(iso); return d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear(); }
+  function awayText(n){
+    if (n < 0) return Math.abs(n) + (Math.abs(n) === 1 ? " day ago" : " days ago");
+    if (n === 0) return "today";
+    if (n === 1) return "tomorrow";
+    return n + " days away";
+  }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+  /* ================= ICONS ================= */
+  function ico(d, size){
+    return '<svg width="' + (size||14) + '" height="' + (size||14) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + "</svg>";
+  }
+  var I = {
+    tick:'<path d="M4 12.5l5 5L20 6.5"/>',
+    warn:'<path d="M12 8v5"/><circle cx="12" cy="16.4" r="1"/><circle cx="12" cy="12" r="9"/>',
+    clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+    flag:'<path d="M5 21V4h13l-2.5 4L18 12H5"/>',
+    home:'<path d="M4 11l8-7 8 7v8a1 1 0 01-1 1h-4v-6H9v6H5a1 1 0 01-1-1z"/>',
+    map:'<path d="M9 4L3 7v13l6-3 6 3 6-3V4l-6 3z"/><path d="M9 4v13M15 7v13"/>',
+    list:'<path d="M4 7h10M4 12h10M4 17h6"/><circle cx="18.5" cy="16.5" r="3"/><path d="M20.8 18.8L22.5 20.5"/>',
+    clip:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 13l2 2 4-4"/>',
+    target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/>',
+    cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    chart:'<path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/>',
+    brief:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2M3 12h18"/>',
+    user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+    out:'<path d="M8 16L18 6M9 6h9v9"/>',
+    bolt:'<path d="M13 2L5 14h6l-1 8 8-12h-6z"/>'
+  };
+
+  /* ================= MODEL =================
+     Two different measures on purpose. Readiness is how much of the
+     application is assembled, weighted by domain. The shortlisting score is
+     how it would actually score, and colleges score in bands, so a half
+     finished project is worth nothing until it is finished. That gap is the
+     single most useful thing this dashboard can show a doctor. */
+  var DOMAINS = [
+    {id:"clinical", name:"Clinical experience", weight:20, maxPts:5,
+     ready:function(){ return Math.min(100, Math.round(S.clinicalMonths / 28 * 100)); },
+     pts:function(){ return S.clinicalMonths >= 24 ? 5 : (S.clinicalMonths >= 12 ? 3 : 0); },
+     bands:"12 months scores 3, 24 months scores 5",
+     note:function(){ return S.clinicalMonths + " months post-internship, target 28 by application"; }},
+    {id:"exams", name:"Exams and membership", weight:15, maxPts:8,
+     ready:function(){ return Math.round(S.examStages / 3 * 100); },
+     pts:function(){ return S.examStages >= 3 ? 8 : (S.examStages >= 1 ? 3 : 0); },
+     bands:"Part 1 scores 3, full membership scores 8",
+     note:function(){ return S.examStages >= 3 ? "Full MRCPI membership held" : S.examStages + " of 3 stages held"; }},
+    {id:"auditqi", name:"Audit and QI", weight:25, maxPts:10,
+     ready:function(){ return Math.round(((S.auditComplete + S.qiPct/100) / 2) * 100); },
+     pts:function(){ return S.auditComplete >= 2 ? 10 : (S.auditComplete >= 1 ? 5 : 0); },
+     bands:"1 completed project scores 5, 2 score 10",
+     note:function(){ return S.auditComplete + " complete, 1 in progress at " + S.qiPct + "%"; }},
+    {id:"teaching", name:"Teaching", weight:20, maxPts:5,
+     ready:function(){ return Math.round(S.teachingDone / S.teachingTarget * 100); },
+     pts:function(){ return S.teachingDone >= 4 ? 5 : (S.teachingDone >= 2 ? 2 : 0); },
+     bands:"2 sessions score 2, 4 score 5",
+     note:function(){ return S.teachingDone + " of " + S.teachingTarget + " sessions logged"; }},
+    {id:"research", name:"Research and publications", weight:15, maxPts:5,
+     ready:function(){ return Math.min(100, Math.round(S.research / 2 * 100)); },
+     pts:function(){ return S.research >= 2 ? 5 : (S.research >= 1 ? 2 : 0); },
+     bands:"1 output scores 2, 2 score 5",
+     note:function(){ return S.research + " of 2 outputs recorded"; }},
+    {id:"leadership", name:"Leadership and management", weight:5, maxPts:2,
+     ready:function(){ return S.leadership ? 100 : 0; },
+     pts:function(){ return S.leadership ? 2 : 0; },
+     bands:"A recognised course scores 2",
+     note:function(){ return S.leadership ? "Course complete" : "No course recorded, optional"; }}
+  ];
+
+  function readiness(){
+    var t = 0;
+    DOMAINS.forEach(function(d){ t += d.ready() * d.weight; });
+    return Math.round(t / 100);
+  }
+  function scorePts(){ var t = 0; DOMAINS.forEach(function(d){ t += d.pts(); }); return t; }
+  function scoreMax(){ var t = 0; DOMAINS.forEach(function(d){ t += d.maxPts; }); return t; }
+  function losingDomains(){
+    return DOMAINS.filter(function(d){ return d.maxPts - d.pts() > 0; }).length;
+  }
+  function domainStatus(d){
+    var r = d.ready();
+    if (r >= 85) return {k:"good", icon:I.tick, label:"Met"};
+    if (r >= 45) return {k:"warn", icon:I.clock, label:"In progress"};
+    return {k:"crit", icon:I.warn, label:"Behind"};
+  }
+
+  /* the ranked "what would move you most" list, by points actually gained */
+  function levers(){
+    var out = [];
+    if (S.auditComplete < 1) out.push({t:"Finish the QI project you started",
+      why:"It is " + S.qiPct + "% done and scores nothing until it is complete",
+      pts:5, act:"finishQI", cta:"Mark complete"});
+    if (S.teachingDone < 4) out.push({t:"Log " + (4 - S.teachingDone) + " more teaching " + (4 - S.teachingDone === 1 ? "session" : "sessions"),
+      why:"Four sessions moves this domain from 2 points to 5",
+      pts:3, act:"logTeaching", cta:"Log a session"});
+    if (S.research < 2) out.push({t:"Record a second research output",
+      why:"A second output moves this domain from 2 points to 5",
+      pts:S.research >= 1 ? 3 : 2, act:"addResearch", cta:"Record output"});
+    if (!S.leadership) out.push({t:"Complete a leadership course",
+      why:"Optional, and the smallest gain of the four",
+      pts:2, act:"doLeadership", cta:"Mark complete"});
+    if (S.auditComplete === 1) out.push({t:"Start a second audit or QI project",
+      why:"A second completed project takes this domain to its full 10 points",
+      pts:5, act:"secondQI", cta:"Start project"});
+    out.sort(function(a,b){ return b.pts - a.pts; });
+    return out;
+  }
+
+  /* ================= MILESTONES ================= */
+  function milestones(){
+    var m = [
+      {t:"Final medical degree", when:"Jun 2018", state:"done"},
+      {t:"Internship", when:"Aug 2019", state:"done"},
+      {t:"IMC registration", when:"Sep 2019", state:"done"},
+      {t:"MRCPI Part 1", when:"Feb 2021", state:"done"},
+      {t:"BST General Internal Medicine, year 1", when:"Aug 2021", state:"done"},
+      {t:"BST General Internal Medicine, year 2", when:"Aug 2022", state:"done"},
+      {t:"BST General Internal Medicine complete", when:"Aug 2023", state:"done"},
+      {t:"Advanced Life Support", when:"Jan 2024", state:"done"},
+      {t:"MRCPI Part 2 written", when:"Nov 2025", state:"done"},
+      {t:"PACES", when:"Mar 2026", state:"done"},
+      {t:"Full MRCPI membership", when:"Mar 2026", state:"done"},
+
+      {t:"Audit and QI project", state: S.auditComplete >= 1 ? "done" : "doing",
+       pct: S.auditComplete >= 1 ? 100 : S.qiPct, when: S.auditComplete >= 1 ? "Complete" : "Started Jan 2026",
+       act:"finishQI", cta:"Mark complete"},
+      {t:"Teaching sessions", state: S.teachingDone >= S.teachingTarget ? "done" : "doing",
+       pct: Math.round(S.teachingDone / S.teachingTarget * 100),
+       when: S.teachingDone + " of " + S.teachingTarget, act:"logTeaching", cta:"Log a session"},
+      {t:"Research output", state: S.research >= 2 ? "done" : (S.research >= 1 ? "doing" : "todo"),
+       pct: Math.min(100, Math.round(S.research / 2 * 100)), when: S.research + " of 2",
+       act:"addResearch", cta:"Record output"},
+      {t:"Leadership training", state: S.leadership ? "done" : "todo", when:"Optional",
+       act:"doLeadership", cta:"Mark complete"},
+
+      {t:"HST Cardiology application", state:"todo", when:"Opens Oct"},
+      {t:"Interview preparation", state:"todo", when:"From Nov"},
+      {t:"HST Cardiology interview", state:"todo", when:"Jan 2027"},
+      {t:"CSCST", state:"todo", when:"Future"}
+    ];
+    (S.customMilestones || []).forEach(function(c){ m.push({t:c, state:"todo", when:"Custom", custom:true}); });
+    return m;
+  }
+
+  /* ================= DEADLINES ================= */
+  function deadlines(){
+    return [
+      {id:"qi",      t:"Audit and QI project complete",   iso:"2026-10-15", kind:"personal", note:"Your own deadline, set to land before applications open"},
+      {id:"teach",   t:"Fourth teaching session logged",  iso:"2026-10-31", kind:"personal", note:"Your own deadline"},
+      {id:"apps",    t:"HST Cardiology applications close",iso:"2026-11-08", kind:"official", note:"RCPI, 5pm"},
+      {id:"upload",  t:"Portfolio evidence upload closes", iso:"2026-12-04", kind:"official", note:"RCPI, evidence must already be dated"},
+      {id:"iview",   t:"HST Cardiology interviews",        iso:"2027-01-18", kind:"official", note:"RCPI, week commencing"},
+      {id:"offers",  t:"Offers issued",                    iso:"2027-02-26", kind:"official", note:"RCPI"},
+      {id:"start",   t:"HST post starts",                  iso:"2027-07-12", kind:"official", note:"RCPI"}
+    ].map(function(d){ d.days = until(d.iso); d.done = !!S.deadlinesDone[d.id]; return d; });
+  }
+  function nextDeadline(){
+    var open = deadlines().filter(function(d){ return !d.done && d.days >= 0; });
+    return open.length ? open[0] : null;
+  }
+
+  /* ================= LADDER ================= */
+  function rungs(){
+    return [
+      {t:"Internship", sub:"Aug 2020", state:"done"},
+      {t:"BST GIM", sub:"Aug 2023", state:"done"},
+      {t:S.target, sub:"Not yet applied", state:"here"},
+      {t:"CSCST", sub:"About 2033", state:"todo"},
+      {t:"Consultant", sub:"Typical 11 years", state:"todo"}
+    ];
+  }
+
+  /* ================= COMPONENTS ================= */
+  function ring(pct, label){
+    var r = 52, c = 2 * Math.PI * r;
+    return '<div class="ring"><svg width="132" height="132" viewBox="0 0 132 132" role="img" aria-label="' + pct + '% ' + esc(label) + '">' +
+      '<circle class="track" cx="66" cy="66" r="' + r + '" fill="none" stroke-width="12"/>' +
+      '<circle class="fill" cx="66" cy="66" r="' + r + '" fill="none" stroke-width="12" stroke-dasharray="' +
+        (c * pct / 100).toFixed(1) + " " + c.toFixed(1) + '"/>' +
+      "</svg>" +
+      '<span class="mid"><span><b class="num">' + pct + '%</b><span>' + esc(label) + "</span></span></span></div>";
+  }
+  function chip(s){ return '<span class="chip ' + s.k + '">' + ico(s.icon, 12) + esc(s.label) + "</span>"; }
+  function bar(pct){ return '<div class="bar"><i style="width:' + pct + '%"></i></div>'; }
+  function stat(k, v, d){ return '<div class="stat"><p class="k">' + esc(k) + '</p><p class="v num">' + v + '</p><p class="d">' + d + "</p></div>"; }
+  function actBtn(act, label, primary){
+    return '<button class="btn btn-sm ' + (primary ? "btn-primary" : "btn-ghost") + '" data-act="' + act + '">' + esc(label) + "</button>";
+  }
+
+  /* ================= VIEWS ================= */
+  var VIEWS = {};
+
+  VIEWS.today = {
+    title:"Today", sub:"Your record, and the one thing worth doing next.",
+    render:function(){
+      var lv = levers(), top = lv[0], nd = nextDeadline(), ms = milestones();
+      var done = ms.filter(function(m){ return m.state === "done"; }).length;
+      var open = deadlines().filter(function(d){ return !d.done && d.days >= 0; }).slice(0, 3);
+      var h = "";
+
+      h += '<div class="move">' +
+        '<span class="ic">' + ico(I.bolt, 22) + "</span>" +
+        '<div class="body"><p class="k">Your next move</p><h2>' + (top ? esc(top.t) : "Nothing outstanding") + "</h2>" +
+        "<p>" + (top ? esc(top.why) + ". Worth " + top.pts + " points on your shortlisting score, the largest single gain available to you right now."
+                     : "Every scored domain is at its maximum. Keep the evidence dated and current.") + "</p></div>" +
+        (top ? actBtn(top.act, top.cta, true) : "") + "</div>";
+
+      h += '<div class="grid g4" style="margin-top:16px">' +
+        stat("Application readiness", readiness() + "%", "Weighted across 6 domains") +
+        stat("Shortlisting score", scorePts() + "<small>/" + scoreMax() + "</small>", "Against published " + esc(S.body) + " criteria") +
+        stat("Milestones", done + "<small>/" + ms.length + "</small>", Math.round(done / ms.length * 100) + "% of your route") +
+        stat("Next deadline", nd ? nd.days + "<small> days</small>" : "None", nd ? esc(nd.t) : "Nothing open") + "</div>";
+
+      h += '<div class="grid g2" style="margin-top:14px">';
+      h += '<div class="card"><div class="card-head"><h2>What is closing</h2><a class="btn-link aside" href="#/deadlines">All deadlines</a></div>';
+      h += open.length ? open.map(function(d){
+        var k = d.days <= 14 ? "crit" : (d.days <= 60 ? "warn" : "mute");
+        return '<div class="row"><span class="t">' + esc(d.t) + "<small>" + fmtLong(d.iso) + " · " + esc(d.note) + "</small></span>" +
+          '<span class="r">' + chip({k:k, icon:d.days <= 14 ? I.warn : I.clock, label:awayText(d.days)}) + "</span></div>";
+      }).join("") : '<p class="empty">Nothing open. Everything ahead of you is marked done.</p>';
+      h += "</div>";
+
+      h += '<div class="card"><div class="card-head"><h2>Where you would gain most</h2><a class="btn-link aside" href="#/score">See the scoring</a></div>';
+      h += lv.length ? lv.slice(0, 4).map(function(l){
+        return '<div class="row"><span class="t">' + esc(l.t) + "<small>" + esc(l.why) + "</small></span>" +
+          '<span class="r"><span class="chip good">+' + l.pts + ' pts</span>' + actBtn(l.act, l.cta) + "</span></div>";
+      }).join("") : '<p class="empty"><b>Nothing left to gain.</b>Every domain is at its ceiling.</p>';
+      h += "</div></div>";
+
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Your ladder</h2><a class="btn-link aside" href="#/roadmap">Open roadmap</a></div>' +
+        rungsHTML() + "</div>";
+      return h;
+    }
+  };
+
+  function rungsHTML(){
+    return '<div class="rungs">' + rungs().map(function(r){
+      return '<div class="rung ' + r.state + '"><div class="dot"></div><b>' + esc(r.t) + "</b><span>" + esc(r.sub) + "</span></div>";
+    }).join("") + "</div>";
+  }
+
+  VIEWS.roadmap = {
+    title:"My roadmap", sub:"Your route to consultant, with your position pinned.",
+    render:function(){
+      var h = '<div class="card">' + rungsHTML() +
+        '<p class="lede" style="text-align:center">Typical total is 11 years from internship. You are ' +
+        (S.clinicalMonths / 12).toFixed(1) + " years past yours.</p></div>";
+
+      var reqs = DOMAINS.map(function(d){
+        var st = domainStatus(d);
+        return '<div class="row"><span class="t">' + ico(st.k === "good" ? I.tick : I.warn, 15) + " " + esc(d.name) +
+          "<small>" + esc(d.note()) + "</small></span><span class=\"r\">" + chip(st) + "</span></div>";
+      }).join("");
+      var nd = nextDeadline();
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>' + esc(S.target) + " entry requirements</h2>" +
+        '<span class="aside">' + (nd ? awayText(nd.days) + " to " + esc(nd.t.toLowerCase()) : "No open deadline") + "</span></div>" +
+        reqs + '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">' +
+        '<a class="btn btn-sm btn-ghost" href="#/gaps">Open gap analyser</a>' +
+        '<a class="btn btn-sm btn-primary" href="#/score">See how it scores</a></div></div>';
+
+      var trail = [
+        {k:"done", t:"Internship", when:"Aug 2020"},
+        {k:"flag", t:"MRCPI Part 1 passed", when:"Feb 2021"},
+        {k:"done", t:"BST General Internal Medicine", when:"Aug 2023"},
+        {k:"flag", t:"MRCPI Part 2 and PACES passed", when:"Mar 2026"},
+        {k:"here", t:S.target + ", not yet applied", when:"Applications close 8 Nov"},
+        {k:"flag", t:"Interview", when:"Jan 2027"},
+        {k:"todo", t:"CSCST", when:"About 2033"},
+        {k:"todo", t:"Consultant post", when:"Future"}
+      ];
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Your ladder in full</h2></div><div class="trail">' +
+        trail.map(function(s){
+          if (s.k === "flag"){
+            return '<div class="trail-item flag"><span class="knob">' + ico(I.flag, 9) + "</span>" +
+              '<p class="trail-flagline">' + esc(s.t) + '<span class="chip mute">' + esc(s.when) + "</span></p></div>";
+          }
+          var mark = s.k === "done" ? ico(I.tick, 11) : (s.k === "here" ? ico(I.target, 11) : "");
+          return '<div class="trail-item ' + s.k + '"><span class="knob">' + mark + "</span>" +
+            '<div class="trail-card"><b>' + esc(s.t) + '</b><span class="when">' + esc(s.when) + "</span></div></div>";
+        }).join("") + "</div></div>";
+      return h;
+    }
+  };
+
+  VIEWS.gaps = {
+    title:"Gap analyser", sub:"What is missing, ordered by what it costs you.",
+    render:function(){
+      var dls = deadlines();
+      function dueFor(id){ var m = {auditqi:"qi", teaching:"teach"}; var d = dls.filter(function(x){ return x.id === m[id]; })[0]; return d || null; }
+      var tiers = [
+        {k:"crit", label:"Critical, and scored in bands", ids:["auditqi","teaching"]},
+        {k:"warn", label:"Important before interview", ids:["research","clinical"]},
+        {k:"mute", label:"Optional, smallest gain", ids:["leadership"]}
+      ];
+      var h = "", any = false;
+      tiers.forEach(function(t){
+        var items = DOMAINS.filter(function(d){ return t.ids.indexOf(d.id) > -1 && d.maxPts - d.pts() > 0; });
+        if (!items.length) return;
+        any = true;
+        h += '<p class="sec-label" style="color:var(--' + (t.k === "crit" ? "crit" : t.k === "warn" ? "warn" : "txt") + '-text)">' + esc(t.label) + "</p>";
+        h += items.map(function(d){
+          var due = dueFor(d.id), lost = d.maxPts - d.pts();
+          return '<div class="gap-item"><div class="gap-top"><b>' + esc(d.name) + "</b>" +
+            '<span class="r">' + (due ? chip({k: due.days <= 21 ? "crit" : "warn", icon:I.clock, label:"Due " + fmt(due.iso) + ", " + awayText(due.days)}) : "") +
+            '<span class="chip mute">' + lost + " points on the table</span></span></div>" +
+            '<div class="gap-meta"><span>Portfolio weight <b>' + d.weight + '%</b></span><span>Scored: ' + esc(d.bands) + "</span><span>" + esc(d.note()) + "</span></div>" +
+            bar(d.ready()) +
+            '<div class="gap-acts" style="margin-top:12px">' + gapActions(d.id) + "</div></div>";
+        }).join("");
+      });
+      if (!any) h = '<p class="empty"><b>No gaps left.</b>Every domain is complete against the published criteria.</p>';
+
+      var missing = losingDomains();
+      h += '<div class="card" style="margin-top:20px"><div class="card-head"><h2>Summary</h2></div>' +
+        '<p class="lede">You are losing points in <b>' + missing + '</b> of 6 domains, worth <b>' + (scoreMax() - scorePts()) +
+        '</b> unscored points. Closing the audit and QI gap alone is worth more than the other three together.</p>' +
+        '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">' +
+        '<a class="btn btn-sm btn-ghost" href="#/progress">Track progress</a>' +
+        '<a class="btn btn-sm btn-primary" href="#/opportunities">Find what closes them</a></div></div>';
+      return h;
+    }
+  };
+  function gapActions(id){
+    if (id === "auditqi") return actBtn("finishQI", "Mark QI project complete", true) +
+      '<a class="btn btn-sm btn-ghost" href="#/opportunities">Find a QI course</a>';
+    if (id === "teaching") return actBtn("logTeaching", "Log a session", true) +
+      '<a class="btn btn-sm btn-ghost" href="#/opportunities">Find teaching opportunities</a>';
+    if (id === "research") return actBtn("addResearch", "Record an output", true);
+    if (id === "leadership") return actBtn("doLeadership", "Mark course complete", true);
+    return '<span class="lede">Accrues with time in post. Nothing to do.</span>';
+  }
+
+  VIEWS.readiness = {
+    title:"Application readiness", sub:"How much of the application is actually assembled.",
+    render:function(){
+      var nd = deadlines().filter(function(d){ return d.id === "apps"; })[0];
+      var h = '<div class="card"><div class="ring-wrap">' + ring(readiness(), "assembled") +
+        '<div><h2 style="font-size:17px;color:var(--deep)">' + readiness() + "% ready for " + esc(S.target) + "</h2>" +
+        '<p class="lede" style="margin-top:6px;max-width:56ch">Weighted across six portfolio domains. Applications close ' +
+        fmtLong(nd.iso) + ", <b>" + awayText(nd.days) + "</b>. This is a different measure from your shortlisting score: " +
+        "readiness counts part-finished work, scoring does not.</p>" +
+        '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-sm btn-ghost" href="#/score">Compare with your score</a>' +
+        '<a class="btn btn-sm btn-primary" href="#/gaps">Close the gaps</a></div></div></div></div>';
+
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Domain by domain</h2>' +
+        '<span class="aside">Weights sum to 100%</span></div>';
+      h += DOMAINS.map(function(d){
+        var st = domainStatus(d);
+        return '<div style="padding:12px 0;border-bottom:1px dashed var(--line)"><div class="barrow">' +
+          '<span class="lbl">' + esc(d.name) + '</span><span class="val num">' + d.ready() + "% · weight " + d.weight + "%</span>" +
+          bar(d.ready()) + '<span class="note">' + esc(d.note()) + "</span></div>" +
+          '<div style="margin-top:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' + chip(st) + gapActions(d.id) + "</div></div>";
+      }).join("") + "</div>";
+
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Interview readiness</h2></div>' +
+        '<p class="lede">Your interview is about ' + Math.round(deadlines().filter(function(d){ return d.id === "iview"; })[0].days / 30) +
+        ' months out, and it scores the same domains as the portfolio. Nothing you fix now is wasted on it.</p>' +
+        '<div style="margin-top:12px"><a class="btn btn-sm btn-ghost" href="/preparation/interviews">Common interview questions</a></div></div>';
+      return h;
+    }
+  };
+
+  VIEWS.score = {
+    title:"Shortlisting score", sub:"How you would score today against published criteria.",
+    render:function(){
+      var pts = scorePts(), max = scoreMax(), pct = Math.round(pts / max * 100);
+      var h = '<div class="card"><div class="ring-wrap">' + ring(pct, "scored") +
+        '<div><h2 style="font-size:17px;color:var(--deep)">' + pts + " of " + max + " points</h2>" +
+        '<p class="lede" style="margin-top:6px;max-width:58ch">Colleges score in bands, not percentages. A project that is 60% finished scores ' +
+        "the same as one never started, which is why your readiness figure of " + readiness() + "% and this score disagree. " +
+        "The disagreement is the useful part.</p></div></div></div>";
+
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Points by domain</h2></div>' +
+        '<div style="overflow-x:auto"><table class="data"><thead><tr><th>Domain</th><th>How it is scored</th><th>Where you are</th><th style="text-align:right">Points</th></tr></thead><tbody>' +
+        DOMAINS.map(function(d){
+          var got = d.pts();
+          return "<tr><td><b>" + esc(d.name) + "</b></td><td style=\"color:var(--txt-soft)\">" + esc(d.bands) +
+            "</td><td style=\"color:var(--txt-soft)\">" + esc(d.note()) + '</td><td class="n">' +
+            (got === d.maxPts ? '<span class="chip good">' + got + "/" + d.maxPts + "</span>"
+                              : '<span class="chip ' + (got === 0 ? "crit" : "warn") + '">' + got + "/" + d.maxPts + "</span>") + "</td></tr>";
+        }).join("") + '<tr><td colspan="3"><b>Total</b></td><td class="n">' + pts + "/" + max + "</td></tr></tbody></table></div></div>";
+
+      var lv = levers();
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>What would move you most</h2>' +
+        '<span class="aside">Ranked by points gained</span></div>';
+      h += lv.length ? lv.map(function(l, i){
+        return '<div class="row"><span class="t"><b class="num" style="color:var(--txt-mute);margin-right:8px">' + (i + 1) + "</b>" + esc(l.t) +
+          "<small>" + esc(l.why) + "</small></span>" +
+          '<span class="r"><span class="chip good">+' + l.pts + ' pts</span>' + actBtn(l.act, l.cta) + "</span></div>";
+      }).join("") : '<p class="empty"><b>Maximum score reached.</b>There is nothing left that would add a point.</p>';
+      h += "</div>";
+      return h;
+    }
+  };
+
+  VIEWS.deadlines = {
+    title:"Deadlines", sub:"Official dates and the ones you set yourself.",
+    render:function(){
+      var all = deadlines(), show = all.filter(function(d){ return S.showPast || d.days >= 0 || d.done; });
+      var h = "", lastMonth = "";
+      if (!show.length) h = '<p class="empty"><b>Nothing scheduled.</b>Every date on your route has passed.</p>';
+      show.forEach(function(d){
+        var mk = MON_LONG[day(d.iso).getMonth()] + " " + day(d.iso).getFullYear();
+        if (mk !== lastMonth){ h += '<p class="month">' + mk + "</p>"; lastMonth = mk; }
+        var k = d.done ? "good" : (d.days < 0 ? "warn" : (d.days <= 21 ? "crit" : (d.days <= 60 ? "warn" : "good")));
+        h += '<div class="dl ' + k + (d.done ? " done" : "") + '"><div class="dl-top"><b>' + esc(d.t) + "</b>" +
+          '<span class="away" style="color:var(--' + (k === "crit" ? "crit" : k === "warn" ? "warn" : "good") + '-text)">' +
+          (d.done ? "Done" : awayText(d.days)) + "</span></div>" +
+          '<div class="dl-sub"><span>' + fmtLong(d.iso) + "</span>" +
+          '<span class="chip mute">' + (d.kind === "official" ? "Official" : "Your own") + "</span>" +
+          "<span>" + esc(d.note) + "</span>" +
+          '<button class="btn-link" data-toggle="' + d.id + '">' + (d.done ? "Mark not done" : "Mark done") + "</button></div></div>";
+      });
+      var pastCount = all.filter(function(d){ return d.days < 0 && !d.done; }).length;
+      h += '<div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">' +
+        '<button class="btn btn-sm btn-ghost" data-act="togglePast">' + (S.showPast ? "Hide past dates" : "Show past dates" + (pastCount ? " (" + pastCount + ")" : "")) + "</button>" +
+        '<button class="btn btn-sm btn-ghost" data-act="exportCal">Export calendar</button>' +
+        '<button class="btn btn-sm btn-primary" data-act="remind">Set reminders</button></div>';
+      return h;
+    }
+  };
+
+  VIEWS.progress = {
+    title:"Progress tracker", sub:"Every milestone on your route, and what state it is in.",
+    render:function(){
+      var ms = milestones();
+      var done = ms.filter(function(m){ return m.state === "done"; });
+      var doing = ms.filter(function(m){ return m.state === "doing"; });
+      var todo = ms.filter(function(m){ return m.state === "todo"; });
+      var pct = Math.round(done.length / ms.length * 100);
+
+      var h = '<div class="card"><div class="card-head"><h2>' + pct + '% of your milestones</h2>' +
+        '<span class="aside num">' + done.length + " of " + ms.length + " complete</span></div>" + bar(pct) + "</div>";
+
+      h += '<p class="sec-label" style="color:var(--good-text)">Complete (' + done.length + ")</p><div class=\"card\">" +
+        done.map(function(m){
+          return '<div class="row"><span class="t">' + ico(I.tick, 14) + " " + esc(m.t) + '</span><span class="r"><span class="lede">' + esc(m.when) + "</span></span></div>";
+        }).join("") + "</div>";
+
+      h += '<p class="sec-label" style="color:var(--warn-text)">In progress (' + doing.length + ")</p>";
+      h += doing.length ? doing.map(function(m){
+        return '<div class="card" style="margin-bottom:10px"><div class="barrow">' +
+          '<span class="lbl">' + esc(m.t) + '</span><span class="val num">' + esc(m.when) + "</span>" + bar(m.pct || 0) + "</div>" +
+          '<div style="margin-top:11px;display:flex;gap:8px;flex-wrap:wrap">' + (m.act ? actBtn(m.act, m.cta, true) : "") + "</div></div>";
+      }).join("") : '<div class="card"><p class="empty">Nothing in progress.</p></div>';
+
+      h += '<p class="sec-label">Not started (' + todo.length + ")</p><div class=\"card\">" +
+        todo.map(function(m){
+          return '<div class="row"><span class="t" style="color:var(--txt-soft)">' + esc(m.t) + '</span><span class="r"><span class="lede">' + esc(m.when) + "</span>" +
+            (m.act ? actBtn(m.act, m.cta) : "") + "</span></div>";
+        }).join("") + "</div>";
+
+      h += '<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">' +
+        '<button class="btn btn-sm btn-ghost" data-act="addMilestone">Add custom milestone</button>' +
+        '<button class="btn btn-sm btn-ghost" data-act="printReport">Print progress report</button></div>';
+      return h;
+    }
+  };
+
+  VIEWS.opportunities = {
+    title:"Matched to you", sub:"Posts, shifts and courses that fit your route and close your gaps.",
+    render:function(){
+      var items = [
+        {kind:"Course", t:"Quality Improvement in Clinical Practice", meta:"RCPI · online · 6 CPD points · €140",
+         why:"Closes your largest gap. A completed QI project is worth 5 points.", href:"../opportunities/conferences.html", tag:"crit"},
+        {kind:"Course", t:"Teaching the Teacher, one day", meta:"RCSI · Dublin · 5 CPD points · €130",
+         why:"Two logged sessions from this would take teaching to its full 5 points.", href:"../opportunities/conferences.html", tag:"crit"},
+        {kind:"Job", t:"NCHD Registrar, Cardiology", meta:"St. James's Hospital · Dublin · Training post",
+         why:"Matches your specialty and grade. Closes 20 Sep.", href:"../opportunities/jobs.html", tag:"warn"},
+        {kind:"Job", t:"Specialist Registrar, Cardiology", meta:"Mater Misericordiae · Dublin · Training post",
+         why:"Same grade, second site, same application cycle.", href:"../opportunities/jobs.html", tag:"warn"},
+        {kind:"Locum", t:"Weekend cover, General Medicine", meta:"Beaumont Hospital · Dublin · €90/hr published",
+         why:"Weekend only, so it does not collide with your QI deadline.", href:"../opportunities/locums.html", tag:"mute"},
+        {kind:"Event", t:"Irish Cardiac Society Annual Meeting", meta:"Dublin · 14 Oct · 8 CPD points · €180",
+         why:"An accepted abstract here would count as your second research output.", href:"../opportunities/conferences.html", tag:"warn"}
+      ];
+      var h = '<div class="card"><div class="card-head"><h2>Why these</h2></div>' +
+        '<p class="lede">Matched on your specialty, your grade and the two domains you are short in. The two courses at the top are here ' +
+        "because they close scored gaps, not because they are popular.</p></div>";
+      h += '<div class="grid g2" style="margin-top:14px">' + items.map(function(o){
+        return '<a class="card" href="' + o.href + '"><div class="card-head" style="margin-bottom:8px">' +
+          '<span class="chip ' + o.tag + '">' + esc(o.kind) + "</span></div>" +
+          '<h3 style="font-size:15px;color:var(--deep);font-weight:700">' + esc(o.t) + "</h3>" +
+          '<p class="lede" style="margin-top:5px">' + esc(o.meta) + "</p>" +
+          '<p class="lede" style="margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);color:var(--deep);font-weight:600">' + esc(o.why) + "</p></a>";
+      }).join("") + "</div>";
+      h += '<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">' +
+        '<a class="btn btn-sm btn-ghost" href="../opportunities/index.html">Browse everything ' + ico(I.out, 12) + "</a></div>";
+      return h;
+    }
+  };
+
+  VIEWS.profile = {
+    title:"Your profile", sub:"Change any of this and every view recalculates.",
+    render:function(){
+      var opts = ["Cardiology","General Practice","Psychiatry","Emergency Medicine","General Surgery"];
+      return '<div class="grid g2"><div class="card"><div class="card-head"><h2>Record</h2></div>' +
+        '<div class="field"><label for="pName">Name</label><input id="pName" value="' + esc(S.name) + '"></div>' +
+        '<div class="field"><label for="pSpec">Target specialty</label><select id="pSpec">' +
+          opts.map(function(o){ return '<option' + (o === S.specialty ? " selected" : "") + ">" + esc(o) + "</option>"; }).join("") +
+        '</select><span class="hint">Changes your target, your college and the criteria you are scored against.</span></div>' +
+        '<div class="field"><label for="pMonths">Months post-internship</label><input id="pMonths" type="number" min="0" max="120" value="' + S.clinicalMonths + '">' +
+        '<span class="hint">Drives the clinical experience domain, which scores in bands at 12 and 24 months.</span></div>' +
+        '<div class="field"><label for="pTeach">Teaching sessions target</label><input id="pTeach" type="number" min="1" max="12" value="' + S.teachingTarget + '"></div>' +
+        '<button class="btn btn-primary" data-act="saveProfile">Save changes</button></div>' +
+
+        '<div class="card"><div class="card-head"><h2>What this record drives</h2></div>' +
+        '<p class="lede">One record, six views. Nothing here is entered twice.</p>' +
+        '<div style="margin-top:12px">' +
+        '<div class="row"><span class="t">Application readiness<small>Weighted percentage assembled</small></span><span class="r"><b class="num">' + readiness() + "%</b></span></div>" +
+        '<div class="row"><span class="t">Shortlisting score<small>Banded points against ' + esc(S.body) + ' criteria</small></span><span class="r"><b class="num">' + scorePts() + "/" + scoreMax() + "</b></span></div>" +
+        '<div class="row"><span class="t">Milestones complete<small>Across your whole route</small></span><span class="r"><b class="num">' +
+          milestones().filter(function(m){ return m.state === "done"; }).length + "/" + milestones().length + "</b></span></div>" +
+        '<div class="row"><span class="t">Open gaps<small>Domains still losing points</small></span><span class="r"><b class="num">' +
+          losingDomains() + "</b></span></div>" +
+        "</div>" +
+        '<div style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)">' +
+        '<p class="lede" style="margin-bottom:10px">This is a demo record held in your browser only. Nothing is sent anywhere.</p>' +
+        '<button class="btn btn-sm btn-ghost" data-act="reset">Reset to the demo record</button></div></div></div>';
+    }
+  };
+
+  /* ================= NAV ================= */
+  var NAV = [
+    {g:"Overview"},
+    {id:"today", t:"Today", ic:I.home},
+    {g:"Your route"},
+    {id:"roadmap", t:"My roadmap", ic:I.map},
+    {id:"progress", t:"Progress tracker", ic:I.chart},
+    {g:"Your readiness"},
+    {id:"gaps", t:"Gap analyser", ic:I.list},
+    {id:"readiness", t:"Application readiness", ic:I.clip},
+    {id:"score", t:"Shortlisting score", ic:I.target},
+    {g:"Planning"},
+    {id:"deadlines", t:"Deadlines", ic:I.cal},
+    {id:"opportunities", t:"Matched to you", ic:I.brief},
+    {g:"Account"},
+    {id:"profile", t:"Your profile", ic:I.user}
+  ];
+
+  function navBadge(id){
+    if (id === "gaps"){
+      var n = losingDomains();
+      return n ? {n:n, alert:false} : null;
+    }
+    if (id === "deadlines"){
+      var u = deadlines().filter(function(d){ return !d.done && d.days >= 0 && d.days <= 21; }).length;
+      return u ? {n:u, alert:true} : null;
+    }
+    return null;
+  }
+
+  function renderNav(active){
+    document.getElementById("nav").innerHTML = NAV.map(function(n){
+      if (n.g) return '<p class="nav-group">' + esc(n.g) + "</p>";
+      var b = navBadge(n.id);
+      return '<a class="nav-item' + (n.id === active ? " on" : "") + '" href="#/' + n.id + '"' +
+        (n.id === active ? ' aria-current="page"' : "") + ">" + ico(n.ic, 17) + esc(n.t) +
+        (b ? '<span class="pill' + (b.alert ? " alert" : "") + '">' + b.n + "</span>" : "") + "</a>";
+    }).join("");
+  }
+
+  /* ================= ROUTER ================= */
+  function currentId(){
+    var id = (location.hash || "#/today").replace("#/", "");
+    return VIEWS[id] ? id : "today";
+  }
+  function render(){
+    var id = currentId(), v = VIEWS[id];
+    document.getElementById("viewTitle").textContent = v.title;
+    document.getElementById("viewSub").textContent = v.sub;
+    document.getElementById("view").innerHTML = v.render();
+    renderNav(id);
+    document.getElementById("scopeTarget").textContent = S.target;
+    document.getElementById("scopeStage").textContent = S.stageLabel;
+    document.getElementById("whoName").textContent = S.name;
+    document.getElementById("avatar").textContent = initials(S.name);
+    document.title = v.title + " · MedNav";
+  }
+  function initials(n){
+    return n.split(/\s+/).filter(Boolean).slice(0, 2).map(function(p){ return p[0].toUpperCase(); }).join("") || "MN";
+  }
+  window.addEventListener("hashchange", function(){
+    render();
+    document.getElementById("view").focus();
+    window.scrollTo({top:0, behavior: reduced ? "auto" : "smooth"});
+  });
+
+  /* ================= TOAST ================= */
+  var toastEl = document.getElementById("toast"), toastTimer = null;
+  function toast(msg){
+    document.getElementById("toastText").innerHTML = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove("show"); }, 4200);
+  }
+
+  /* ================= ACTIONS =================
+     Every mutation reports the delta it actually caused, computed rather than
+     asserted, because the causal link is the thing worth teaching. */
+  var SPEC = {
+    "Cardiology":         {target:"HST Cardiology",          body:"RCPI"},
+    "General Practice":   {target:"GP training scheme",      body:"ICGP"},
+    "Psychiatry":         {target:"HST Psychiatry",          body:"College of Psychiatrists"},
+    "Emergency Medicine": {target:"HST Emergency Medicine",  body:"RCSI"},
+    "General Surgery":    {target:"HST General Surgery",     body:"RCSI"}
+  };
+
+  var ACTIONS = {
+    finishQI: function(){ S.auditComplete = 1; S.qiPct = 100; return "QI project marked complete"; },
+    secondQI: function(){ S.auditComplete = 2; S.qiPct = 100; return "Second QI project marked complete"; },
+    logTeaching: function(){
+      S.teachingDone = Math.min(S.teachingTarget, S.teachingDone + 1);
+      return "Teaching session logged, " + S.teachingDone + " of " + S.teachingTarget;
+    },
+    addResearch: function(){ S.research = Math.min(2, S.research + 1); return "Research output recorded"; },
+    doLeadership: function(){ S.leadership = true; return "Leadership course recorded"; },
+    togglePast: function(){ S.showPast = !S.showPast; return null; },
+    reset: function(){
+      try { window.localStorage.removeItem(KEY); } catch (e) {}
+      S = load();
+      return "Demo record reset";
+    },
+    printReport: function(){ window.print(); return null; },
+    exportCal: function(){ toast("Calendar export is not wired up in this demo."); return null; },
+    remind: function(){ toast("Reminders are not wired up in this demo."); return null; },
+    saveProfile: function(){
+      var name = document.getElementById("pName").value.trim();
+      var spec = document.getElementById("pSpec").value;
+      var months = parseInt(document.getElementById("pMonths").value, 10);
+      var teach = parseInt(document.getElementById("pTeach").value, 10);
+      if (name) S.name = name;
+      if (SPEC[spec]){ S.specialty = spec; S.target = SPEC[spec].target; S.body = SPEC[spec].body; }
+      if (!isNaN(months) && months >= 0) S.clinicalMonths = months;
+      if (!isNaN(teach) && teach >= 1){
+        S.teachingTarget = teach;
+        S.teachingDone = Math.min(S.teachingDone, teach);
+      }
+      return "Profile saved";
+    }
+  };
+
+  function runAction(name){
+    var fn = ACTIONS[name];
+    if (!fn) return;
+    var beforeScore = scorePts(), beforeReady = readiness();
+    var msg = fn();
+    save();
+    render();
+    if (!msg) return;
+    var dScore = scorePts() - beforeScore, dReady = readiness() - beforeReady;
+    var bits = [];
+    if (dScore) bits.push("shortlisting score <em>" + (dScore > 0 ? "+" : "") + dScore + "</em>");
+    if (dReady) bits.push("readiness <em>" + (dReady > 0 ? "+" : "") + dReady + "%</em>");
+    toast(esc(msg) + (bits.length ? ". " + bits.join(", ") : "."));
+  }
+
+  document.addEventListener("click", function(ev){
+    var act = ev.target.closest("[data-act]");
+    if (act){ ev.preventDefault(); runAction(act.getAttribute("data-act")); return; }
+
+    var tog = ev.target.closest("[data-toggle]");
+    if (tog){
+      ev.preventDefault();
+      var id = tog.getAttribute("data-toggle");
+      S.deadlinesDone[id] = !S.deadlinesDone[id];
+      save(); render();
+      toast(S.deadlinesDone[id] ? "Marked done." : "Marked not done.");
+      return;
+    }
+
+    /* custom milestone: swap the button for an inline field rather than a
+       browser prompt, which some embedded contexts block outright */
+    var add = ev.target.closest('[data-act="addMilestone"]');
+    if (add){ ev.preventDefault(); }
+  });
+
+  /* the add-milestone control is wired separately so it can replace itself */
+  document.addEventListener("click", function(ev){
+    var btn = ev.target.closest('button[data-act="addMilestone"]');
+    if (!btn) return;
+    var wrap = document.createElement("span");
+    wrap.style.cssText = "display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap";
+    wrap.innerHTML = '<input id="newMs" placeholder="Milestone name" style="border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;min-width:200px">' +
+      '<button class="btn btn-sm btn-primary" id="newMsAdd">Add</button>' +
+      '<button class="btn btn-sm btn-ghost" id="newMsCancel">Cancel</button>';
+    btn.replaceWith(wrap);
+    var input = document.getElementById("newMs");
+    input.focus();
+    function commit(){
+      var val = input.value.trim();
+      if (!val){ render(); return; }
+      S.customMilestones = S.customMilestones || [];
+      S.customMilestones.push(val.slice(0, 80));
+      save(); render();
+      toast("Milestone added.");
+    }
+    document.getElementById("newMsAdd").addEventListener("click", commit);
+    document.getElementById("newMsCancel").addEventListener("click", function(){ render(); });
+    input.addEventListener("keydown", function(e){ if (e.key === "Enter") commit(); });
+  }, true);
+
+  document.getElementById("resetBtn").addEventListener("click", function(){ runAction("reset"); });
+  document.getElementById("signOut").addEventListener("click", function(){
+    toast("Sign out is not wired up in this demo.");
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

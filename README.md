@@ -12,6 +12,7 @@ Static marketing site for MedNav, the Irish medical career navigation platform.
 | `opportunities/locums.html` | Locum shifts | Grouped by starting month |
 | `opportunities/conferences.html` | Conferences, courses and CPD | Agenda timeline with a CPD planner |
 | `tools/index.html` | Career Tools | One profile driving seven live tool cards |
+| `app/index.html` | Dashboard (signed in) | App shell, nine views over one record |
 
 Each page is a single self-contained file. Fonts (Sora, Inter) load from
 jsDelivr; everything else is inline, so a page opens straight from disk with no
@@ -32,6 +33,44 @@ dim and say why rather than disappearing.
 Career Tools reuses the homepage's own roadmap components (`.rd-step`,
 `.rd-check-row`, `.rd-next`) so the example there and the example on the
 homepage are visibly the same product.
+
+## The dashboard
+
+`app/index.html` is the signed-in application, not a marketing page, so the
+craft shifts to information design: a persistent rail, dense cards, tabular
+figures, hash routing (`#/today`, `#/score`, and so on) and a demo record held
+in `localStorage`.
+
+Its organising idea is that there is one record and every view derives from it.
+Marking the QI project complete moves the shortlisting score, application
+readiness, the gap list, the progress tracker, the sidebar badge and the
+next-best-action on Today in one go, and the toast reports the delta it
+actually caused rather than a canned message.
+
+The two headline measures are deliberately different, and their disagreement is
+the product:
+
+- **Application readiness** is a weighted percentage of how much is assembled,
+  so a project at 60% counts for 60%.
+- **Shortlisting score** is banded, the way colleges actually score, so that
+  same project counts for nothing until it is finished.
+
+That is why finishing one half-done project is worth more than starting three
+new things, and the "what would move you most" list ranks by points actually
+gained.
+
+### Chart colour
+
+Following the dataviz method, and computed rather than eyeballed:
+
+- Magnitude bars are **sequential**: one mint hue, never a status colour. A
+  status palette on adjacent amber and coral hues collapses for deutan vision
+  (delta E 3.5 to 5.7 once darkened enough to be visible on this light
+  surface), so status came off the fill entirely.
+- Status is an icon **plus** a word **plus** a colour, never one of the three
+  alone. `#0b7a63`, `#8a5a10` and `#b8482a` all clear WCAG AA on their tints.
+- Deadline rails keep a status colour but always carry the icon and the
+  days-away figure beside them.
 
 ## Design system
 
@@ -106,3 +145,9 @@ inherited it, so the fix is applied in all six files.
 - `/opportunities/submit`, `/blog/locum-guide-ireland` and the `/tools` links
   are not built yet.
 - Homepage testimonial and avatar images are illustrative placeholders.
+- Dashboard: `DEFAULTS` is one demo record for "Jane Doyle" in `localStorage`,
+  not an account. Swap it for the user service. The scoring bands in `DOMAINS`
+  are illustrative and must be replaced with each college's published criteria
+  before any of it is shown to a real doctor.
+- Dashboard actions that are honestly stubbed and say so: calendar export,
+  reminders and sign out.
