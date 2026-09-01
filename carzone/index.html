@@ -1,0 +1,79 @@
+<!--
+  CarZone Kuwait, working prototype.
+
+  A single hash routed document. The header, the views and the dialogs are
+  all rendered by assets/app.js; this file is the shell and the head.
+
+  Nothing here is a live business. The catalogue is a sample of 46 parts,
+  no order is taken, no payment is processed and no message is sent. Every
+  screen that could be mistaken for a real transaction says so on the
+  screen itself rather than only in this comment. See README.md.
+-->
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CarZone Kuwait: the right part, guaranteed</title>
+<meta name="description" content="Parts, tires and fitting for Kuwait. Set your car once and the whole catalogue filters to it, with same day delivery and a technician who comes to the car.">
+<meta name="theme-color" content="#F4F1EA">
+
+<!-- Placeholder domain and social card. Both need replacing before launch. -->
+<link rel="canonical" href="https://carzone.com.kw/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CarZone Kuwait">
+<meta property="og:title" content="CarZone Kuwait: the right part, guaranteed">
+<meta property="og:description" content="Set your car once and the whole catalogue filters to it. Same day delivery across Kuwait, fitted where the car is parked.">
+<meta property="og:url" content="https://carzone.com.kw/">
+<meta property="og:image" content="https://carzone.com.kw/og-image.png">
+<meta property="og:locale" content="en_KW">
+<meta property="og:locale:alternate" content="ar_KW">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2314120E'/%3E%3Cpath d='M16 5.4 25.6 10.9v10.2L16 26.6 6.4 21.1V10.9Z' fill='none' stroke='%23F4F1EA' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='4.4' fill='none' stroke='%23CC4A1E' stroke-width='2'/%3E%3C/svg%3E">
+
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"AutoPartsStore",
+  "name":"CarZone Kuwait",
+  "description":"Vehicle parts, tires and mobile fitting across Kuwait, with fitment checked against the vehicle before purchase.",
+  "areaServed":{ "@type":"Country", "name":"Kuwait" },
+  "currenciesAccepted":"KWD",
+  "paymentAccepted":"KNET, Visa, Mastercard, Apple Pay, Cash on delivery",
+  "availableLanguage":["ar","en"]
+}
+</script>
+
+<!-- Archivo carries the headings, Inter the interface, IBM Plex Mono every
+     figure and part number, IBM Plex Sans Arabic the whole Arabic side.
+     Each has a real fallback so a blocked CDN degrades rather than breaks. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/archivo@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/archivo@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-mono@5/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans-arabic@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans-arabic@5/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans-arabic@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans-arabic@5/700.css">
+<link rel="stylesheet" href="assets/carzone.css">
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="hdr" id="hdr"></header>
+<main id="main"></main>
+<footer class="ftr" id="ftr"></footer>
+
+<div id="overlay" hidden></div>
+
+<script src="assets/data.js"></script>
+<script src="assets/art.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
