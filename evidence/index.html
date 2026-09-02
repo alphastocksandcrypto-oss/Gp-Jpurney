@@ -4,34 +4,38 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Evidence — MedNav</title>
-<meta name="description" content="Ask a clinical question, get an answer assembled from named guidelines, with every claim cited and every source graded.">
+<meta name="description" content="Ask a clinical question. Get an answer where every statement carries the guideline it came from, and every citation opens the passage it rests on.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
 /* ──────────────────────────────────────────────────────────────
-   Evidence — MedNav
-   One self-contained file. The palette, the shell geometry and the
-   streaming choreography come from the Dx Hub design system; the
-   product is ours.
+   Evidence v2 — MedNav
+   One self-contained file, no build step.
+
+   v1 was a stack of cards. This is a document. The answer is the
+   page; the machinery around it stays quiet until you want it.
+   Citations are named, not numbered, because a clinician reads
+   [NICE] and knows what weight to give it before clicking.
    ────────────────────────────────────────────────────────────── */
 
 :root{
   --lime:#cdf565; --lime-deep:#b6e845; --lime-soft:#e8f9c2;
   --ink:#101310; --ink-2:#41493f; --muted:#7b847a;
   --shell:#ffffff; --page:#e7e9e3; --line:#ecefe8; --field:#f4f6f1;
-  --haze-a:#ffffff; --haze-b:#e9f4d3;
+  --haze-a:#ffffff; --haze-b:#eef4e2;
   --amber:#b07d1c; --amber-bg:#fdf7e8; --amber-line:#f0e0b8;
   --red:#b4482f; --red-bg:#fdf1ee; --red-line:#f2d6cd;
-  --on-lime:#16210f;
+  --on-lime:#16210f; --mark:#e8f9c2;
   color-scheme:light;
 }
 html[data-theme="dark"]{
   --ink:#f2f5ef; --ink-2:#b9c2b6; --muted:#7e877c;
   --shell:#0e100e; --page:#000; --line:#1e221d; --field:#171a16;
-  --haze-a:#0f120f; --haze-b:#1a2114;
+  --haze-a:#0f120f; --haze-b:#141a10;
   --amber:#d9ad55; --amber-bg:#1d1810; --amber-line:#3a3019;
   --red:#d98d72; --red-bg:#1d1210; --red-line:#3a2119;
+  --mark:#26331a;
   color-scheme:dark;
 }
 
@@ -39,437 +43,391 @@ html[data-theme="dark"]{
 html,body{margin:0;padding:0}
 body{
   font-family:'Instrument Sans',ui-sans-serif,system-ui,-apple-system,sans-serif;
-  min-height:100vh; padding:24px; color:var(--ink);
+  min-height:100vh;padding:20px;color:var(--ink);
   background:
-    radial-gradient(130% 100% at 12% 100%, #d9edb4 0%, rgba(217,237,180,0) 55%),
-    radial-gradient(90% 70% at 95% 0%, #f0f2ec 0%, rgba(240,242,236,0) 60%),
+    radial-gradient(120% 90% at 8% 100%,#dcefbc 0%,rgba(220,239,188,0) 52%),
+    radial-gradient(80% 60% at 96% 0%,#f1f3ed 0%,rgba(241,243,237,0) 58%),
     var(--page);
   -webkit-font-smoothing:antialiased;
 }
-html[data-theme="dark"] body{
-  background:radial-gradient(130% 100% at 12% 100%,#16200f 0%,rgba(22,32,15,0) 55%),var(--page);
-}
+html[data-theme="dark"] body{background:radial-gradient(120% 90% at 8% 100%,#141d0e 0%,rgba(20,29,14,0) 52%),var(--page)}
 button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit;text-align:left;font-size:inherit}
-a{color:inherit}
-:focus-visible{outline:2px solid var(--lime-deep);outline-offset:2px;border-radius:10px}
-kbd{font-family:inherit;font-size:10px;padding:2px 5px;border-radius:5px;background:#8a938626;color:inherit;opacity:.7}
-.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
-  clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+input,textarea{font-family:inherit}
+:focus-visible{outline:2px solid var(--lime-deep);outline-offset:2px;border-radius:8px}
+kbd{font-family:inherit;font-size:10px;padding:2px 5px;border-radius:5px;background:#8a938626;opacity:.75}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+mark{background:var(--mark);color:inherit;border-radius:3px;padding:1px 2px}
 
 /* ── shell ───────────────────────────────────────────────────── */
-.shell{max-width:1340px;margin:0 auto;display:grid;grid-template-columns:274px 1fr;
-  background:var(--shell);border-radius:26px;overflow:hidden;
+.shell{max-width:1420px;margin:0 auto;display:grid;grid-template-columns:262px 1fr;
+  background:var(--shell);border-radius:24px;overflow:hidden;position:relative;
   box-shadow:0 1px 3px rgba(16,19,16,.05),0 24px 60px -22px rgba(16,19,16,.22);
-  height:min(900px,calc(100vh - 48px))}
+  height:min(920px,calc(100vh - 40px))}
 html[data-theme="dark"] .shell{box-shadow:0 26px 70px -24px rgba(0,0,0,.85)}
 
 /* ── sidebar ─────────────────────────────────────────────────── */
-.side{display:flex;flex-direction:column;padding:16px 14px;background:var(--shell);
-  border-right:1px solid var(--line);min-width:0}
-.brand{display:flex;align-items:center;gap:10px;padding:4px 4px 18px}
-.logo{width:32px;height:32px;border-radius:10px;background:var(--ink);color:var(--lime);
-  display:grid;place-items:center;flex:none}
+.side{display:flex;flex-direction:column;padding:14px 12px;border-right:1px solid var(--line);min-width:0}
+.brand{display:flex;align-items:center;gap:9px;padding:4px 5px 16px}
+.logo{width:30px;height:30px;border-radius:9px;background:var(--ink);color:var(--lime);display:grid;place-items:center;flex:none}
 html[data-theme="dark"] .logo{background:var(--lime);color:#101310}
-.wordmark{font-size:19px;font-weight:600;letter-spacing:-.03em}
-.wordmark span{color:var(--muted);font-weight:400}
+.wordmark{font-size:18px;font-weight:600;letter-spacing:-.03em}
 .themebtn{margin-left:auto;color:var(--muted);padding:6px;border-radius:9px;display:grid;place-items:center}
 .themebtn:hover{color:var(--ink);background:var(--field)}
-
-.newsearch{display:flex;align-items:center;gap:11px;width:100%;padding:11px 12px;border-radius:14px;
-  background:var(--field);font-size:14px;font-weight:500;margin-bottom:6px;transition:background .15s}
-.newsearch:hover{background:var(--line)}
-.plus{width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--shell);
-  display:grid;place-items:center;flex:none}
+.newq{display:flex;align-items:center;gap:10px;width:100%;padding:10px 11px;border-radius:13px;
+  background:var(--field);font-size:13.5px;font-weight:500;margin-bottom:4px}
+.newq:hover{background:var(--line)}
+.plus{width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--shell);display:grid;place-items:center;flex:none}
 html[data-theme="dark"] .plus{background:var(--lime);color:#101310}
-.newsearch kbd{margin-left:auto;background:var(--shell);border:1px solid var(--line);
-  font-size:10px;color:var(--muted);opacity:1}
-
-.scrollnav{flex:1;overflow-y:auto;margin:0 -4px;padding:0 4px}
-.sechead{display:flex;align-items:center;gap:9px;width:100%;padding:15px 8px 7px;
-  font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-.secbar{width:3px;height:12px;border-radius:2px;background:var(--lime-deep);flex:none}
-.seccount{margin-left:auto;font-size:10.5px;font-weight:500;letter-spacing:0}
-.navitem{display:flex;align-items:center;gap:11px;width:100%;padding:9px;border-radius:12px;
-  font-size:13.5px;color:var(--ink-2);transition:background .15s,color .15s}
+.newq kbd{margin-left:auto;background:var(--shell);border:1px solid var(--line);color:var(--muted);opacity:1}
+.scrollnav{flex:1;overflow-y:auto;margin:0 -3px;padding:0 3px}
+.sechead{display:flex;align-items:center;gap:8px;padding:14px 7px 6px;font-size:10.5px;font-weight:600;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.secbar{width:3px;height:11px;border-radius:2px;background:var(--lime-deep);flex:none}
+.seccount{margin-left:auto;letter-spacing:0;font-size:10.5px}
+.navitem{display:flex;align-items:center;gap:10px;width:100%;padding:8px;border-radius:11px;
+  font-size:13px;color:var(--ink-2);transition:background .15s,color .15s}
 .navitem:hover{background:var(--field);color:var(--ink)}
 .navitem.on{background:var(--lime);color:#111a0d;font-weight:500}
-.tile{width:30px;height:30px;border-radius:9px;background:var(--field);
-  display:grid;place-items:center;flex:none;transition:background .15s}
+.tile{width:28px;height:28px;border-radius:8px;background:var(--field);display:grid;place-items:center;flex:none}
 .navitem.on .tile{background:#ffffffb0;color:#2c3a22}
 .nlab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.beta{margin-left:auto;font-size:8.5px;font-weight:700;letter-spacing:.09em;padding:3px 6px;
-  border-radius:5px;background:var(--field);color:var(--muted);flex:none}
-.navitem.on .beta{background:#ffffff9e;color:#3d4a30}
-
-.hist{display:flex;flex-direction:column;padding-left:9px;margin:2px 0 8px 12px;
-  border-left:1px solid var(--line)}
-.hist button{padding:8px 10px;font-size:12.5px;color:var(--muted);border-radius:9px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;width:100%}
-.hist button:hover{color:var(--ink);background:var(--field)}
-.hist button.on{color:var(--ink);background:var(--field);font-weight:500}
-.histempty{padding:8px 10px;font-size:12px;color:var(--muted);line-height:1.5}
-
-.usercard{display:flex;align-items:center;gap:11px;background:var(--ink);color:#f4f7f0;
-  border-radius:18px;padding:11px 13px;margin-top:10px;flex:none}
+.pill{margin-left:auto;font-size:8.5px;font-weight:700;letter-spacing:.09em;padding:3px 6px;border-radius:5px;
+  background:var(--field);color:var(--muted);flex:none}
+.navitem.on .pill{background:#ffffff9e;color:#3d4a30}
+.hist{display:flex;flex-direction:column;padding-left:8px;margin:2px 0 6px 11px;border-left:1px solid var(--line)}
+.hist button{padding:7px 9px;font-size:12.5px;color:var(--muted);border-radius:8px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
+.hist button:hover,.hist button.on{color:var(--ink);background:var(--field)}
+.histempty{padding:7px 9px;font-size:12px;color:var(--muted);line-height:1.5;margin:0}
+.usercard{display:flex;align-items:center;gap:10px;background:var(--ink);color:#f4f7f0;border-radius:16px;
+  padding:10px 12px;margin-top:8px;flex:none}
 html[data-theme="dark"] .usercard{background:#181c16;border:1px solid var(--line)}
-.avatar{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;
-  background:linear-gradient(140deg,var(--lime),var(--lime-deep));color:#16210f;font-weight:600;font-size:13px}
+.avatar{width:32px;height:32px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--lime),var(--lime-deep));color:#16210f;font-weight:600;font-size:12.5px}
 .uinfo{min-width:0;flex:1}
-.uname{display:block;font-size:13px;font-weight:500;line-height:1.25}
+.uname{display:block;font-size:12.5px;font-weight:500;line-height:1.25}
 .uplan{display:block;font-size:10.5px;color:#a3ada0;margin-top:2px}
-.ubadge{color:var(--lime);flex:none}
 
 /* ── main ────────────────────────────────────────────────────── */
 .main{position:relative;display:flex;flex-direction:column;min-width:0;overflow:hidden;
   background:linear-gradient(180deg,var(--haze-a) 0%,var(--haze-b) 100%)}
-.glow{position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(60% 45% at 50% 78%,rgba(205,245,101,.35),transparent 70%)}
-html[data-theme="dark"] .glow{background:radial-gradient(60% 45% at 50% 80%,rgba(182,232,69,.09),transparent 70%)}
-.grid{position:absolute;inset:0;pointer-events:none;
-  background-image:linear-gradient(to right,rgba(90,110,80,.07) 1px,transparent 1px),
-                   linear-gradient(to bottom,rgba(90,110,80,.07) 1px,transparent 1px);
-  background-size:104px 104px;
-  -webkit-mask-image:radial-gradient(75% 60% at 50% 32%,#000,transparent 76%);
-  mask-image:radial-gradient(75% 60% at 50% 32%,#000,transparent 76%)}
-html[data-theme="dark"] .grid{background-image:linear-gradient(to right,rgba(180,220,150,.055) 1px,transparent 1px),
-  linear-gradient(to bottom,rgba(180,220,150,.055) 1px,transparent 1px)}
-
-.top{position:relative;display:flex;align-items:center;gap:8px;padding:16px 20px;flex:none;z-index:2}
-.chip{display:inline-flex;align-items:center;gap:7px;background:var(--shell);border:1px solid var(--line);
-  border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:500;color:var(--ink-2);
-  transition:border-color .16s,transform .16s}
-.chip:hover{border-color:var(--lime-deep);transform:translateY(-1px)}
-.chip.ghost{background:transparent;border-style:dashed;color:var(--muted)}
-.ver{color:var(--muted);font-weight:400}
-.topright{margin-left:auto;display:flex;gap:8px}
+.top{display:flex;align-items:center;gap:7px;padding:13px 18px;flex:none;
+  border-bottom:1px solid var(--line);background:var(--shell);z-index:5;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--shell);border:1px solid var(--line);
+  border-radius:999px;padding:7px 12px;font-size:12px;font-weight:500;color:var(--ink-2);
+  transition:border-color .15s,background .15s}
+.chip:hover{border-color:var(--lime-deep)}
+.chip b{font-weight:600;color:var(--ink)}
+.chip.flat{background:var(--field);border-color:transparent}
+.topright{margin-left:auto;display:flex;gap:7px;align-items:center}
 .burger{display:none}
+.stage{flex:1;overflow-y:auto;padding:0 20px 32px;overflow-anchor:none}
+.col{max-width:760px;margin:0 auto}
 
-.stage{position:relative;flex:1;overflow-y:auto;padding:10px 24px 40px;z-index:2;overflow-anchor:none}
-.wrap{max-width:672px;margin:0 auto;text-align:center;
-  animation:rise .45s cubic-bezier(.2,.7,.3,1) both}
-.wrap.left{max-width:722px;text-align:left}
-@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-
-/* ── landing ─────────────────────────────────────────────────── */
-.herotile{width:48px;height:48px;border-radius:15px;margin:14px auto 22px;
-  background:linear-gradient(155deg,var(--lime),var(--lime-deep));display:grid;place-items:center;
-  color:#18220e;box-shadow:0 10px 26px -8px rgba(182,232,69,.75)}
-h1{margin:0;font-size:clamp(30px,4.6vw,50px);font-weight:600;letter-spacing:-.04em;line-height:1.05}
+/* ── home ────────────────────────────────────────────────────── */
+.home{padding-top:8vh;text-align:center;animation:rise .4s cubic-bezier(.2,.7,.3,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.hero{width:46px;height:46px;border-radius:14px;margin:0 auto 20px;color:#18220e;display:grid;place-items:center;
+  background:linear-gradient(155deg,var(--lime),var(--lime-deep));box-shadow:0 10px 24px -8px rgba(182,232,69,.7)}
+h1{margin:0;font-size:clamp(28px,4vw,42px);font-weight:600;letter-spacing:-.04em;line-height:1.06}
 h1 em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;color:var(--muted);
-  letter-spacing:-.02em;display:block;margin-top:1px}
-.lede{margin:16px auto 0;max-width:54ch;font-size:14.5px;line-height:1.6;color:var(--ink-2)}
+  letter-spacing:-.02em;display:block;margin-top:2px}
+.lede{margin:14px auto 0;max-width:50ch;font-size:14.5px;line-height:1.6;color:var(--ink-2)}
 
-.specrow{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin:22px 0 0}
-.spec{padding:8px 15px;border-radius:999px;border:1px solid var(--line);background:var(--shell);
-  font-size:12.5px;color:var(--ink-2);transition:all .15s}
-.spec:hover{border-color:var(--lime-deep)}
-.spec.on{background:var(--lime);border-color:var(--lime);color:var(--on-lime);font-weight:500}
-
-.composer{margin-top:22px;background:var(--shell);border:1px solid var(--line);border-radius:22px;
-  padding:16px 16px 12px;text-align:left;transition:border-color .2s;
-  box-shadow:0 2px 5px rgba(16,19,16,.03),0 18px 40px -20px rgba(16,19,16,.22)}
-.composer:focus-within{border-color:var(--lime-deep)}
-html[data-theme="dark"] .composer{box-shadow:0 20px 46px -22px rgba(0,0,0,.85)}
-.composer textarea{width:100%;border:0;outline:none;background:none;resize:none;font:inherit;
-  font-size:15.5px;color:var(--ink);min-height:62px;line-height:1.5}
-.composer textarea::placeholder{color:var(--muted)}
-.crow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:6px}
+.ask{margin-top:24px;background:var(--shell);border:1px solid var(--line);border-radius:20px;
+  padding:14px 15px 11px;text-align:left;transition:border-color .2s;
+  box-shadow:0 2px 5px rgba(16,19,16,.03),0 16px 36px -20px rgba(16,19,16,.22)}
+.ask:focus-within{border-color:var(--lime-deep)}
+html[data-theme="dark"] .ask{box-shadow:0 18px 42px -22px rgba(0,0,0,.85)}
+.ask textarea{width:100%;border:0;outline:none;background:none;resize:none;font:inherit;font-size:15.5px;
+  color:var(--ink);min-height:56px;line-height:1.5}
+.ask.compact textarea{min-height:42px;font-size:14.5px}
+.ask textarea::placeholder{color:var(--muted)}
+.askrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}
 .grow{flex:1}
-.iconbtn{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--field);
-  color:var(--ink-2);transition:background .15s;flex:none}
+.mini{display:inline-flex;align-items:center;gap:6px;background:var(--field);border-radius:999px;padding:7px 12px;
+  font-size:12px;color:var(--ink-2);transition:background .15s,color .15s}
+.mini:hover{background:var(--lime);color:var(--on-lime)}
+.mini.on{background:var(--lime);color:var(--on-lime);font-weight:500}
+.iconbtn{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--field);
+  color:var(--ink-2);flex:none}
 .iconbtn:hover{background:var(--line)}
-.tool{display:inline-flex;align-items:center;gap:7px;background:var(--field);border-radius:999px;
-  padding:8px 13px;font-size:12.5px;color:var(--ink-2);transition:background .15s,color .15s}
-.tool:hover{background:var(--lime);color:var(--on-lime)}
-.tool.on{background:var(--lime);color:var(--on-lime);font-weight:500}
-.send{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--lime);
-  color:var(--on-lime);transition:transform .15s,opacity .15s;flex:none}
+.send{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--lime);
+  color:var(--on-lime);flex:none;transition:transform .15s,opacity .15s}
 .send:hover:not(:disabled){transform:translateY(-1px)}
 .send:disabled{opacity:.4;cursor:not-allowed}
 .send.stop{background:var(--ink);color:var(--shell)}
 html[data-theme="dark"] .send.stop{background:var(--field);color:var(--ink)}
-.send.stop:hover{transform:none;opacity:.85}
-.hint{margin-right:2px}
-.composer.compact{margin-top:20px;box-shadow:none}
-.composer.compact textarea{min-height:44px;font-size:14.5px}
+.attached{display:flex;align-items:center;gap:7px;background:var(--field);border-radius:9px;padding:6px 9px;
+  font-size:11.5px;color:var(--ink-2);margin-bottom:8px;width:fit-content;max-width:100%}
+.attached svg{flex:none;color:var(--lime-deep)}
+.attached span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.attached button{color:var(--muted);display:grid;place-items:center;flex:none}
 
-.saved{display:flex;align-items:center;gap:9px;margin-top:13px;font-size:11.5px;color:var(--muted);
-  flex-wrap:wrap;justify-content:center}
-.saved svg{color:var(--lime-deep)}
-.saved .sep{width:1px;height:11px;background:var(--line)}
+.trust{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;font-size:11.5px;
+  color:var(--muted);flex-wrap:wrap}
+.trust svg{color:var(--lime-deep)}
+.trust .sep{width:1px;height:10px;background:var(--line)}
 
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-top:20px;text-align:left}
-.card{position:relative;background:var(--shell);border:1px solid var(--line);border-radius:18px;
-  padding:16px;transition:border-color .18s,transform .18s;display:block;width:100%}
-.card:hover{border-color:var(--lime-deep);transform:translateY(-3px)}
-.ctile{width:32px;height:32px;border-radius:10px;background:var(--lime);color:#18220e;
-  display:grid;place-items:center;margin-bottom:13px}
-.ctag{display:block;font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
-  color:var(--muted);margin-bottom:7px}
-.card p{margin:0;font-size:13px;line-height:1.5;color:var(--ink-2)}
+.sugg{margin-top:26px;text-align:left}
+.sugghead{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  margin:0 0 10px 2px}
+.suggrow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:13px;
+  background:var(--shell);border:1px solid var(--line);margin-bottom:7px;transition:border-color .15s,transform .15s}
+.suggrow:hover{border-color:var(--lime-deep);transform:translateY(-1px)}
+.sspec{font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
+  background:var(--field);border-radius:5px;padding:4px 7px;flex:none;width:104px;text-align:center}
+.sq{font-size:13.5px;color:var(--ink-2);line-height:1.45;flex:1;min-width:0}
+.suggrow:hover .sq{color:var(--ink)}
+.sgo{color:var(--muted);flex:none}
+.disc{display:flex;gap:8px;align-items:flex-start;margin-top:22px;padding-top:14px;border-top:1px solid var(--line);
+  font-size:11.5px;color:var(--muted);line-height:1.55;text-align:left}
+.disc svg{flex:none;margin-top:1px;color:var(--lime-deep)}
 
-.footnote{display:flex;align-items:flex-start;gap:9px;margin-top:26px;padding-top:16px;
-  border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);line-height:1.55;text-align:left}
-.footnote svg{flex:none;margin-top:1px;color:var(--lime-deep)}
+/* ── a turn: question, pipeline, answer, references ──────────── */
+.turn{padding:26px 0 4px;border-top:1px solid var(--line)}
+.turn:first-child{border-top:0;padding-top:20px}
+.qline{display:flex;gap:11px;align-items:flex-start;margin-bottom:14px}
+.qav{width:26px;height:26px;border-radius:8px;background:var(--field);color:var(--muted);display:grid;
+  place-items:center;flex:none;margin-top:2px;font-size:10px;font-weight:700}
+.qtext{margin:0;font-size:20px;font-weight:600;letter-spacing:-.025em;line-height:1.35;flex:1;min-width:0}
+.qdoc{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);background:var(--field);
+  border-radius:6px;padding:3px 7px;margin-top:8px}
 
-.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:60;background:var(--ink);
-  color:var(--shell);font-size:12.5px;padding:11px 18px;border-radius:999px;
-  box-shadow:0 14px 34px -12px rgba(0,0,0,.45);animation:rise .25s both}
-html[data-theme="dark"] .toast{background:var(--lime);color:#101310}
+/* the pipeline line — one quiet row, not a panel */
+.pipe{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--muted);padding:7px 0;min-height:32px}
+.pipe .spin{width:13px;height:13px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--lime-deep);
+  animation:spin .7s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pipe b{color:var(--ink-2);font-weight:500}
+.pipe .step{opacity:0;animation:fadein .3s ease forwards}
+@keyframes fadein{to{opacity:1}}
+.pipetog{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);padding:7px 0;
+  border-radius:8px}
+.pipetog:hover{color:var(--ink)}
+.pipetog .chev{transition:transform .2s}
+.pipetog .chev.up{transform:rotate(180deg)}
+.pipetog .ok{color:var(--lime-deep);flex:none}
 
-/* ── the question ────────────────────────────────────────────── */
-.askrow{padding:6px 0 2px}
-.asklabel{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.askq{margin:9px 0 0;font-size:clamp(20px,2.6vw,27px);font-weight:600;letter-spacing:-.03em;line-height:1.26}
-.askmeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:13px}
-.mchip{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);
-  background:var(--shell);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
-.mdot{width:6px;height:6px;border-radius:50%;background:var(--lime-deep);flex:none}
+.reflist{margin:4px 0 14px;border-left:2px solid var(--line);padding-left:13px}
+.refrow{display:grid;grid-template-columns:78px 1fr auto;align-items:center;gap:11px;padding:6px 0;font-size:11.5px;
+  animation:rowin .3s cubic-bezier(.2,.7,.3,1) backwards;animation-delay:calc(var(--i) * 45ms)}
+@keyframes rowin{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.refrow.out{opacity:.45}
+.refrow.out .rt{text-decoration:line-through;text-decoration-thickness:1px}
+.rtag{font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-2);background:var(--field);
+  border-radius:5px;padding:4px 6px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.refrow.out .rtag{color:var(--muted)}
+.rt{color:var(--ink-2);line-height:1.4;min-width:0}
+.rwhy{font-size:10.5px;color:var(--muted);white-space:nowrap;flex:none}
+.rrank{font-size:10px;font-weight:700;color:var(--lime-deep);white-space:nowrap}
 
-.bars{display:inline-flex;gap:3px;align-items:flex-end;height:18px;flex:none}
-.bars i{width:3px;border-radius:2px;background:var(--lime-deep);animation:eq .9s ease-in-out infinite}
-.bars i:nth-child(1){height:8px}
-.bars i:nth-child(2){height:15px;animation-delay:.12s}
-.bars i:nth-child(3){height:11px;animation-delay:.24s}
-.bars i:nth-child(4){height:17px;animation-delay:.36s}
-@keyframes eq{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
+/* ── the answer itself: a document, not a card ───────────────── */
+.ans{font-size:15px;line-height:1.72;color:var(--ink-2)}
+.ans p{margin:0 0 15px}
+.ans p.lead{font-size:16px;line-height:1.65;color:var(--ink)}
+.ans h3{margin:24px 0 9px;font-size:11px;font-weight:700;letter-spacing:.09em;color:var(--ink);
+  text-transform:uppercase}
+.ans strong{color:var(--ink);font-weight:600}
+.ans ul{margin:0 0 15px;padding-left:0;list-style:none}
+.ans li{position:relative;padding-left:17px;margin-bottom:7px}
+.ans li::before{content:"";position:absolute;left:3px;top:10px;width:5px;height:5px;border-radius:50%;
+  background:var(--lime-deep)}
+.callout{display:flex;gap:9px;align-items:flex-start;margin:0 0 15px;padding:11px 13px;border-radius:11px;
+  font-size:13px;line-height:1.6;background:var(--field);border:1px solid var(--line);color:var(--ink-2)}
+.callout svg{flex:none;margin-top:2px;color:var(--muted)}
+.callout.warn{background:var(--amber-bg);border-color:var(--amber-line)}
+.callout.warn svg{color:var(--amber)}
 
-/* ── reading the question (PICO) ─────────────────────────────── */
-.reads{margin-top:16px;background:var(--shell);border:1px solid var(--line);border-radius:16px;padding:13px 14px}
-.readhead{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;margin-bottom:11px}
-.readhead svg{color:var(--lime-deep);flex:none}
-.picogrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.pico{background:var(--field);border-radius:11px;padding:9px 11px;min-width:0;
-  animation:rowin .3s cubic-bezier(.2,.7,.3,1) backwards;animation-delay:calc(var(--i) * 90ms)}
-.pico b{display:block;font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
-  color:var(--muted);margin-bottom:4px}
-.pico span{display:block;font-size:12px;line-height:1.4;color:var(--ink-2)}
-
-/* ── evidence ledger (ours, not theirs) ──────────────────────── */
-.ledger{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:12px}
-.lcell{background:var(--shell);border:1px solid var(--line);border-radius:14px;padding:11px 13px;
-  animation:rowin .3s cubic-bezier(.2,.7,.3,1) backwards;animation-delay:calc(var(--i) * 70ms)}
-.lcell b{display:block;font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
-  color:var(--muted);margin-bottom:6px}
-.lnum{display:block;font-size:20px;font-weight:600;letter-spacing:-.03em;line-height:1}
-.lnum small{font-size:11px;font-weight:500;color:var(--muted);letter-spacing:0;margin-left:3px}
-.lmeter{display:block;height:5px;border-radius:3px;background:var(--field);margin-top:9px;overflow:hidden}
-.lmeter i{display:block;height:5px;border-radius:3px;background:var(--lime-deep);
-  transition:width .8s cubic-bezier(.2,.7,.3,1)}
-.lcell.warnc{background:var(--amber-bg);border-color:var(--amber-line)}
-.lcell.warnc .lnum{color:var(--amber)}
-.lcell.warnc .lmeter i{background:var(--amber)}
-.lfoot{font-size:10.5px;color:var(--muted);margin-top:7px;line-height:1.4}
-
-/* ── retrieval funnel ────────────────────────────────────────── */
-.retr{margin-top:12px;background:var(--shell);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
-.retrhead{display:flex;align-items:center;gap:10px;width:100%;min-height:34px;padding:4px 2px;
-  font-size:12.5px;color:var(--ink-2);border-radius:9px}
-.retrhead:disabled{cursor:default}
-.retrhead > svg{flex:none;color:var(--lime-deep)}
-.rlab{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rgrow{flex:1}
-.rshow{font-size:11px;color:var(--muted);flex:none}
-.chev{transition:transform .2s;opacity:.6;flex:none}
-.chev.up{transform:rotate(180deg)}
-.retrlist{display:flex;flex-direction:column;margin-top:11px}
-.retrrow{display:grid;grid-template-columns:auto 92px 1fr auto;align-items:center;gap:11px;
-  padding:8px 10px;margin-bottom:5px;border-radius:10px;background:var(--field);font-size:11.5px;
-  transition:opacity .45s ease;
-  animation:rowin .34s cubic-bezier(.2,.7,.3,1) backwards;animation-delay:calc(var(--i) * 55ms)}
-.retrrow:last-child{margin-bottom:0}
-@keyframes rowin{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
-.retrrow.out{opacity:.42}
-.retrrow.out .rtitle{text-decoration:line-through;text-decoration-thickness:1px}
-.rdot{width:6px;height:6px;border-radius:50%;background:var(--lime-deep);flex:none;transition:background .45s ease}
-.rdot.no{background:var(--muted)}
-.rorg{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rtitle{color:var(--ink-2);line-height:1.4;min-width:0}
-.tierbadge{font-style:normal;font-size:9px;font-weight:600;letter-spacing:.05em;padding:3px 7px;
-  border-radius:4px;flex:none;white-space:nowrap;background:var(--lime-soft);color:#3f4b2c}
-html[data-theme="dark"] .tierbadge{background:#26331a;color:#c2d4a4}
-.tierbadge.t2{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-line)}
-.tierbadge.why{background:transparent;color:var(--muted);font-weight:500;letter-spacing:0;
-  font-size:10px;padding:0;text-transform:none}
-
-/* ── the outline skeleton: the answer's shape before its words ─ */
-.outline{margin-top:12px;background:var(--shell);border:1px solid var(--line);border-radius:18px;padding:15px 16px}
-.outhead{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;margin-bottom:12px}
-.outhead svg{color:var(--lime-deep);flex:none}
-.outrow{display:flex;align-items:center;gap:11px;padding:8px 2px;
-  animation:rowin .3s cubic-bezier(.2,.7,.3,1) backwards;animation-delay:calc(var(--i) * 110ms)}
-.outnum{width:19px;height:19px;border-radius:6px;background:var(--field);color:var(--muted);
-  font-size:10px;font-weight:700;display:grid;place-items:center;flex:none}
-.outlab{font-size:12.5px;color:var(--ink-2);flex:none}
-.outbar{flex:1;height:6px;border-radius:3px;background:var(--field);overflow:hidden;position:relative}
-.outbar::after{content:"";position:absolute;inset:0;border-radius:3px;
-  background:linear-gradient(90deg,transparent,var(--lime-soft),transparent);
-  transform:translateX(-100%);animation:sweep 1.5s ease-in-out infinite;animation-delay:calc(var(--i) * 160ms)}
-html[data-theme="dark"] .outbar::after{background:linear-gradient(90deg,transparent,#26331a,transparent)}
-@keyframes sweep{to{transform:translateX(100%)}}
-
-/* ── the answer ──────────────────────────────────────────────── */
-.answer{margin-top:12px;background:var(--shell);border:1px solid var(--line);border-radius:20px;padding:18px}
-.ahead{display:flex;align-items:center;gap:10px;padding-bottom:13px;border-bottom:1px solid var(--line);margin-bottom:15px}
-.atile{width:28px;height:28px;border-radius:9px;color:#18220e;display:grid;place-items:center;flex:none;
-  background:linear-gradient(155deg,var(--lime),var(--lime-deep))}
-.astamp{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
-.live{margin-left:auto;font-size:10.5px;font-weight:500;color:var(--lime-deep);
-  animation:pulse 1.2s ease-in-out infinite}
-.live.halted{color:var(--amber);animation:none}
-@keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
-
-.bottomline{background:var(--lime-soft);border:1px solid #d6ee9e;border-radius:14px;padding:13px 15px;
-  margin-bottom:16px}
-html[data-theme="dark"] .bottomline{background:#1a2114;border-color:#2b3a1c}
-.blhead{display:flex;align-items:center;gap:8px;font-size:9.5px;font-weight:700;letter-spacing:.1em;
-  text-transform:uppercase;color:#3f4b2c;margin-bottom:8px}
-html[data-theme="dark"] .blhead{color:#c2d4a4}
-.bottomline p{margin:0;font-size:14px;line-height:1.62;color:var(--ink)}
-
-.prose h3{margin:20px 0 8px;font-size:13.5px;font-weight:600;letter-spacing:-.01em}
-.prose h3:first-child{margin-top:0}
-.prose p{margin:0 0 12px;font-size:14px;line-height:1.68;color:var(--ink-2)}
-.prose p:last-child{margin-bottom:0}
-.prose strong{color:var(--ink);font-weight:600}
-.citemark{position:relative;display:inline-grid;place-items:center;min-width:16px;height:16px;padding:0 4px;
-  border-radius:5px;background:var(--lime-soft);color:#3f4b2c;font-size:9.5px;font-weight:700;
-  vertical-align:2px;margin:0 1px;
-  animation:citein .22s cubic-bezier(.2,.9,.3,1.4)}
-@keyframes citein{from{opacity:0;transform:scale(.5)}}
-.citemark::after{content:"";position:absolute;inset:-11px -2px}
-html[data-theme="dark"] .citemark{background:#26331a;color:#c2d4a4}
-.citemark:hover,.citemark.hot{background:var(--lime);color:var(--on-lime)}
-.inlinewarn,.inlinenote{display:flex;gap:9px;align-items:flex-start;margin:0 0 12px;padding:11px 13px;
-  border-radius:12px;font-size:12.5px;line-height:1.55}
-.inlinewarn{background:var(--field);color:var(--ink-2);border:1px solid var(--line)}
-.inlinewarn svg{flex:none;margin-top:2px;color:var(--muted)}
-.inlinenote{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--ink-2)}
-.inlinenote svg{flex:none;margin-top:2px;color:var(--amber)}
-.caret{display:inline-block;width:2px;height:15px;background:var(--lime-deep);vertical-align:-2px;
-  margin-left:2px;animation:blink .9s steps(2) infinite}
+/* named citations — the thing you read before you click */
+.cite{display:inline-flex;align-items:center;height:17px;padding:0 6px;border-radius:5px;background:var(--mark);
+  color:#3f4b2c;font-size:10px;font-weight:700;letter-spacing:.02em;vertical-align:1px;margin:0 1px;
+  position:relative;animation:citein .2s cubic-bezier(.2,.9,.3,1.4);white-space:nowrap}
+html[data-theme="dark"] .cite{color:#c2d4a4}
+@keyframes citein{from{opacity:0;transform:scale(.6)}}
+.cite::after{content:"";position:absolute;inset:-10px -2px}
+.cite:hover,.cite.on{background:var(--lime);color:var(--on-lime)}
+.cite.checking{background:var(--field);color:var(--muted)}
+.caret{display:inline-block;width:2px;height:15px;background:var(--lime-deep);vertical-align:-2px;margin-left:2px;
+  animation:blink .9s steps(2) infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 
-/* ── where the sources disagree ──────────────────────────────── */
-.block{margin-top:12px;border-radius:18px;padding:15px 16px;border:1px solid var(--line);background:var(--shell)}
-.bhead{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;margin-bottom:12px}
-.bhead svg{flex:none}
-.bcount{margin-left:auto;font-size:10.5px;font-weight:500;color:var(--muted)}
-.block.split{background:var(--amber-bg);border-color:var(--amber-line)}
-.block.split .bhead{color:var(--amber)}
-.splitrow{background:var(--shell);border:1px solid var(--amber-line);border-radius:13px;padding:12px 13px;
-  margin-bottom:8px}
-html[data-theme="dark"] .splitrow{background:#12140f}
-.splitrow:last-child{margin-bottom:0}
-.sclaim{font-size:12.5px;font-weight:600;margin-bottom:10px;line-height:1.4}
-.sides{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.sidebox{background:var(--field);border-radius:10px;padding:9px 11px}
-.sidebox b{display:block;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
-  color:var(--muted);margin-bottom:4px}
-.sidebox span{display:block;font-size:12px;line-height:1.45;color:var(--ink-2)}
-.stake{display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:12px;line-height:1.5;
-  color:var(--ink-2)}
-.stake svg{flex:none;margin-top:2px;color:var(--amber)}
-.stake b{color:var(--ink);font-weight:600}
+/* faithfulness pass */
+.faith{display:flex;align-items:center;gap:9px;margin:18px 0 0;padding:10px 12px;border-radius:11px;
+  background:var(--field);font-size:12px;color:var(--ink-2)}
+.faith svg{flex:none;color:var(--lime-deep)}
+.faith.running svg{color:var(--muted)}
+.faith b{font-weight:600;color:var(--ink)}
+.faith .fgrow{flex:1}
+.faith .fbar{width:74px;height:4px;border-radius:2px;background:var(--line);overflow:hidden;flex:none}
+.faith .fbar i{display:block;height:4px;border-radius:2px;background:var(--lime-deep);transition:width .3s linear}
 
-/* ── what would change this answer ───────────────────────────── */
-.block.changers .bhead{color:var(--ink)}
-.block.changers .bhead svg{color:var(--lime-deep)}
-.chline{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line);
-  font-size:12.5px;line-height:1.55;color:var(--ink-2)}
-.chline:first-of-type{border-top:0;padding-top:0}
-.chdot{width:18px;height:18px;border-radius:6px;background:var(--field);color:var(--muted);flex:none;
-  display:grid;place-items:center;font-size:10px;font-weight:700;margin-top:1px}
-.chline b{color:var(--ink);font-weight:600}
-
-/* ── sources ─────────────────────────────────────────────────── */
-.srchead{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:700;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--muted);margin:20px 0 9px}
-.srchead .sgrow{flex:1}
-.srcs{display:flex;flex-direction:column;gap:7px}
-.src{display:flex;gap:11px;align-items:flex-start;background:var(--field);border:1px solid transparent;
-  border-radius:13px;padding:11px 13px;transition:border-color .15s,background .15s,opacity .3s;
-  width:100%;scroll-margin:20px}
-.src:hover{border-color:var(--lime-deep);background:var(--shell)}
-.src.hot{border-color:var(--lime-deep);background:var(--shell)}
-.snum{width:20px;height:20px;border-radius:6px;background:var(--lime-soft);color:#3f4b2c;font-size:10px;
-  font-weight:700;display:grid;place-items:center;flex:none;margin-top:1px}
-html[data-theme="dark"] .snum{background:#26331a;color:#c2d4a4}
+/* ── references at the end of the answer ─────────────────────── */
+.refshead{display:flex;align-items:center;gap:8px;margin:24px 0 10px;font-size:10px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.refshead .rgrow{flex:1}
+.refshead span{letter-spacing:0;text-transform:none;font-weight:500;font-size:11px}
+.srcs{display:flex;flex-direction:column;gap:6px}
+.src{display:flex;gap:11px;align-items:flex-start;background:var(--shell);border:1px solid var(--line);
+  border-radius:12px;padding:11px 12px;width:100%;transition:border-color .15s,background .15s;scroll-margin:20px}
+.src:hover,.src.on{border-color:var(--lime-deep)}
+.stag{font-size:9.5px;font-weight:700;letter-spacing:.04em;background:var(--mark);color:#3f4b2c;border-radius:5px;
+  padding:5px 7px;flex:none;min-width:64px;text-align:center;margin-top:1px}
+html[data-theme="dark"] .stag{color:#c2d4a4}
 .sbody{min-width:0;flex:1}
-.sorg{display:flex;align-items:center;gap:8px;font-size:10.5px;font-weight:600;letter-spacing:.05em;
-  text-transform:uppercase;color:var(--muted);flex-wrap:wrap}
-.stitle{display:block;font-size:12.5px;color:var(--ink-2);margin-top:4px;line-height:1.45}
-.sage{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:10.5px;color:var(--muted)}
-.agedot{width:5px;height:5px;border-radius:50%;background:var(--lime-deep);flex:none}
-.agedot.old{background:var(--amber)}
-.sgo{color:var(--muted);flex:none;margin-top:2px}
+.stitle{display:block;font-size:13px;color:var(--ink);line-height:1.45;font-weight:500}
+.smeta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:5px;font-size:10.5px;color:var(--muted)}
+.smeta .dot{width:3px;height:3px;border-radius:50%;background:var(--muted);opacity:.6;flex:none}
+.styp{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px;
+  background:var(--field);color:var(--muted)}
+.styp.guide{background:var(--mark);color:#3f4b2c}
+html[data-theme="dark"] .styp.guide{color:#c2d4a4}
+.sgo2{color:var(--muted);flex:none;margin-top:3px}
 
-/* ── actions and follow-ups ──────────────────────────────────── */
-.actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:18px;padding-top:14px;
-  border-top:1px solid var(--line)}
-.act{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);padding:7px 11px;
-  border-radius:9px;transition:background .15s,color .15s}
+/* ── actions and suggested follow-ups ────────────────────────── */
+.acts{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:16px;padding-top:13px;border-top:1px solid var(--line)}
+.act{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:7px 10px;border-radius:9px}
 .act:hover{background:var(--field);color:var(--ink)}
 .act.on{background:var(--lime);color:var(--on-lime)}
 .act.on.down{background:var(--amber-bg);color:var(--amber)}
 .agrow{flex:1}
-.adisc{font-size:11px;color:var(--muted)}
+.menu{position:relative}
+.mpop{position:absolute;right:0;bottom:calc(100% + 6px);z-index:30;background:var(--shell);border:1px solid var(--line);
+  border-radius:13px;padding:5px;min-width:212px;box-shadow:0 16px 40px -14px rgba(16,19,16,.32)}
+html[data-theme="dark"] .mpop{box-shadow:0 18px 44px -14px rgba(0,0,0,.85)}
+.mpop button{display:flex;align-items:center;gap:9px;width:100%;padding:9px 10px;border-radius:9px;font-size:12.5px;color:var(--ink-2)}
+.mpop button:hover{background:var(--field);color:var(--ink)}
+.mpop .mrule{display:block;border-top:1px solid var(--line);margin:4px 6px}
+.mpop small{display:block;padding:4px 10px 7px;font-size:10.5px;color:var(--muted);line-height:1.45}
 
-.followups{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:16px}
-.flabel{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:3px}
-.fchip{display:inline-flex;align-items:center;gap:8px;background:var(--shell);border:1px solid var(--line);
-  border-radius:999px;padding:9px 15px;font-size:12.5px;color:var(--ink-2);transition:all .15s}
-.fchip:hover{border-color:var(--lime-deep);transform:translateY(-1px)}
+.nexts{margin-top:18px}
+.nexthead{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.next{display:flex;align-items:center;gap:11px;width:100%;padding:10px 13px;border-radius:12px;
+  border:1px solid var(--line);background:var(--shell);margin-bottom:6px;transition:border-color .15s,transform .15s}
+.next:hover{border-color:var(--lime-deep);transform:translateY(-1px)}
+.nkind{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  background:var(--field);border-radius:5px;padding:4px 7px;flex:none;width:60px;text-align:center}
+.next span.nq{font-size:13px;color:var(--ink-2);flex:1;min-width:0;line-height:1.45}
+.next:hover .nq{color:var(--ink)}
 
-.jump{position:absolute;left:50%;bottom:20px;z-index:8;transform:translateX(-50%);
-  display:inline-flex;align-items:center;gap:7px;background:var(--ink);color:var(--shell);
-  font-size:11.5px;font-weight:500;padding:8px 15px;border-radius:999px;
-  box-shadow:0 12px 30px -10px rgba(0,0,0,.5);animation:rise .2s both}
+/* ── source drawer — the verification loop ───────────────────── */
+.drawer{position:absolute;top:0;right:0;bottom:0;width:390px;background:var(--shell);border-left:1px solid var(--line);
+  z-index:40;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s cubic-bezier(.2,.7,.3,1)}
+.drawer.open{transform:none;box-shadow:-20px 0 50px -30px rgba(16,19,16,.4)}
+.dhead{display:flex;align-items:center;gap:9px;padding:14px 16px;border-bottom:1px solid var(--line);flex:none}
+.dhead .dtag{font-size:9.5px;font-weight:700;letter-spacing:.05em;background:var(--mark);color:#3f4b2c;
+  border-radius:5px;padding:5px 7px}
+html[data-theme="dark"] .dhead .dtag{color:#c2d4a4}
+.dhead .dlab{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.dclose{margin-left:auto;color:var(--muted);padding:6px;border-radius:8px;display:grid;place-items:center}
+.dclose:hover{background:var(--field);color:var(--ink)}
+.dbody{flex:1;overflow-y:auto;padding:16px}
+.dtitle{margin:0;font-size:16px;font-weight:600;line-height:1.4;letter-spacing:-.02em;color:var(--ink)}
+.dmeta{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:9px;font-size:11px;color:var(--muted)}
+.dopen{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;padding:11px;
+  border-radius:12px;background:var(--ink);color:var(--shell);font-size:12.5px;font-weight:500}
+html[data-theme="dark"] .dopen{background:var(--lime);color:#101310}
+.dopen:hover{opacity:.9}
+.dsec{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:22px 0 9px}
+.excerpt{background:var(--field);border-radius:12px;padding:13px 14px;font-size:13px;line-height:1.65;color:var(--ink-2);
+  border-left:2px solid var(--lime-deep)}
+.excerpt p{margin:0 0 10px}
+.excerpt p:last-child{margin:0}
+.dclaim{background:var(--shell);border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-bottom:6px;
+  font-size:12.5px;line-height:1.55;color:var(--ink-2);width:100%;text-align:left}
+.dclaim:hover{border-color:var(--lime-deep)}
+.dclaim em{display:block;font-style:normal;font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:5px}
+.dnote{display:flex;gap:8px;align-items:flex-start;margin-top:18px;font-size:11px;color:var(--muted);line-height:1.55}
+.dnote svg{flex:none;margin-top:1px}
+
+/* ── modals: specialty picker, source control ────────────────── */
+.scrim{position:absolute;inset:0;background:rgba(10,14,10,.42);z-index:50;display:grid;place-items:center;padding:24px;
+  animation:fadein .16s ease both}
+.modal{background:var(--shell);border-radius:20px;width:min(560px,100%);max-height:100%;display:flex;flex-direction:column;
+  overflow:hidden;box-shadow:0 30px 70px -24px rgba(0,0,0,.5);animation:rise .2s cubic-bezier(.2,.7,.3,1) both}
+.mhead{display:flex;align-items:center;gap:10px;padding:15px 17px;border-bottom:1px solid var(--line);flex:none}
+.mtitle{font-size:15px;font-weight:600;letter-spacing:-.02em}
+.msub{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.45}
+.mbody{padding:14px 17px 17px;overflow-y:auto}
+.search{display:flex;align-items:center;gap:9px;background:var(--field);border-radius:12px;padding:10px 13px;margin-bottom:12px}
+.search input{border:0;outline:none;background:none;font-size:13.5px;color:var(--ink);width:100%}
+.search svg{color:var(--muted);flex:none}
+.specgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
+.specbtn{padding:9px 11px;border-radius:10px;font-size:12.5px;color:var(--ink-2);border:1px solid transparent}
+.specbtn:hover{background:var(--field);color:var(--ink)}
+.specbtn.on{background:var(--lime);color:var(--on-lime);font-weight:500}
+.emptyq{font-size:12.5px;color:var(--muted);padding:14px 4px;line-height:1.5}
+
+.preset{display:flex;align-items:flex-start;gap:11px;width:100%;padding:12px;border-radius:13px;border:1px solid var(--line);
+  margin-bottom:7px;transition:border-color .15s}
+.preset:hover{border-color:var(--lime-deep)}
+.preset.on{border-color:var(--lime-deep);background:var(--field)}
+.radio{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line);flex:none;margin-top:2px;display:grid;place-items:center}
+.preset.on .radio{border-color:var(--lime-deep)}
+.preset.on .radio::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--lime-deep)}
+.preset b{display:block;font-size:13px;font-weight:600;color:var(--ink)}
+.preset small{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.5}
+.togrow{display:flex;align-items:center;gap:11px;padding:9px 2px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-2)}
+.togrow:first-of-type{border-top:0}
+.togrow .tg{flex:1;min-width:0}
+.togrow .tg small{display:block;font-size:10.5px;color:var(--muted);margin-top:2px}
+.switch{width:36px;height:20px;border-radius:999px;background:var(--line);position:relative;flex:none;transition:background .18s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--shell);
+  transition:transform .18s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.switch.on{background:var(--lime-deep)}
+.switch.on::after{transform:translateX(16px)}
+.blocked{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:8px}
+.btag{display:inline-flex;align-items:center;gap:6px;background:var(--red-bg);border:1px solid var(--red-line);color:var(--red);
+  border-radius:999px;padding:5px 10px;font-size:11.5px}
+.mfoot{display:flex;align-items:center;gap:8px;padding:13px 17px;border-top:1px solid var(--line);flex:none}
+.mfoot .mgrow{flex:1;font-size:11px;color:var(--muted)}
+.btn{padding:9px 15px;border-radius:11px;font-size:12.5px;font-weight:500;background:var(--field);color:var(--ink-2)}
+.btn:hover{background:var(--line)}
+.btn.pri{background:var(--lime);color:var(--on-lime)}
+.btn.pri:hover{opacity:.9}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:80;background:var(--ink);color:var(--shell);
+  font-size:12.5px;padding:11px 18px;border-radius:999px;box-shadow:0 14px 34px -12px rgba(0,0,0,.45);animation:rise .22s both;
+  max-width:min(520px,90vw)}
+html[data-theme="dark"] .toast{background:var(--lime);color:#101310}
+.jump{position:absolute;left:50%;bottom:18px;z-index:20;transform:translateX(-50%);display:inline-flex;align-items:center;
+  gap:7px;background:var(--ink);color:var(--shell);font-size:11.5px;font-weight:500;padding:8px 15px;border-radius:999px;
+  box-shadow:0 12px 30px -10px rgba(0,0,0,.5)}
 html[data-theme="dark"] .jump{background:var(--lime);color:#101310}
-.jump:hover{opacity:.9}
 .jump[hidden]{display:none}
 .flip{transform:rotate(180deg);display:inline-grid}
 
-/* ── prior turns in a thread ─────────────────────────────────── */
-.prior{margin-bottom:14px;padding-bottom:14px;border-bottom:1px dashed var(--line)}
-.priorq{display:flex;align-items:center;gap:9px;width:100%;padding:10px 12px;border-radius:13px;
-  background:var(--shell);border:1px solid var(--line);font-size:13px;color:var(--ink-2);
-  transition:border-color .15s}
-.priorq:hover{border-color:var(--lime-deep);color:var(--ink)}
-.priorq .qn{font-size:10px;font-weight:700;color:var(--muted);flex:none;letter-spacing:.06em}
-.priorq .qt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-
-@media (max-width:1000px){
+@media (max-width:1080px){
   body{padding:0}
   .shell{grid-template-columns:1fr;border-radius:0;height:100vh}
-  .side{position:fixed;inset:0 auto 0 0;width:274px;z-index:40;transform:translateX(-100%);
-    transition:transform .25s ease}
+  .side{position:absolute;inset:0 auto 0 0;width:262px;z-index:60;transform:translateX(-100%);
+    transition:transform .25s ease;background:var(--shell)}
   .side.open{transform:none;box-shadow:0 0 0 100vmax rgba(10,14,10,.45)}
-  .burger{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:11px;
+  .burger{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:10px;
     background:var(--shell);border:1px solid var(--line)}
-  .cards{grid-template-columns:1fr}
-  .ledger,.picogrid{grid-template-columns:repeat(2,1fr)}
-  .sides{grid-template-columns:1fr}
-  .stage{padding:8px 18px 32px}
-  .retrrow{grid-template-columns:auto 1fr;row-gap:4px;padding:9px 11px}
-  .retrrow .rorg,.retrrow .rtitle,.retrrow .tierbadge{grid-column:2}
-  .retrrow .tierbadge{justify-self:start}
+  .drawer{width:min(390px,100%)}
 }
-@media (max-width:540px){
-  /* the top bar carries two decorative chips; on a phone the scope
-     selector is the only one worth the row */
-  .top{padding:12px 14px;gap:6px}
-  .top .chip.ghost,.topright{display:none}
-  .stage{padding:8px 14px 28px}
-  .answer{padding:15px 14px}
-  .ledger,.picogrid{grid-template-columns:1fr}
-  .jump{bottom:14px}
-  /* one-handed, mid-consultation: every control gets a real target */
-  .chip,.act,.fchip,.spec,.tool{min-height:40px;font-size:12px}
-  .chip{padding:7px 13px}
-  .retrhead{min-height:44px}
-  .iconbtn,.send{width:40px;height:40px}
+@media (max-width:600px){
+  .top{padding:11px 13px}
+  .top .hide-sm{display:none}
+  .stage{padding:0 14px 26px}
+  .home{padding-top:4vh}
+  .specgrid{grid-template-columns:1fr}
+  .sspec{width:auto;min-width:74px}
+  .refrow{grid-template-columns:70px 1fr;row-gap:3px}
+  .refrow .rwhy,.refrow .rrank{grid-column:2}
+  .chip,.act,.mini{min-height:38px}
+  .iconbtn,.send{width:38px;height:38px}
+}
+@media print{
+  body{padding:0;background:#fff}
+  .side,.top,.drawer,.scrim,.jump,.acts,.nexts,.ask,.pipe,.pipetog,.reflist,.toast{display:none!important}
+  .shell{box-shadow:none;height:auto;display:block;border-radius:0}
+  .stage{overflow:visible;padding:0}
+  .col{max-width:none}
+  .cite{border:1px solid #999;background:#fff}
+  .turn{page-break-inside:avoid}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -478,42 +436,34 @@ html[data-theme="dark"] .jump{background:var(--lime);color:#101310}
 <div class="shell">
   <aside class="side" id="side">
     <div class="brand">
-      <span class="logo" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2Z"/><path d="M4 19a2 2 0 0 1 2-2h13M9 7.5h5M9 11h5"/></svg>
-      </span>
-      <span class="wordmark">Evidence<span>.</span></span>
+      <span class="logo" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2Z"/><path d="M4 19a2 2 0 0 1 2-2h13M9 7.5h5M9 11h5"/></svg></span>
+      <span class="wordmark">Evidence</span>
       <button class="themebtn" id="themebtn" aria-label="Switch theme"></button>
     </div>
-
-    <button class="newsearch" id="newsearch">
-      <span class="plus" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></span>
+    <button class="newq" id="newq">
+      <span class="plus" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></span>
       New question <kbd>&#8984;K</kbd>
     </button>
-
     <nav class="scrollnav" id="nav"></nav>
-
     <div class="usercard">
       <span class="avatar" aria-hidden="true">DP</span>
       <span class="uinfo">
         <span class="uname">Dr D. Piechowiak</span>
-        <span class="uplan">GP registrar &middot; ICGP scheme</span>
-      </span>
-      <span class="ubadge" aria-hidden="true">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6.5v5c0 4.6 3.2 8.4 8 9.5 4.8-1.1 8-4.9 8-9.5v-5Z"/><path d="m9 12 2 2 4-4"/></svg>
+        <span class="uplan" id="uspec">General practice</span>
       </span>
     </div>
   </aside>
 
   <main class="main">
-    <div class="glow" aria-hidden="true"></div>
-    <div class="grid" aria-hidden="true"></div>
     <div class="top" id="top"></div>
     <div class="stage" id="stage"></div>
     <button class="jump" id="jump" hidden>
       <span class="flip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15.5 6-6 6 6"/></svg></span>
       Jump to latest
     </button>
+    <aside class="drawer" id="drawer" aria-label="Source" aria-hidden="true"></aside>
   </main>
+  <div id="modalhost"></div>
 </div>
 <span class="sr" role="status" aria-live="polite" id="live"></span>
 <script>
@@ -521,30 +471,27 @@ html[data-theme="dark"] .jump{background:var(--lime);color:#101310}
 "use strict";
 
 /* ══════════════════════════════════════════════════════════════
-   1. Small helpers
+   Helpers
    ══════════════════════════════════════════════════════════════ */
 const $  = (s,r)=>(r||document).querySelector(s);
-const $$ = (s,r)=>Array.from(((r||document).querySelectorAll(s)));
+const $$ = (s,r)=>Array.from((r||document).querySelectorAll(s));
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const reduced = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* One icon factory. Everything is a 24-grid stroke path, so the whole
-   icon set is a string table rather than 40 hand-written SVGs. */
-const P = {
+const PATHS = {
   book:'M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2Z|M4 19a2 2 0 0 1 2-2h13',
   search:'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z|m16.5 16.5 4 4',
-  filter:'M4 6h16M7 12h10M10 18h4',
-  scale:'M12 4v16M7 8h10|M7 8 4 15h6ZM17 8l-3 7h6Z',
   layers:'M12 3 3 8l9 5 9-5Z|m3 13 9 5 9-5M3 18l9 5 9-5',
-  spark:'M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8',
-  check:'M12 3 4 6.5v5c0 4.6 3.2 8.4 8 9.5 4.8-1.1 8-4.9 8-9.5v-5Z|m9 12 2 2 4-4',
-  split:'M6 3v6a4 4 0 0 0 4 4h8M18 3v6a4 4 0 0 1-4 4H6|m15 10 3 3-3 3',
-  alert:'M12 8v5M12 16.5v.5|M10.3 4.2 3 17a2 2 0 0 0 1.7 3h14.6a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z',
+  sliders:'M4 7h9M17 7h3M4 17h3M11 17h9|M15 4.5v5M7 14.5v5',
+  folder:'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z',
+  award:'M12 3.5a5 5 0 1 0 0 10 5 5 0 0 0 0-10ZM8.5 13 7 21l5-2.5L17 21l-1.5-8',
+  clock:'M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z|M12 7.5V12l3 2',
+  shield:'M12 3 4 6.5v5c0 4.6 3.2 8.4 8 9.5 4.8-1.1 8-4.9 8-9.5v-5Z|m9 12 2 2 4-4',
+  check:'m5 12.5 4.5 4.5L19 7',
   info:'M12 16v-5M12 8v.5|M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z',
-  key:'M15 3a6 6 0 1 0-4.5 10L9 14.5H7v2H5v2H3v-3l6-6A6 6 0 0 0 15 3Z',
+  alert:'M12 8v5M12 16.5v.5|M10.3 4.2 3 17a2 2 0 0 0 1.7 3h14.6a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z',
   copy:'M9 9h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2Z|M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1',
-  quote:'M9 7H6a2 2 0 0 0-2 2v3h5V7ZM19 7h-3a2 2 0 0 0-2 2v3h5V7Z|M4 12c0 3 1.5 4.5 4 5M14 12c0 3 1.5 4.5 4 5',
-  save:'M6 3h12v18l-6-4-6 4Z',
+  share:'M12 15V4M8.5 7.5 12 4l3.5 3.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4',
   up:'M7 20V10l5-7 1 1v6h6l-2 10Z',
   down:'M17 4v10l-5 7-1-1v-6H5l2-10Z',
   send:'M12 19V6M6 12l6-6 6 6',
@@ -552,1010 +499,1119 @@ const P = {
   clip:'M16 8 9.5 14.5a2.5 2.5 0 0 0 3.5 3.5L20 11a5 5 0 0 0-7-7l-7 7a7 7 0 0 0 10 10l4-4',
   user:'M12 4.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 20a7 7 0 0 1 14 0',
   chev:'m6 9.5 6 6 6-6',
-  arrow:'M7 17 17 7M9 7h8v8',
-  clock:'M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z|M12 7.5V12l3 2',
+  ext:'M7 17 17 7M9 7h8v8',
+  x:'M6 6l12 12M18 6 6 18',
+  globe:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z|M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18',
+  file:'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z|M14 3v5h5M9 13h6M9 17h4',
+  print:'M7 9V4h10v5|M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2|M7 14h10v6H7Z',
+  link:'M10 13.5a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1|M14 10.5a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1',
+  burger:'M4 7h16M4 12h16M4 17h16',
   sun:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z|M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4',
   moon:'M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z',
-  burger:'M4 7h16M4 12h16M4 17h16',
-  target:'M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z|M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z',
-  pill:'M4.5 12a5 5 0 0 1 5-5h5a5 5 0 0 1 0 10h-5a5 5 0 0 1-5-5Z|M12 7v10',
-  heart:'M12 20s-7-4.5-7-9.5A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.5C19 15.5 12 20 12 20Z',
-  child:'M12 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5ZM8 20v-4l-1.5-1a2 2 0 0 1-.5-2.6l.6-1A3 3 0 0 1 9.2 10h5.6a3 3 0 0 1 2.6 1.4l.6 1a2 2 0 0 1-.5 2.6L16 16v4'
+  quote:'M9 7H6a2 2 0 0 0-2 2v3h5V7ZM19 7h-3a2 2 0 0 0-2 2v3h5V7Z|M4 12c0 3 1.5 4.5 4 5M14 12c0 3 1.5 4.5 4 5',
+  block:'M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z|m6 6 12 12'
 };
-function ico(name,size,sw){
-  const d = (P[name]||'').split('|').map(p=>`<path d="${p}"/>`).join('');
-  const s = size||16;
-  return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    stroke-width="${sw||1.8}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+function ico(n,s,w){
+  const d=(PATHS[n]||'').split('|').map(p=>`<path d="${p}"/>`).join('');
+  return `<svg width="${s||15}" height="${s||15}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="${w||1.8}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 }
 
 /* ══════════════════════════════════════════════════════════════
-   2. Scopes — the practice setting shapes retrieval, so it is a
-      first-class control rather than a preference buried in settings.
+   Specialties — retrieval is weighted by the one you set, the way
+   a cardiologist and a GP asking the same question should not get
+   the same guideline stack.
    ══════════════════════════════════════════════════════════════ */
-const SCOPES = [
-  {id:'gp',    label:'General practice', ico:'user'},
-  {id:'paeds', label:'Paediatrics',      ico:'child'},
-  {id:'ed',    label:'Emergency',        ico:'heart'},
-  {id:'rx',    label:'Prescribing',      ico:'pill'}
+const SPECIALTIES = ['General practice','Emergency medicine','Paediatrics','Cardiology','Respiratory medicine',
+'Endocrinology','Gastroenterology','Nephrology','Neurology','Rheumatology','Geriatric medicine','Palliative medicine',
+'Infectious diseases','Haematology','Medical oncology','Dermatology','Psychiatry','Old age psychiatry','Obstetrics',
+'Gynaecology','Urology','General surgery','Orthopaedics','Vascular surgery','ENT','Ophthalmology','Anaesthetics',
+'Intensive care','Public health','Occupational medicine','Sports medicine','Pain medicine','Clinical pharmacology',
+'Rehabilitation medicine','Sexual health','Addiction medicine','Immunology','Allergy','Neonatology','Paediatric surgery',
+'Clinical genetics','Radiology','Pathology','Microbiology','Nurse prescribing','Advanced nurse practitioner',
+'Practice nursing','Midwifery','Community pharmacy','Hospital pharmacy','Physiotherapy','Dietetics','Podiatry',
+'Dentistry','Paramedicine','Sports physiotherapy','Respiratory physiology','Audiology','Optometry','Speech and language'];
+
+const PRESETS = [
+  {id:'guide', name:'Guidelines first',
+   sub:'National and specialty guidance ranked above everything else. Primary studies appear only where no guideline covers the question.'},
+  {id:'bal', name:'Balanced',
+   sub:'Guidance first, then systematic reviews, then primary evidence. The default, and what these answers were built with.'},
+  {id:'prim', name:'Primary evidence',
+   sub:'Trials, systematic reviews and impact-factor journals ranked first. Use when the guidance is older than the evidence.'}
+];
+
+const SOURCE_SETS = [
+  {id:'hse',  name:'HSE and national programmes', sub:'Irish national clinical guidance', on:true},
+  {id:'icgp', name:'ICGP', sub:'Irish College of General Practitioners', on:true},
+  {id:'nice', name:'NICE', sub:'Used where no Irish guidance exists', on:true},
+  {id:'coch', name:'Cochrane', sub:'Systematic reviews', on:true},
+  {id:'hpra', name:'HPRA and SmPCs', sub:'Medicines authorisation and product information', on:true},
+  {id:'lit',  name:'Impact-factor journals', sub:'PubMed-indexed, quartile 1 and 2 only', on:true},
+  {id:'intl', name:'International guidance', sub:'ESC, AAP, WHO and equivalents, when local guidance is silent', on:true},
+  {id:'lib',  name:'Practice Library', sub:'3 documents you uploaded — local protocols and pathways', on:false}
 ];
 
 /* ══════════════════════════════════════════════════════════════
-   3. The answers.
-      Clinical content below is ILLUSTRATIVE. Guideline bodies,
-      document names and the shape of the disagreements are real;
-      doses, thresholds, dates and numeric figures are placeholders
-      and must be replaced with each body's published values before
-      this goes anywhere near a patient.
+   Answers.
+   Guideline bodies, document names and source types are real.
+   Every dose, threshold, date, percentage and quoted excerpt is
+   ILLUSTRATIVE and must be replaced with each body's published
+   text before clinical use.
    ══════════════════════════════════════════════════════════════ */
 const ANSWERS = {
 
 otitis:{
-  scope:'paeds',
-  pico:{P:'Child 3 years, acute otitis media, systemically well',
-        I:'Immediate oral antibiotic',
-        C:'No prescription, or a delayed prescription',
-        O:'Symptom duration, complication rate'},
-  retrieved:[
-    {org:'HSE / antibioticprescribing.ie', t:'Acute otitis media — primary care antimicrobial guidance', keep:true, tier:'1'},
-    {org:'ICGP', t:'Quick reference guide — respiratory tract infections in children', keep:true, tier:'1'},
-    {org:'NICE NG91', t:'Otitis media (acute) — antimicrobial prescribing', keep:true, tier:'1'},
-    {org:'Cochrane', t:'Antibiotics for acute otitis media in children', keep:true, tier:'1'},
-    {org:'HPRA', t:'Amoxicillin oral suspension — Summary of Product Characteristics', keep:true, tier:'1'},
-    {org:'AAP', t:'Diagnosis and management of acute otitis media', keep:true, tier:'2'},
-    {org:'HPSC', t:'Antimicrobial resistance surveillance — annual report', keep:false, why:'Surveillance data, carries no recommendation'},
-    {org:'HSE', t:'Otitis externa — topical treatment', keep:false, why:'Different condition'},
-    {org:'NICE NG79', t:'Otitis media with effusion in under-12s', keep:false, why:'Effusion without acute infection'}
+  specialty:'Paediatrics', region:'Ireland',
+  read:[
+    {tag:'HSE',      t:'Acute otitis media — primary care antimicrobial guidance', keep:true, rank:'1st'},
+    {tag:'ICGP',     t:'Respiratory tract infections in children — quick reference', keep:true, rank:'2nd'},
+    {tag:'NICE',     t:'NG91 Otitis media (acute): antimicrobial prescribing', keep:true, rank:'3rd'},
+    {tag:'Cochrane', t:'Antibiotics for acute otitis media in children', keep:true, rank:'4th'},
+    {tag:'HPRA',     t:'Amoxicillin oral suspension — Summary of Product Characteristics', keep:true, rank:'5th'},
+    {tag:'AAP',      t:'Diagnosis and management of acute otitis media', keep:true, rank:'6th'},
+    {tag:'HPSC',     t:'Antimicrobial resistance surveillance — annual report', keep:false, why:'No recommendation'},
+    {tag:'NICE',     t:'NG79 Otitis media with effusion in under-12s', keep:false, why:'Different condition'},
+    {tag:'HSE',      t:'Otitis externa — topical treatment', keep:false, why:'Different condition'},
+    {tag:'PubMed',   t:'Tympanostomy tube outcomes in recurrent AOM — cohort study', keep:false, why:'Outside the question'},
+    {tag:'WHO',      t:'Integrated management of childhood illness', keep:false, why:'Local guidance available'}
   ],
-  ledger:{tier1:5, total:6, oldestYr:2019, agreement:'split', confidence:78,
-          note:'Five Tier 1 sources agree on first-line agent. They part company on when to prescribe at all.'},
-  outline:['Bottom line','When to prescribe','Agent, dose and duration','If penicillin-allergic','Safety-netting'],
-  bottom:'For a systemically well 3-year-old with acute otitis media, Irish primary care guidance supports no immediate antibiotic or a delayed prescription, with review at 3 days. Where an antibiotic is indicated, amoxicillin is first line.[1][2]',
+  lead:'For a systemically well child over 2 years with unilateral acute otitis media, Irish primary care guidance supports adequate analgesia with either no antibiotic or a delayed prescription reviewed at 3 days, rather than an immediate one [HSE][ICGP]. Where an antibiotic is indicated, amoxicillin is first line [HSE][NICE].',
   body:[
-    {t:'h', x:'When to prescribe'},
-    {t:'p', x:'**HSE primary care antimicrobial guidance recommends** that most children over 2 years with acute otitis media are managed with analgesia and a delayed prescription rather than an immediate one, because the majority settle within 3 days without antibiotics.[1][4]'},
-    {t:'p', x:'**The ICGP quick reference guide adds** that an immediate prescription is indicated where the child is systemically unwell, has otorrhoea, has bilateral disease under 2 years, or is immunocompromised.[2] None of those apply to a well 3-year-old with unilateral disease.'},
-    {t:'p', x:'**The Cochrane review quantifies the gap**: roughly 1 in 20 children treated with antibiotics has less pain at days 2–7 than they would have had otherwise, against a comparable rate of rash, vomiting or diarrhoea attributable to treatment.[4] That trade-off is the whole reason the guidance is written as a delayed prescription rather than a refusal.'},
+    {t:'h', x:'When to prescribe immediately'},
+    {t:'p', x:'An immediate antibiotic is indicated where any of the following is present [ICGP][NICE]:'},
+    {t:'ul', items:[
+      'Systemic illness, or features suggesting a complication such as mastoiditis [ICGP]',
+      'Otorrhoea, which shifts the balance toward immediate treatment in both Irish and NICE guidance [HSE][NICE]',
+      'Bilateral disease in a child under 2 years [NICE][AAP]',
+      'Immunocompromise, or a significant comorbidity [ICGP]'
+    ]},
+    {t:'p', x:'None of these applies to a well 3-year-old with unilateral disease, which is why the guidance defaults to analgesia with a delayed prescription in that group [HSE][ICGP].'},
+    {t:'p', x:'The size of the effect is what makes that defensible. Pooled trial data put the number needed to treat for reduced pain at days 2 to 7 at roughly 20, against a comparable rate of rash, vomiting or diarrhoea attributable to the antibiotic [Cochrane].'},
     {t:'h', x:'Agent, dose and duration'},
-    {t:'p', x:'**Where an antibiotic is used, HSE guidance names amoxicillin as first line**, dosed by weight, with a 5-day course for uncomplicated disease in a child over 2 years.[1][5] NICE NG91 uses the same agent and the same duration.[3]'},
-    {t:'note', x:'Dose figures on this page are illustrative. Confirm the weight-band dose against the HPRA Summary of Product Characteristics and your local formulary before prescribing.'},
+    {t:'p', x:'Amoxicillin is first line, dosed by weight, for 5 days in an uncomplicated case in a child over 2 years [HSE][NICE]. The authorised weight bands and the maximum daily dose are set out in the product information rather than the guideline [HPRA].'},
+    {t:'callout', x:'Dose figures on this page are illustrative. Confirm the weight-band dose against the HPRA Summary of Product Characteristics and your local formulary before prescribing.'},
     {t:'h', x:'If penicillin-allergic'},
-    {t:'p', x:'**The guidance lists clarithromycin as the alternative**, with erythromycin where a macrolide is needed in pregnancy.[1] Neither is first line on efficacy grounds — both appear because of allergy, not because they perform better.[4]'},
-    {t:'h', x:'Safety-netting'},
-    {t:'p', x:'**All three guideline sources converge here.** Advise the parent to use the delayed prescription if symptoms have not started improving by 3 days, or sooner if the child becomes systemically unwell.[1][2][3] Same-day review is indicated for signs of mastoiditis or intracranial spread.[3]'},
-    {t:'warn', x:'None of the Irish sources give a specific analgesic dosing schedule for this indication. Follow your usual paediatric antipyretic and analgesic dosing.'}
+    {t:'p', x:'Clarithromycin is the listed alternative, with erythromycin preferred where a macrolide is needed in pregnancy [HSE]. Neither is first line on efficacy grounds — both appear in the guidance because of allergy [Cochrane].'},
+    {t:'h', x:'Safety-netting and review'},
+    {t:'p', x:'Advise the parent to use the delayed prescription if symptoms have not begun to improve by 3 days, or sooner if the child becomes systemically unwell [HSE][ICGP][NICE]. Arrange same-day review for signs of mastoiditis, meningism or facial nerve involvement [NICE].'},
+    {t:'warn', x:'Guidance differs on children under 2 with bilateral disease. NICE frames the choice between a delayed and an immediate prescription as clinical judgement [NICE]; the AAP recommends immediate antibiotics for bilateral disease under 24 months regardless of severity [AAP]. Irish practice follows the HSE and ICGP position, which is closer to NICE.'}
   ],
-  split:[
-    {claim:'Whether a child under 2 with bilateral disease gets an immediate antibiotic',
-     a:{src:'NICE NG91', pos:'Offers a delayed or immediate prescription, framed as a judgement call, with no age-based mandate.'},
-     b:{src:'AAP', pos:'Recommends immediate antibiotics for bilateral acute otitis media under 24 months, regardless of severity.'},
-     take:'Irish practice follows the HSE and ICGP line, which is closer to NICE. The AAP position is the reason you will see conflicting advice in textbooks and in parents’ online searches — worth naming explicitly in the consultation.'}
-  ],
-  changers:[
-    'The child is **under 2 with bilateral disease** — the threshold for an immediate prescription drops in every source here.',
-    '**Otorrhoea** is present — moves this to an immediate prescription under HSE and NICE guidance alike.',
-    'The child is **immunocompromised, or has a cochlear implant or craniofacial abnormality** — outside the scope of routine primary care guidance.',
-    '**Symptoms have already run beyond 3 days** without improvement — the delayed prescription is now due.'
-  ],
-  sources:[
-    {n:1, org:'HSE / antibioticprescribing.ie', t:'Acute otitis media — primary care antimicrobial guidance', d:'2025', tier:'1', age:'Reviewed 8 months ago'},
-    {n:2, org:'ICGP', t:'Quick reference guide — respiratory tract infections in children', d:'2024', tier:'1', age:'Reviewed 1 year ago'},
-    {n:3, org:'NICE NG91', t:'Otitis media (acute) — antimicrobial prescribing', d:'2022', tier:'1', age:'Reviewed 3 years ago'},
-    {n:4, org:'Cochrane', t:'Antibiotics for acute otitis media in children', d:'2023', tier:'1', age:'Reviewed 2 years ago'},
-    {n:5, org:'HPRA', t:'Amoxicillin oral suspension — Summary of Product Characteristics', d:'2025', tier:'1', age:'Current'},
-    {n:6, org:'AAP', t:'Diagnosis and management of acute otitis media', d:'2019', tier:'2', age:'Reviewed 6 years ago', old:true}
-  ],
-  followups:['Show the weight-band dosing table','What if it recurs within 30 days?','Draft a parent explanation for delayed prescribing']
+  refs:{
+    HSE:{title:'Acute otitis media — primary care antimicrobial guidance', publisher:'Health Service Executive / antibioticprescribing.ie',
+      type:'Guideline', date:'Jan 2025', region:'Ireland', url:'antibioticprescribing.ie',
+      excerpt:['For children over 2 years who are systemically well with unilateral acute otitis media, adequate analgesia should be offered and an antibiotic withheld, or a delayed prescription issued for use if symptoms have not improved after 3 days.',
+               'Where an antibiotic is indicated, amoxicillin is the first-line agent. In documented penicillin allergy, clarithromycin is the alternative.'],
+      hi:'a delayed prescription issued for use if symptoms have not improved after 3 days'},
+    ICGP:{title:'Respiratory tract infections in children — quick reference guide', publisher:'Irish College of General Practitioners',
+      type:'Guideline', date:'Nov 2024', region:'Ireland', url:'icgp.ie',
+      excerpt:['Immediate antibiotic treatment is indicated where the child is systemically unwell, has otorrhoea, has bilateral disease under 2 years of age, or is immunocompromised.',
+               'In all other cases, analgesia and safety-netting with a delayed prescription is the preferred approach.'],
+      hi:'systemically unwell, has otorrhoea, has bilateral disease under 2 years of age, or is immunocompromised'},
+    NICE:{title:'NG91 — Otitis media (acute): antimicrobial prescribing', publisher:'National Institute for Health and Care Excellence',
+      type:'Guideline', date:'2022', region:'United Kingdom', url:'nice.org.uk/guidance/ng91',
+      excerpt:['Consider a no antibiotic prescribing strategy or a back-up antibiotic prescribing strategy for children with acute otitis media who are not systemically very unwell.',
+               'A 5-day course of amoxicillin is recommended as first choice where an antibiotic is given. Seek immediate medical help if symptoms of a serious illness develop.'],
+      hi:'A 5-day course of amoxicillin is recommended as first choice'},
+    Cochrane:{title:'Antibiotics for acute otitis media in children', publisher:'Cochrane Database of Systematic Reviews',
+      type:'Systematic review', date:'2023', region:'International', url:'cochranelibrary.com',
+      excerpt:['Antibiotics produced a small reduction in the proportion of children with pain between days 2 and 7, with a number needed to treat of approximately 20.',
+               'Adverse events including rash, vomiting and diarrhoea were more common in the antibiotic groups, at a rate comparable to the benefit observed.'],
+      hi:'a number needed to treat of approximately 20'},
+    HPRA:{title:'Amoxicillin oral suspension — Summary of Product Characteristics', publisher:'Health Products Regulatory Authority',
+      type:'Product information', date:'2025', region:'Ireland', url:'hpra.ie',
+      excerpt:['Posology in children is determined by body weight, with the total daily dose divided into equal doses at regular intervals.',
+               'The maximum recommended daily dose should not be exceeded. Renal impairment requires dose adjustment.'],
+      hi:'Posology in children is determined by body weight'},
+    AAP:{title:'Diagnosis and management of acute otitis media', publisher:'American Academy of Pediatrics',
+      type:'Guideline', date:'2019', region:'United States', url:'publications.aap.org',
+      excerpt:['Antibiotic therapy is recommended for bilateral acute otitis media in children younger than 24 months, irrespective of severity of presentation.',
+               'For unilateral disease in children 24 months and older without severe symptoms, observation with close follow-up is an option.'],
+      hi:'bilateral acute otitis media in children younger than 24 months'}
+  },
+  next:[
+    {kind:'Refine', q:'Give me the amoxicillin weight-band dosing for a 15 kg child'},
+    {kind:'Narrow', q:'What changes if the child is under 2 with bilateral disease?'},
+    {kind:'Extend', q:'When should recurrent acute otitis media be referred to ENT?'}
+  ]
 },
 
 statin:{
-  scope:'gp',
-  pico:{P:'Adult 58, no established cardiovascular disease',
-        I:'Start a statin now',
-        C:'Lifestyle measures and recalculate in 12 months',
-        O:'10-year risk of a cardiovascular event'},
-  retrieved:[
-    {org:'ESC 2021', t:'Guidelines on cardiovascular disease prevention in clinical practice', keep:true, tier:'1'},
-    {org:'ICGP', t:'Cardiovascular risk assessment in general practice', keep:true, tier:'1'},
-    {org:'NICE NG238', t:'Cardiovascular disease — risk assessment and lipid modification', keep:true, tier:'1'},
-    {org:'SCORE2 working group', t:'Risk prediction algorithms for European populations', keep:true, tier:'1'},
-    {org:'HSE', t:'Chronic disease management programme — lipid targets', keep:true, tier:'1'},
-    {org:'CTT Collaboration', t:'Efficacy and safety of statin therapy — meta-analysis', keep:true, tier:'2'},
-    {org:'NICE NG28', t:'Type 2 diabetes in adults — management', keep:false, why:'Diabetes not stated in the question'},
-    {org:'HSE', t:'Secondary prevention after myocardial infarction', keep:false, why:'Secondary prevention, different population'},
-    {org:'HPRA', t:'Rosuvastatin — Summary of Product Characteristics', keep:false, why:'Product detail, no threshold recommendation'}
+  specialty:'General practice', region:'Ireland',
+  read:[
+    {tag:'ESC',    t:'2021 Guidelines on cardiovascular disease prevention in clinical practice', keep:true, rank:'1st'},
+    {tag:'ICGP',   t:'Cardiovascular risk assessment in general practice', keep:true, rank:'2nd'},
+    {tag:'HSE',    t:'Chronic disease management programme — lipid management', keep:true, rank:'3rd'},
+    {tag:'SCORE2', t:'Risk prediction algorithms for European populations', keep:true, rank:'4th'},
+    {tag:'NICE',   t:'NG238 Cardiovascular disease: risk assessment and lipid modification', keep:true, rank:'5th'},
+    {tag:'CTT',    t:'Efficacy and safety of statin therapy — collaborative meta-analysis', keep:true, rank:'6th'},
+    {tag:'NICE',   t:'NG28 Type 2 diabetes in adults', keep:false, why:'Diabetes not stated'},
+    {tag:'HSE',    t:'Secondary prevention after myocardial infarction', keep:false, why:'Different population'},
+    {tag:'HPRA',   t:'Rosuvastatin — Summary of Product Characteristics', keep:false, why:'No threshold guidance'},
+    {tag:'PubMed', t:'Statin adherence in primary prevention — retrospective cohort', keep:false, why:'Outside the question'}
   ],
-  ledger:{tier1:5, total:6, oldestYr:2021, agreement:'split', confidence:71,
-          note:'The evidence for benefit is strong and consistent. The disagreement is about where the treatment line sits, not whether statins work.'},
-  outline:['Bottom line','Which risk tool applies here','Where the threshold sits','What to do at the borderline','Discussing it'],
-  bottom:'A SCORE2 of 7% at age 58 sits in the ESC high-risk band, where lipid-lowering is recommended alongside lifestyle measures. The same patient scored on QRISK3 under NICE may fall below the 10% treatment threshold, so the tool you use decides the answer.[1][3]',
+  lead:'At age 58 with a SCORE2 of 7%, this patient sits in the ESC high-risk band for the 50–69 age group, where lipid-lowering therapy is recommended after a discussion of benefit and preference [ESC][ICGP]. The figure is tool-dependent: the same patient scored on QRISK3 under NICE may fall below the 10% treatment threshold, so record which calculator produced the number [NICE][SCORE2].',
   body:[
-    {t:'h', x:'Which risk tool applies here'},
-    {t:'p', x:'**ICGP guidance directs Irish general practice to SCORE2** for apparently healthy adults aged 40–69, using the low-risk region calibration for Ireland.[2][4] SCORE2 estimates 10-year risk of fatal *and* non-fatal cardiovascular events, which is why its numbers are not interchangeable with the older SCORE chart.[4]'},
+    {t:'h', x:'Which calculator applies in Irish practice'},
+    {t:'p', x:'ICGP guidance directs Irish general practice to SCORE2 for apparently healthy adults aged 40 to 69, using the low-risk region calibration [ICGP]. SCORE2 estimates 10-year risk of fatal and non-fatal cardiovascular events, which is why its output is not interchangeable with the older SCORE chart or with QRISK3 [SCORE2].'},
     {t:'h', x:'Where the threshold sits'},
-    {t:'p', x:'**Under ESC 2021, for the 50–69 age band, a SCORE2 of 5% to under 10% is the high-risk category**, and risk-factor treatment is recommended after a discussion of benefit and preference.[1] A value of 7% therefore falls squarely in the band where a statin is offered.[1]'},
-    {t:'p', x:'**The HSE chronic disease management programme aligns with that**, setting an LDL-C target rather than a fixed dose, and expecting a recorded conversation about starting treatment at this level of risk.[5]'},
-    {t:'note', x:'Thresholds and percentages on this page are illustrative. Verify against the current published ESC, NICE and ICGP documents before applying them.'},
-    {t:'h', x:'What to do at the borderline'},
-    {t:'p', x:'**All the sources here treat the number as the start of a conversation, not the end of one.**[1][2][3] ESC lists risk modifiers that shift the decision upward: a family history of premature cardiovascular disease, raised Lp(a), chronic inflammatory disease, or a coronary artery calcium score above the age-adjusted range.[1] The CTT meta-analysis puts the expected benefit at roughly a fifth reduction in major vascular events per 1 mmol/L of LDL-C lowering, and that proportional benefit holds across baseline risk.[6]'},
-    {t:'h', x:'Discussing it'},
-    {t:'p', x:'**Because the absolute benefit scales with baseline risk**, the useful framing for this patient is the number of events avoided per 100 people treated for 10 years, not the relative risk reduction.[6] ICGP guidance asks for the decision, the risk figure and the tool used to be documented.[2]'},
-    {t:'warn', x:'The retrieved sources do not settle whether a coronary artery calcium score should be sought before starting treatment at this risk level in Irish practice, and access varies by region.'}
+    {t:'p', x:'For the 50 to 69 age band, ESC 2021 classifies 5% to under 10% as high risk, and recommends risk-factor treatment after a discussion of benefit and preference [ESC]. A SCORE2 of 7% therefore falls inside the band where a statin is offered rather than merely considered [ESC].'},
+    {t:'p', x:'The HSE chronic disease management programme aligns with that, setting an LDL-C target rather than a fixed dose and expecting the decision and its risk figure to be recorded [HSE].'},
+    {t:'h', x:'Modifiers that move a borderline decision'},
+    {t:'p', x:'ESC lists factors that shift the estimate upward at the same numeric risk [ESC]:'},
+    {t:'ul', items:[
+      'Family history of premature cardiovascular disease [ESC]',
+      'Raised lipoprotein(a) [ESC]',
+      'Chronic inflammatory or autoimmune disease [ESC]',
+      'A coronary artery calcium score above the age-adjusted range, where available [ESC]'
+    ]},
+    {t:'callout', x:'Thresholds, percentages and age bands on this page are illustrative. Verify against the current published ESC, NICE and ICGP documents before applying them.'},
+    {t:'h', x:'How to frame it with the patient'},
+    {t:'p', x:'Proportional benefit is stable across baseline risk — roughly a fifth reduction in major vascular events per 1 mmol/L of LDL-C lowering — so absolute benefit is what varies between patients [CTT]. Events avoided per 100 people treated over 10 years is therefore the more useful figure in the consultation than relative risk reduction [CTT][ICGP].'},
+    {t:'warn', x:'The retrieved sources do not resolve whether coronary artery calcium scoring should be sought before starting treatment at this level of risk in Irish practice, and access varies by region [ESC][ICGP].'}
   ],
-  split:[
-    {claim:'The risk threshold at which a statin is offered for primary prevention',
-     a:{src:'ESC 2021 / SCORE2', pos:'5% to <10% at ages 50–69 is high risk. Treatment recommended after discussion. This patient qualifies at 7%.'},
-     b:{src:'NICE NG238 / QRISK3', pos:'Offer atorvastatin at a QRISK3 of 10% or more. A 7% SCORE2 does not map onto QRISK3, and the same patient may sit below the line.'},
-     take:'The tools measure different outcomes over different populations, so the numbers are not comparable. Irish practice follows ICGP and uses SCORE2 — record which tool produced the figure, because a later reviewer cannot infer it from the number alone.'}
-  ],
-  changers:[
-    '**Established cardiovascular disease, diabetes or CKD** — this leaves primary prevention entirely and the risk calculators no longer apply.',
-    '**A family history of premature cardiovascular disease**, or a raised Lp(a) — an ESC risk modifier that moves a borderline decision toward treating.',
-    '**LDL-C above 4.9 mmol/L, or a total cholesterol above 7.5 mmol/L with a family history** — raises familial hypercholesterolaemia, a different pathway.',
-    '**The patient is over 70** — the ESC risk bands change, and the SCORE2-OP calibration applies instead.'
-  ],
-  sources:[
-    {n:1, org:'ESC 2021', t:'Guidelines on cardiovascular disease prevention in clinical practice', d:'2021', tier:'1', age:'Reviewed 4 years ago', old:true},
-    {n:2, org:'ICGP', t:'Cardiovascular risk assessment in general practice', d:'2025', tier:'1', age:'Reviewed 6 months ago'},
-    {n:3, org:'NICE NG238', t:'Cardiovascular disease — risk assessment and lipid modification', d:'2023', tier:'1', age:'Reviewed 2 years ago'},
-    {n:4, org:'SCORE2', t:'Risk prediction algorithms for European populations', d:'2021', tier:'1', age:'Reviewed 4 years ago', old:true},
-    {n:5, org:'HSE', t:'Chronic disease management programme — lipid targets', d:'2025', tier:'1', age:'Current'},
-    {n:6, org:'CTT Collaboration', t:'Efficacy and safety of statin therapy — meta-analysis', d:'2022', tier:'2', age:'Reviewed 3 years ago'}
-  ],
-  followups:['What are the ESC risk modifiers in full?','How do SCORE2 and QRISK3 differ?','Draft a shared decision note for the chart']
+  refs:{
+    ESC:{title:'2021 Guidelines on cardiovascular disease prevention in clinical practice', publisher:'European Society of Cardiology',
+      type:'Guideline', date:'2021', region:'Europe', url:'escardio.org',
+      excerpt:['For apparently healthy people aged 50–69 years, a 10-year risk of cardiovascular disease of 5% to <10% places the individual in the high-risk category.',
+               'Risk factor treatment is recommended in the high-risk category after discussion of expected benefit, comorbidity, frailty and patient preference.'],
+      hi:'5% to <10% places the individual in the high-risk category'},
+    ICGP:{title:'Cardiovascular risk assessment in general practice', publisher:'Irish College of General Practitioners',
+      type:'Guideline', date:'Mar 2025', region:'Ireland', url:'icgp.ie',
+      excerpt:['SCORE2 should be used for apparently healthy adults aged 40–69, applying the low-risk region calibration for Ireland.',
+               'The risk figure, the tool used to produce it and the outcome of the treatment discussion should be recorded in the patient record.'],
+      hi:'SCORE2 should be used for apparently healthy adults aged 40–69'},
+    HSE:{title:'Chronic disease management programme — lipid management', publisher:'Health Service Executive',
+      type:'Guideline', date:'2025', region:'Ireland', url:'hse.ie',
+      excerpt:['Lipid management in the programme is directed to an LDL-C target appropriate to the patient risk category rather than to a fixed statin dose.',
+               'The risk assessment and the shared decision are expected to be documented at the review at which treatment is started.'],
+      hi:'an LDL-C target appropriate to the patient risk category rather than to a fixed statin dose'},
+    SCORE2:{title:'SCORE2 — risk prediction algorithms for European populations', publisher:'European Heart Journal, SCORE2 working group',
+      type:'Primary evidence', date:'2021', region:'Europe', url:'academic.oup.com/eurheartj',
+      excerpt:['SCORE2 estimates the 10-year risk of fatal and non-fatal cardiovascular events in apparently healthy individuals aged 40–69.',
+               'Region-specific recalibration is required; risk estimates are not transferable between calibration regions or between algorithms.'],
+      hi:'risk estimates are not transferable between calibration regions or between algorithms'},
+    NICE:{title:'NG238 — Cardiovascular disease: risk assessment and lipid modification', publisher:'National Institute for Health and Care Excellence',
+      type:'Guideline', date:'2023', region:'United Kingdom', url:'nice.org.uk/guidance/ng238',
+      excerpt:['Offer atorvastatin 20 mg for the primary prevention of cardiovascular disease to people who have a 10% or greater 10-year risk, estimated using QRISK3.',
+               'QRISK3 should not be used in people with pre-existing cardiovascular disease or in those aged over 84.'],
+      hi:'a 10% or greater 10-year risk, estimated using QRISK3'},
+    CTT:{title:'Efficacy and safety of statin therapy — collaborative meta-analysis', publisher:'Cholesterol Treatment Trialists Collaboration',
+      type:'Systematic review', date:'2022', region:'International', url:'thelancet.com',
+      excerpt:['Each 1 mmol/L reduction in LDL cholesterol produced a proportional reduction in major vascular events of approximately one fifth.',
+               'The proportional benefit was similar across baseline risk categories, so absolute benefit scales with untreated risk.'],
+      hi:'proportional reduction in major vascular events of approximately one fifth'}
+  },
+  next:[
+    {kind:'Refine', q:'List the ESC risk modifiers in full with their evidence grade'},
+    {kind:'Narrow', q:'What if the LDL-C is 5.2 mmol/L with a family history?'},
+    {kind:'Extend', q:'How do SCORE2 and QRISK3 differ in what they predict?'}
+  ]
 },
 
 af:{
-  scope:'gp',
-  pico:{P:'Adult, new irregular pulse at routine review, asymptomatic',
-        I:'Confirm, risk-stratify and anticoagulate',
-        C:'Refer without starting treatment',
-        O:'Stroke prevention, time to diagnosis'},
-  retrieved:[
-    {org:'ESC 2024', t:'Guidelines for the management of atrial fibrillation', keep:true, tier:'1'},
-    {org:'ICGP', t:'Atrial fibrillation in general practice — detection and referral', keep:true, tier:'1'},
-    {org:'NICE NG196', t:'Atrial fibrillation — diagnosis and management', keep:true, tier:'1'},
-    {org:'HSE', t:'Anticoagulation in non-valvular atrial fibrillation', keep:true, tier:'1'},
-    {org:'EAST-AFNET 4', t:'Early rhythm-control therapy in patients with atrial fibrillation', keep:true, tier:'2'},
-    {org:'HPRA', t:'Direct oral anticoagulants — renal dose adjustment', keep:true, tier:'1'},
-    {org:'HSE', t:'Atrial flutter — acute management', keep:false, why:'Different rhythm'},
-    {org:'NICE NG106', t:'Chronic heart failure in adults', keep:false, why:'Heart failure not stated in the question'},
-    {org:'HSE', t:'Peri-operative anticoagulation bridging', keep:false, why:'No procedure in the question'}
+  specialty:'General practice', region:'Ireland',
+  read:[
+    {tag:'ESC',        t:'2024 Guidelines for the management of atrial fibrillation', keep:true, rank:'1st'},
+    {tag:'ICGP',       t:'Atrial fibrillation in general practice — detection and referral', keep:true, rank:'2nd'},
+    {tag:'HSE',        t:'Anticoagulation in non-valvular atrial fibrillation', keep:true, rank:'3rd'},
+    {tag:'NICE',       t:'NG196 Atrial fibrillation: diagnosis and management', keep:true, rank:'4th'},
+    {tag:'HPRA',       t:'Direct oral anticoagulants — renal dose adjustment', keep:true, rank:'5th'},
+    {tag:'EAST-AFNET', t:'Early rhythm-control therapy in patients with atrial fibrillation', keep:true, rank:'6th'},
+    {tag:'HSE',        t:'Atrial flutter — acute management', keep:false, why:'Different rhythm'},
+    {tag:'NICE',       t:'NG106 Chronic heart failure in adults', keep:false, why:'Not stated in question'},
+    {tag:'HSE',        t:'Peri-operative anticoagulation bridging', keep:false, why:'No procedure in question'},
+    {tag:'PubMed',     t:'Wearable single-lead ECG accuracy in AF screening', keep:false, why:'Superseded by guidance'}
   ],
-  ledger:{tier1:5, total:6, oldestYr:2020, agreement:'aligned', confidence:88,
-          note:'Five Tier 1 sources agree on the sequence: confirm on ECG, score the stroke risk, then anticoagulate on the score.'},
-  outline:['Bottom line','Confirm the rhythm','Score the stroke risk','Rate or rhythm','What to arrange today'],
-  bottom:'An irregular pulse is not a diagnosis. Confirm atrial fibrillation on a 12-lead ECG, then decide anticoagulation on CHA₂DS₂-VASc rather than on symptoms — an asymptomatic patient carries the same stroke risk as a symptomatic one.[1][2]',
+  lead:'An irregular pulse is not a diagnosis. Confirm atrial fibrillation on a 12-lead ECG, then decide anticoagulation on CHA₂DS₂-VASc rather than on symptoms, since an asymptomatic patient carries the same stroke risk as a symptomatic one [ESC][ICGP][NICE].',
   body:[
     {t:'h', x:'Confirm the rhythm'},
-    {t:'p', x:'**ICGP guidance is explicit that a manual irregular pulse warrants a 12-lead ECG**, and that a single-lead or wearable trace is a prompt to obtain one rather than a substitute for it.[2] Where the ECG is normal but the history suggests paroxysmal disease, ambulatory monitoring is the next step.[1][3]'},
-    {t:'h', x:'Score the stroke risk'},
-    {t:'p', x:'**ESC 2024 and NICE NG196 both use CHA₂DS₂-VASc**, and both are clear that the score drives the anticoagulation decision independently of whether the patient feels the arrhythmia.[1][3] HSE guidance names a DOAC as first line for non-valvular disease, with warfarin reserved for the situations where a DOAC is contraindicated.[4]'},
-    {t:'p', x:'**Renal function determines the dose, not the choice.**[6] Check eGFR before prescribing and at the intervals the product information specifies, because the dose bands differ between agents.[6]'},
-    {t:'note', x:'Score cut-offs and dose bands on this page are illustrative. Check the current ESC, NICE and HPRA documents before prescribing.'},
-    {t:'h', x:'Rate or rhythm'},
-    {t:'p', x:'**ESC 2024 gives early rhythm control a stronger recommendation than earlier guidance did**, on the strength of EAST-AFNET 4, which found a lower rate of adverse cardiovascular outcomes in patients randomised to rhythm control within a year of diagnosis.[1][5] That shifts the referral question: a recent-onset diagnosis is a reason to discuss rhythm control early rather than to default to rate control and review.[5]'},
-    {t:'h', x:'What to arrange today'},
-    {t:'p', x:'**The sources converge on four things at the index consultation**: the 12-lead ECG, bloods including renal and thyroid function, the CHA₂DS₂-VASc and bleeding-risk assessment, and the anticoagulation decision documented with its score.[1][2][3][4]'},
-    {t:'warn', x:'None of the retrieved sources give an Irish-specific target time from detection to cardiology review. Follow your local referral pathway.'}
+    {t:'p', x:'A manual irregular pulse warrants a 12-lead ECG, and a single-lead or wearable trace is a prompt to obtain one rather than a substitute for it [ICGP]. Where the ECG is normal but the history suggests paroxysmal disease, ambulatory monitoring is the next step [ESC][NICE].'},
+    {t:'h', x:'Assess stroke and bleeding risk'},
+    {t:'p', x:'ESC 2024 and NICE NG196 both use CHA₂DS₂-VASc, and both are explicit that the score drives the anticoagulation decision independently of whether the patient feels the arrhythmia [ESC][NICE]. A DOAC is first line in non-valvular disease, with warfarin reserved for the situations where a DOAC is contraindicated [HSE].'},
+    {t:'p', x:'Renal function sets the dose rather than the choice of agent, and the dose bands differ between agents [HPRA].'},
+    {t:'h', x:'Rate or rhythm control'},
+    {t:'p', x:'ESC 2024 gives early rhythm control a stronger recommendation than earlier guidance did, on the strength of a randomised trial showing fewer adverse cardiovascular outcomes when rhythm control was started within a year of diagnosis [ESC][EAST-AFNET]. A recent-onset diagnosis is therefore a reason to raise rhythm control at referral rather than to default to rate control and review [EAST-AFNET].'},
+    {t:'h', x:'What to arrange at this consultation'},
+    {t:'ul', items:[
+      '12-lead ECG to confirm the rhythm [ICGP]',
+      'Bloods including FBC, renal function, electrolytes and TSH [ESC][NICE]',
+      'CHA₂DS₂-VASc and a bleeding-risk assessment, both recorded [ESC][HSE]',
+      'The anticoagulation decision documented with the score that produced it [HSE]',
+      'Echocardiogram and cardiology referral per your local pathway [ESC]'
+    ]},
+    {t:'callout', x:'Score cut-offs, dose bands and referral intervals on this page are illustrative. Check the current ESC, NICE and HPRA documents before prescribing.'},
+    {t:'warn', x:'Escalate rather than manage in the community where there is haemodynamic instability, chest pain, syncope, or a clear onset within 48 hours that may open a cardioversion pathway [ESC][NICE].'}
   ],
-  split:[],
-  changers:[
-    '**Haemodynamic instability, chest pain or syncope** — this stops being a general practice decision and becomes an emergency referral.',
-    '**Moderate-to-severe mitral stenosis or a mechanical valve** — valvular AF, where a DOAC is not appropriate and warfarin is used.',
-    '**eGFR below the product threshold** — changes the agent and the dose, not just the monitoring interval.',
-    '**Onset clearly within 48 hours** — opens a cardioversion pathway that the routine outpatient route does not.'
-  ],
-  sources:[
-    {n:1, org:'ESC 2024', t:'Guidelines for the management of atrial fibrillation', d:'2024', tier:'1', age:'Reviewed 1 year ago'},
-    {n:2, org:'ICGP', t:'Atrial fibrillation in general practice — detection and referral', d:'2025', tier:'1', age:'Reviewed 5 months ago'},
-    {n:3, org:'NICE NG196', t:'Atrial fibrillation — diagnosis and management', d:'2021', tier:'1', age:'Reviewed 4 years ago', old:true},
-    {n:4, org:'HSE', t:'Anticoagulation in non-valvular atrial fibrillation', d:'2025', tier:'1', age:'Current'},
-    {n:5, org:'EAST-AFNET 4', t:'Early rhythm-control therapy in patients with atrial fibrillation', d:'2020', tier:'2', age:'Published 5 years ago', old:true},
-    {n:6, org:'HPRA', t:'Direct oral anticoagulants — renal dose adjustment', d:'2025', tier:'1', age:'Current'}
-  ],
-  followups:['Score CHA₂DS₂-VASc for this patient','Which DOAC at eGFR 38?','What does EAST-AFNET 4 actually show?']
+  refs:{
+    ESC:{title:'2024 Guidelines for the management of atrial fibrillation', publisher:'European Society of Cardiology',
+      type:'Guideline', date:'2024', region:'Europe', url:'escardio.org',
+      excerpt:['Oral anticoagulation is recommended in patients with atrial fibrillation and an elevated thromboembolic risk score, irrespective of whether the arrhythmia is symptomatic or the pattern paroxysmal.',
+               'Early rhythm control should be considered in patients diagnosed within 12 months, in addition to appropriate anticoagulation and rate control.'],
+      hi:'irrespective of whether the arrhythmia is symptomatic or the pattern paroxysmal'},
+    ICGP:{title:'Atrial fibrillation in general practice — detection and referral', publisher:'Irish College of General Practitioners',
+      type:'Guideline', date:'Apr 2025', region:'Ireland', url:'icgp.ie',
+      excerpt:['An irregular pulse detected on manual palpation should prompt a 12-lead ECG.',
+               'A single-lead or consumer wearable recording is a prompt to obtain a 12-lead ECG and is not itself diagnostic of atrial fibrillation.'],
+      hi:'is a prompt to obtain a 12-lead ECG and is not itself diagnostic'},
+    HSE:{title:'Anticoagulation in non-valvular atrial fibrillation', publisher:'Health Service Executive',
+      type:'Guideline', date:'2025', region:'Ireland', url:'hse.ie',
+      excerpt:['A direct oral anticoagulant is first-line therapy for stroke prevention in non-valvular atrial fibrillation.',
+               'Warfarin remains indicated where a DOAC is contraindicated, including moderate-to-severe mitral stenosis and mechanical heart valves.'],
+      hi:'A direct oral anticoagulant is first-line therapy'},
+    NICE:{title:'NG196 — Atrial fibrillation: diagnosis and management', publisher:'National Institute for Health and Care Excellence',
+      type:'Guideline', date:'2021', region:'United Kingdom', url:'nice.org.uk/guidance/ng196',
+      excerpt:['Use CHA2DS2-VASc to assess stroke risk in people with any form of atrial fibrillation, atrial flutter or continuing risk of arrhythmia recurrence.',
+               'Perform a 12-lead ECG in anyone in whom atrial fibrillation is suspected, whether or not they are symptomatic.'],
+      hi:'whether or not they are symptomatic'},
+    HPRA:{title:'Direct oral anticoagulants — renal dose adjustment', publisher:'Health Products Regulatory Authority',
+      type:'Product information', date:'2025', region:'Ireland', url:'hpra.ie',
+      excerpt:['Renal function must be assessed before initiation and at intervals specified in the product information for each agent.',
+               'Dose reduction criteria differ between agents and are not interchangeable.'],
+      hi:'Dose reduction criteria differ between agents and are not interchangeable'},
+    'EAST-AFNET':{title:'Early rhythm-control therapy in patients with atrial fibrillation', publisher:'New England Journal of Medicine',
+      type:'Primary evidence', date:'2020', region:'International', url:'nejm.org',
+      excerpt:['Early rhythm-control therapy was associated with a lower risk of adverse cardiovascular outcomes than usual care among patients with early atrial fibrillation and cardiovascular conditions.',
+               'The trial enrolled patients diagnosed within 12 months; the finding is not established for long-standing atrial fibrillation.'],
+      hi:'a lower risk of adverse cardiovascular outcomes than usual care'}
+  },
+  next:[
+    {kind:'Refine', q:'Score CHA₂DS₂-VASc for a 74-year-old woman with hypertension'},
+    {kind:'Narrow', q:'Which DOAC and what dose at an eGFR of 38?'},
+    {kind:'Extend', q:'What did EAST-AFNET 4 actually randomise and measure?'}
+  ]
 },
 
 fallback:{
-  scope:'gp',
-  pico:{P:'Not enough clinical detail to bound the population',
-        I:'—', C:'—',
-        O:'Route the question to a wired demonstration'},
-  retrieved:[
-    {org:'MedNav', t:'Evidence — source register and tiering policy', keep:true, tier:'1'},
-    {org:'HSE', t:'National clinical guidelines index', keep:true, tier:'1'},
-    {org:'ICGP', t:'Guideline library', keep:true, tier:'1'},
-    {org:'—', t:'No source matched the clinical terms in this question', keep:false, why:'Prototype: three questions are wired'}
+  specialty:'General practice', region:'Ireland',
+  read:[
+    {tag:'MedNav', t:'Evidence — source register and ranking policy', keep:true, rank:'1st'},
+    {tag:'HSE',    t:'National clinical guidelines index', keep:true, rank:'2nd'},
+    {tag:'ICGP',   t:'Guideline library', keep:true, rank:'3rd'},
+    {tag:'—',      t:'No indexed source matched the clinical terms in this question', keep:false, why:'Prototype scope'}
   ],
-  ledger:{tier1:3, total:3, oldestYr:2025, agreement:'aligned', confidence:40,
-          note:'This is the prototype’s fallback path, not a graded clinical answer.'},
-  outline:['Bottom line','What is wired','How the answer is built'],
-  bottom:'This is a working prototype of the answer pipeline, not a live evidence service. Three clinical questions are wired end to end — try one of the examples on the home screen to see the full retrieval, grading and streaming sequence.[1]',
+  lead:'This is a working prototype of the Evidence answer pipeline, not a live evidence service. Three clinical questions are wired end to end — acute otitis media in a young child, a primary prevention statin decision, and new atrial fibrillation found at routine review [MedNav].',
   body:[
-    {t:'h', x:'What is wired'},
-    {t:'p', x:'**Three demonstration questions run the full pipeline**: acute otitis media in a young child, a primary prevention statin decision, and new atrial fibrillation found at routine review.[1] Each was chosen to exercise a different part of the structure — one where the sources disagree about *when* to treat, one where they disagree about *the threshold*, and one where they agree completely.'},
-    {t:'h', x:'How the answer is built'},
-    {t:'p', x:'**Every answer is assembled in the same order**: read the question into a population, intervention, comparator and outcome; retrieve candidates from the registered sources; screen out what does not apply and say why; grade what survives; lay out the answer’s shape; then write it, citing each claim as it is made.[1][2][3]'},
-    {t:'warn', x:'Nothing on this page is a clinical recommendation. Source names are real; every figure is illustrative.'}
+    {t:'h', x:'How an answer is built'},
+    {t:'p', x:'Each question runs the same sequence: interpret the question against your specialty setting, search the enabled source sets, re-rank what came back by source tier and relevance, drop what does not apply and say why, write the answer citing each statement as it is made, then check every citation resolves to a source that actually supports it [MedNav].'},
+    {t:'p', x:'Citations are named rather than numbered. A clinician reads [HSE] or [Cochrane] and knows what weight to give the claim before deciding whether to open it [MedNav].'},
+    {t:'h', x:'What you can change'},
+    {t:'ul', items:[
+      'Your specialty, which re-weights the guideline stack behind every answer [MedNav]',
+      'The source preset — guidelines first, balanced, or primary evidence first [MedNav]',
+      'Which source sets are enabled, and which domains are blocked [MedNav]'
+    ]},
+    {t:'warn', x:'Nothing on this page is a clinical recommendation. Source names and types are real; every figure, date and quoted excerpt is illustrative [MedNav].'}
   ],
-  split:[],
-  changers:[
-    'Ask one of the **three wired questions** and the pipeline runs against real guideline names.',
-    'Change the **scope chip** — general practice, paediatrics, emergency or prescribing — and retrieval reorders around that setting.'
-  ],
-  sources:[
-    {n:1, org:'MedNav', t:'Evidence — source register and tiering policy', d:'2026', tier:'1', age:'Current'},
-    {n:2, org:'HSE', t:'National clinical guidelines index', d:'2026', tier:'1', age:'Current'},
-    {n:3, org:'ICGP', t:'Guideline library', d:'2026', tier:'1', age:'Current'}
-  ],
-  followups:['Antibiotic for otitis media in a 3-year-old?','Statin at SCORE2 7%, age 58?','New AF at routine review — what now?']
+  refs:{
+    MedNav:{title:'Evidence — source register and ranking policy', publisher:'MedNav', type:'Internal',
+      date:'2026', region:'Ireland', url:'mednav.ie',
+      excerpt:['Sources are ranked by tier: national clinical guidance, then specialty society guidance, then systematic review, then primary evidence from indexed journals.',
+               'Every statement in an answer must resolve to a passage in a cited source. Statements that cannot be grounded are removed before the answer is shown.'],
+      hi:'Every statement in an answer must resolve to a passage in a cited source'},
+    HSE:{title:'National clinical guidelines index', publisher:'Health Service Executive', type:'Index',
+      date:'2026', region:'Ireland', url:'hse.ie', excerpt:['Index of published national clinical guidelines and national clinical programme documents.'], hi:''},
+    ICGP:{title:'Guideline library', publisher:'Irish College of General Practitioners', type:'Index',
+      date:'2026', region:'Ireland', url:'icgp.ie', excerpt:['Library of quick reference guides and clinical resources for Irish general practice.'], hi:''}
+  },
+  next:[
+    {kind:'Try', q:'Antibiotic or watchful waiting for acute otitis media in a well 3-year-old?'},
+    {kind:'Try', q:'Should I start a statin for primary prevention at SCORE2 7%, age 58?'},
+    {kind:'Try', q:'New irregular pulse at routine review — what do I arrange today?'}
+  ]
 }
 };
 
 const EXAMPLES = [
-  {ico:'child', tag:'Paediatrics', q:'Antibiotic or watchful waiting for acute otitis media in a well 3-year-old?'},
-  {ico:'heart', tag:'Prevention',  q:'Should I start a statin for primary prevention at SCORE2 7%, age 58?'},
-  {ico:'pill',  tag:'Cardiology',  q:'New irregular pulse at routine review — what do I arrange today?'}
+  {spec:'Paediatrics',  q:'Antibiotic or watchful waiting for acute otitis media in a well 3-year-old?'},
+  {spec:'Prevention',   q:'Should I start a statin for primary prevention at SCORE2 7%, age 58?'},
+  {spec:'Cardiology',   q:'New irregular pulse at routine review — what do I arrange today?'}
 ];
 
 function route(q){
   const t = q.toLowerCase();
-  if(/otitis|ear ache|earache|amoxicillin|otalgia/.test(t)) return 'otitis';
-  if(/statin|score2|qrisk|cholesterol|lipid|primary prevention/.test(t)) return 'statin';
-  if(/\baf\b|atrial|irregular pulse|fibrillation|cha2ds2|anticoagul/.test(t)) return 'af';
+  if(/otitis|ear ?ache|amoxicillin|otalgia|otorrhoea|ent\b/.test(t)) return 'otitis';
+  if(/statin|score2|qrisk|cholesterol|lipid|ldl|primary prevention|atorvastatin/.test(t)) return 'statin';
+  if(/\baf\b|atrial|irregular pulse|fibrillation|cha2ds2|cha₂ds₂|anticoagul|doac|east-afnet/.test(t)) return 'af';
   return 'fallback';
 }
 
 /* ══════════════════════════════════════════════════════════════
-   4. State
+   State
    ══════════════════════════════════════════════════════════════ */
 const S = {
-  view:'home',        // 'home' | 'thread'
-  scope:'gp',
+  view:'home',
+  specialty:'General practice',
+  preset:'bal',
+  sources:SOURCE_SETS.reduce((a,s)=>(a[s.id]=s.on,a),{}),
+  blocked:['patient-forums.example','wellness-blog.example'],
+  attached:null,
   draft:'',
-  thread:[],          // [{q, key}] — prior turns, oldest first
-  q:'', key:'fallback',
-  phase:'idle',       // reading → searching → screening → grading → outlining → composing → verifying → done
-  halted:false,
-  hot:null,           // highlighted citation number
-  vote:null, saved:false,
-  history:[],         // [{q, key}]
-  sideOpen:false
+  turns:[],
+  history:[],
+  modal:null,
+  sideOpen:false,
+  menuOpen:null
 };
+const stage = $('#stage'), drawer = $('#drawer'), liveR = $('#live'), jumpBtn = $('#jump');
+const STAMP = new Date().toLocaleDateString('en-IE',{day:'numeric',month:'short',year:'numeric'});
+let timers = [], stream = null, stuck = true;
 
-const PHASES = ['reading','searching','screening','grading','outlining','composing','verifying','done'];
-const PHASE_LABEL = {
-  reading:'Reading the question', searching:'Searching registered sources',
-  screening:'Screening candidates', grading:'Grading what survived',
-  outlining:'Laying out the answer', composing:'Writing, citing as it goes',
-  verifying:'Verifying every citation resolves'
-};
-const stage = $('#stage'), liveRegion = $('#live'), jumpBtn = $('#jump');
-let timers = [], stream = null;
-
-function clearTimers(){ timers.forEach(clearTimeout); timers = []; }
-function later(fn,ms){ const t = setTimeout(fn, reduced()?Math.min(ms,60):ms); timers.push(t); return t; }
-function say(msg){ liveRegion.textContent = msg; }
-
-let toastTimer = null;
-function toast(msg){
-  const old = $('.toast'); if(old) old.remove();
-  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
-  document.body.appendChild(t);
-  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.remove(), 2200);
+const clearTimers = ()=>{ timers.forEach(clearTimeout); timers = []; };
+const later = (fn,ms)=>{ const t=setTimeout(fn, reduced()?Math.min(ms,40):ms); timers.push(t); return t; };
+const say = m => { liveR.textContent = m; };
+let toastT = null;
+function toast(m){
+  const o=$('.toast'); if(o) o.remove();
+  const t=document.createElement('div'); t.className='toast'; t.textContent=m;
+  document.body.appendChild(t); clearTimeout(toastT); toastT=setTimeout(()=>t.remove(),2600);
 }
+const A = i => ANSWERS[S.turns[i].key];
+const enabledCount = ()=>SOURCE_SETS.filter(s=>S.sources[s.id]).length;
+const presetName = ()=>PRESETS.find(p=>p.id===S.preset).name;
 
 /* ══════════════════════════════════════════════════════════════
-   5. Chrome — sidebar and top bar
+   Chrome
    ══════════════════════════════════════════════════════════════ */
 function renderNav(){
   const items = [
-    {ico:'search', label:'Ask',              on:true},
-    {ico:'save',   label:'Saved answers',    badge:String(S.history.length)},
-    {ico:'layers', label:'Source register',  badge:'42'},
-    {ico:'scale',  label:'Tiering policy'},
-    {ico:'clock',  label:'Audit log',        badge:'BETA'}
+    {ico:'search',  label:'Evidence', on:true},
+    {ico:'folder',  label:'Practice Library', pill:'3'},
+    {ico:'sliders', label:'Source control', act:'src'},
+    {ico:'award',   label:'CPD log', pill:'12'},
+    {ico:'clock',   label:'Sessions'}
   ];
-  const hist = S.history.length
-    ? S.history.map((h,i)=>`<button data-hist="${i}" class="${S.view==='thread'&&h.q===S.q?'on':''}">${esc(h.q)}</button>`).join('')
-    : `<p class="histempty">Questions you ask appear here, with the sources that were live when you asked.</p>`;
-
-  $('#nav').innerHTML = `
-    <div class="sechead"><span class="secbar"></span>Workspace</div>
-    ${items.map(it=>`
-      <button class="navitem ${it.on?'on':''}">
-        <span class="tile">${ico(it.ico,15)}</span>
-        <span class="nlab">${it.label}</span>
-        ${it.badge?`<span class="beta">${it.badge}</span>`:''}
-      </button>`).join('')}
-    <div class="sechead"><span class="secbar"></span>Recent<span class="seccount">${S.history.length}</span></div>
-    <div class="hist">${hist}</div>`;
+  const h = S.history.length
+    ? S.history.map((x,i)=>`<button data-hist="${i}">${esc(x)}</button>`).join('')
+    : `<p class="histempty">Answers you keep appear here with the source versions that were live when you asked.</p>`;
+  $('#nav').innerHTML =
+    `<div class="sechead"><span class="secbar"></span>Workspace</div>` +
+    items.map(i=>`<button class="navitem ${i.on?'on':''}" ${i.act?`data-open="${i.act}"`:''}>
+        <span class="tile">${ico(i.ico,14)}</span><span class="nlab">${i.label}</span>
+        ${i.pill?`<span class="pill">${i.pill}</span>`:''}</button>`).join('') +
+    `<div class="sechead"><span class="secbar"></span>Saved<span class="seccount">${S.history.length}</span></div>
+     <div class="hist">${h}</div>`;
+  $('#uspec').textContent = S.specialty;
 }
 
 function renderTop(){
-  const sc = SCOPES.find(s=>s.id===S.scope);
   const dark = document.documentElement.dataset.theme === 'dark';
-  $('#themebtn').innerHTML = ico(dark?'sun':'moon',15);
+  $('#themebtn').innerHTML = ico(dark?'sun':'moon',14);
   $('#top').innerHTML = `
     <button class="burger" id="burger" aria-label="Menu">${ico('burger',16)}</button>
-    <button class="chip" id="scopebtn">${ico(sc.ico,14)} ${sc.label} ${ico('chev',12)}</button>
-    <span class="chip ghost">${ico('layers',13)} 42 registered sources</span>
+    <button class="chip" data-open="spec">${ico('user',13)} <b>${esc(S.specialty)}</b> ${ico('chev',11)}</button>
+    <button class="chip hide-sm" data-open="src">${ico('sliders',13)} ${esc(presetName())} <span style="color:var(--muted)">&middot; ${enabledCount()} sets</span></button>
+    <span class="chip flat hide-sm">${ico('globe',13)} Ireland</span>
     <span class="topright">
-      <button class="chip" id="policybtn">${ico('scale',13)} Tiering <span class="ver">v1.0</span></button>
+      <button class="chip hide-sm" id="aboutbtn">${ico('info',13)} How this works</button>
     </span>`;
 }
 
 /* ══════════════════════════════════════════════════════════════
-   6. Home
+   Home
    ══════════════════════════════════════════════════════════════ */
-function renderHome(){
-  stage.innerHTML = `
-  <div class="wrap">
-    <div class="herotile">${ico('book',22)}</div>
-    <h1>Ask it once.<em>Get the guideline, not a guess.</em></h1>
-    <p class="lede">Evidence answers a clinical question from named guidelines only, shows you
-      everything it read and everything it threw away, and cites each claim to the document it
-      came from — so you can check it in the ninety seconds you actually have.</p>
-
-    <div class="specrow">
-      ${SCOPES.map(s=>`<button class="spec ${S.scope===s.id?'on':''}" data-scope="${s.id}">${s.label}</button>`).join('')}
-    </div>
-
-    <div class="composer">
-      <label class="sr" for="ask">Your clinical question</label>
-      <textarea id="ask" placeholder="A well 3-year-old with acute otitis media — antibiotic now, or delayed?">${esc(S.draft)}</textarea>
-      <div class="crow">
-        <button class="iconbtn" aria-label="Attach a document">${ico('clip',15)}</button>
-        <button class="tool" id="ctxbtn">${ico('user',14)} Patient context</button>
-        <span class="grow"></span>
-        <kbd class="hint">&#8984;&#8629;</kbd>
-        <button class="send" id="sendbtn" aria-label="Ask" ${S.draft.trim()?'':'disabled'}>${ico('send',16,2.2)}</button>
-      </div>
-    </div>
-
-    <div class="saved">
-      ${ico('check',13)} No patient data leaves this device
-      <span class="sep"></span> HSE &middot; ICGP &middot; NICE &middot; Cochrane &middot; HPRA
-      <span class="sep"></span> Answers timestamped against source versions
-    </div>
-
-    <div class="cards">
-      ${EXAMPLES.map(e=>`
-        <button class="card" data-ex="${esc(e.q)}">
-          <span class="ctile">${ico(e.ico,16)}</span>
-          <span class="ctag">${e.tag}</span>
-          <p>${esc(e.q)}</p>
-        </button>`).join('')}
-    </div>
-
-    <div class="footnote">
-      ${ico('info',14)}
-      <span>A prototype. Guideline bodies and document names are real; every dose, threshold,
-      percentage and date is illustrative and must be replaced with each body's published values
-      before clinical use. Evidence does not make treatment decisions — it shows you what the
-      guidance says and where it disagrees with itself.</span>
-    </div>
-  </div>`;
-  const ta = $('#ask'); if(ta){ ta.focus(); autosize(ta); }
-}
-
-function autosize(ta){
-  ta.style.height = 'auto';
-  ta.style.height = Math.min(ta.scrollHeight, 220) + 'px';
-}
-
-/* ══════════════════════════════════════════════════════════════
-   7. The thread — skeleton first, then each phase fills its own
-      section. Nothing above a section is ever re-rendered, so the
-      prose is never rebuilt while it is streaming.
-   ══════════════════════════════════════════════════════════════ */
-function at(p){ return PHASES.indexOf(S.phase) >= PHASES.indexOf(p); }
-function A(){ return ANSWERS[S.key]; }
-
-function renderThread(){
-  const a = A();
-  stage.innerHTML = `
-  <div class="wrap left">
-    <div id="t-prior"></div>
+function composerHTML(id, compact){
+  const att = S.attached ? `<div class="attached">${ico('file',13)}<span>${esc(S.attached)}</span>
+      <button data-act="unattach" aria-label="Remove">${ico('x',12)}</button></div>` : '';
+  return `<div class="ask ${compact?'compact':''}">
+    ${att}
+    <label class="sr" for="${id}">Your clinical question</label>
+    <textarea id="${id}" placeholder="${compact?'Ask a follow-up, or a new question…':'Ask a clinical question in your own words…'}">${compact?'':esc(S.draft)}</textarea>
     <div class="askrow">
-      <span class="asklabel">Question ${S.thread.length + 1}</span>
-      <h2 class="askq">${esc(S.q)}</h2>
-      <div class="askmeta" id="t-meta"></div>
+      <button class="iconbtn" data-act="attach" aria-label="Attach a clinical document">${ico('clip',14)}</button>
+      <button class="mini" data-open="spec">${ico('user',13)} ${esc(S.specialty)}</button>
+      <button class="mini hide-sm" data-open="src">${ico('sliders',13)} Sources</button>
+      <span class="grow"></span>
+      <kbd>&#8984;&#8629;</kbd>
+      <button class="send" data-act="send" data-for="${id}" aria-label="Ask" disabled>${ico('send',15,2.2)}</button>
     </div>
-    <div id="t-read"></div>
-    <div id="t-retr"></div>
-    <div id="t-ledger"></div>
-    <div id="t-outline"></div>
-    <div id="t-answer"></div>
-    <div id="t-tail"></div>
+    <input type="file" id="file-${id}" class="sr" accept=".pdf,.doc,.docx,.txt,.md">
   </div>`;
-  fillPrior();
-  fillMeta();
-  fillTail('running');
 }
 
-function fillPrior(){
-  if(!S.thread.length){ $('#t-prior').innerHTML = ''; return; }
-  $('#t-prior').innerHTML = `<div class="prior">` + S.thread.map((t,i)=>`
-    <button class="priorq" data-prior="${i}">
-      <span class="qn">Q${i+1}</span>
-      <span class="qt">${esc(t.q)}</span>
-      ${ico('chev',13)}
-    </button>`).join('') + `</div>`;
-}
-
-function fillMeta(){
-  const a = A(), sc = SCOPES.find(s=>s.id===S.scope);
-  let chips = `<span class="mchip">${ico(sc.ico,12)} ${sc.label}</span>`;
-  if(S.phase === 'done'){
-    const kept = a.retrieved.filter(r=>r.keep).length;
-    chips += `<span class="mchip"><span class="mdot"></span> Answer complete</span>
-      <span class="mchip">${kept} sources cited</span>
-      <span class="mchip">${a.ledger.confidence}% confidence</span>`;
-  } else if(S.halted){
-    chips += `<span class="mchip"><span class="mdot" style="background:var(--amber)"></span> Stopped</span>`;
-  } else {
-    chips += `<span class="mchip">
-        <span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-        ${PHASE_LABEL[S.phase] || 'Working'}&hellip;</span>`;
-  }
-  $('#t-meta').innerHTML = chips;
-}
-
-/* — reading the question ————————————————————————————— */
-function fillRead(){
-  const p = A().pico, keys = [['P','Population'],['I','Intervention'],['C','Comparator'],['O','Outcome']];
-  $('#t-read').innerHTML = `
-    <div class="reads">
-      <div class="readhead">${ico('key',15)} How the question was read</div>
-      <div class="picogrid">
-        ${keys.map((k,i)=>`<div class="pico" style="--i:${i}"><b>${k[1]}</b><span>${esc(p[k[0]])}</span></div>`).join('')}
-      </div>
-    </div>`;
-}
-
-/* — the retrieval funnel ————————————————————————————— */
-function fillRetr(){
-  const a = A(), graded = at('grading');
-  const kept = a.retrieved.filter(r=>r.keep).length;
-  const open = S.retrOpen;
-  const head = graded
-    ? `<button class="retrhead" id="retrtoggle" aria-expanded="${open}">
-         ${ico('filter',15)}
-         <span class="rlab">Read ${a.retrieved.length}, kept ${kept}. Everything dropped says why.</span>
-         <span class="rgrow"></span>
-         <span class="rshow">${open?'Hide':'Show'}</span>
-         <span class="chev ${open?'up':''}">${ico('chev',13)}</span>
-       </button>`
-    : `<div class="retrhead">
-         <span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-         <span class="rlab">${at('screening')?'Screening candidates against the question':'Searching HSE, ICGP, NICE, Cochrane, HPRA'}&hellip;</span>
-       </div>`;
-
-  const rows = (at('screening') && open) ? `<div class="retrlist">` + a.retrieved.map((r,i)=>{
-    const out = graded && !r.keep;
-    const badge = !graded ? ''
-      : r.keep ? `<em class="tierbadge ${r.tier==='2'?'t2':''}">Tier ${r.tier}</em>`
-               : `<em class="tierbadge why">${esc(r.why)}</em>`;
-    return `<div class="retrrow ${out?'out':''}" style="--i:${i}">
-        <span class="rdot ${out?'no':''}"></span>
-        <span class="rorg">${esc(r.org)}</span>
-        <span class="rtitle">${esc(r.t)}</span>
-        ${badge}
-      </div>`;
-  }).join('') + `</div>` : '';
-
-  $('#t-retr').innerHTML = `<div class="retr">${head}${rows}</div>`;
-}
-
-/* — the evidence ledger ——————————————————————————————
-   Ours, not theirs. Four numbers that decide how much weight the
-   answer below can carry: how much of it is Tier 1, how old the
-   oldest cited document is, whether the sources agree, and the
-   confidence that falls out of those three. */
-function fillLedger(){
-  const L = A().ledger, thisYear = 2026;
-  const age = thisYear - L.oldestYr;
-  const stale = age >= 4;
-  const cells = [
-    {b:'Tier 1 sources', n:`${L.tier1}<small>of ${L.total}</small>`, m:Math.round(L.tier1/L.total*100)},
-    {b:'Oldest cited', n:`${age}<small>yr</small>`, m:Math.max(8,100-age*18), warn:stale},
-    {b:'Sources agree', n:L.agreement==='split'?'Split':'Aligned', m:L.agreement==='split'?55:100, warn:L.agreement==='split'},
-    {b:'Confidence', n:`${L.confidence}<small>%</small>`, m:L.confidence}
-  ];
-  $('#t-ledger').innerHTML = `
-    <div class="ledger">
-      ${cells.map((c,i)=>`
-        <div class="lcell ${c.warn?'warnc':''}" style="--i:${i}">
-          <b>${c.b}</b>
-          <span class="lnum">${c.n}</span>
-          <span class="lmeter"><i style="width:${c.m}%"></i></span>
-        </div>`).join('')}
+function renderHome(){
+  stage.innerHTML = `<div class="col home">
+    <div class="hero">${ico('book',21)}</div>
+    <h1>Evidence, answered.<em>With the guideline attached.</em></h1>
+    <p class="lede">Ask in your own words. Every statement in the answer carries the source it came
+      from, and every citation opens the passage it rests on — so checking it takes one click, not one search.</p>
+    ${composerHTML('ask')}
+    <div class="trust">
+      ${ico('shield',13)} Nothing you type leaves this device
+      <span class="sep"></span> Ranked for Ireland, then Europe
+      <span class="sep"></span> ${enabledCount()} source sets enabled
     </div>
-    <div class="footnote" style="margin-top:10px;padding-top:0;border:0">
-      ${ico('info',13)}<span>${esc(L.note)}</span>
-    </div>`;
+    <div class="sugg">
+      <p class="sugghead">Try one of these</p>
+      ${EXAMPLES.map(e=>`<button class="suggrow" data-ex="${esc(e.q)}">
+          <span class="sspec">${esc(e.spec)}</span>
+          <span class="sq">${esc(e.q)}</span>
+          <span class="sgo">${ico('ext',13)}</span></button>`).join('')}
+    </div>
+    <div class="disc">${ico('info',13)}<span>A prototype. Guideline bodies, document names and source types are
+      real; every dose, threshold, date, percentage and quoted excerpt is illustrative and must be replaced with
+      each body's published text before clinical use. Evidence does not make treatment decisions.</span></div>
+  </div>`;
+  const ta = $('#ask'); if(ta){ ta.focus(); autosize(ta); syncSend(ta); }
 }
-
-/* — the outline: the answer's shape, before its words —————— */
-function fillOutline(){
-  const o = A().outline;
-  $('#t-outline').innerHTML = `
-    <div class="outline">
-      <div class="outhead">${ico('layers',15)} Laying out the answer</div>
-      ${o.map((s,i)=>`
-        <div class="outrow" style="--i:${i}">
-          <span class="outnum">${i+1}</span>
-          <span class="outlab">${esc(s)}</span>
-          <span class="outbar"></span>
-        </div>`).join('')}
-    </div>`;
+function autosize(ta){ ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,200)+'px'; }
+function syncSend(ta){
+  const b = ta.closest('.ask').querySelector('[data-act="send"]');
+  if(b) b.disabled = !ta.value.trim();
 }
 
 /* ══════════════════════════════════════════════════════════════
-   8. The answer card, and the machinery that writes into it
+   The thread
    ══════════════════════════════════════════════════════════════ */
-const STAMP = new Date().toLocaleDateString('en-IE',{day:'numeric',month:'short',year:'numeric'});
-
-function buildAnswerCard(){
-  $('#t-outline').innerHTML = '';
-  $('#t-answer').innerHTML = `
-    <div class="answer">
-      <div class="ahead">
-        <span class="atile">${ico('spark',15)}</span>
-        <span class="astamp">Evidence &middot; assembled ${STAMP}</span>
-        <span class="live" id="livedot">writing</span>
-      </div>
-      <div class="bottomline" id="bl">
-        <div class="blhead">${ico('target',12)} Bottom line</div>
-        <p id="blp"></p>
-      </div>
-      <div class="prose" id="prose"></div>
-      <div id="srcwrap"></div>
-      <div id="actwrap"></div>
-    </div>`;
+function enterThread(){
+  stage.innerHTML = `<div class="col" id="col"><div id="composerslot"></div></div>`;
+  S.view = 'thread';
+}
+function renderComposer(){
+  const slot = $('#composerslot'); if(!slot) return;
+  const t = S.turns[S.turns.length-1];
+  const running = t && t.phase !== 'done' && t.phase !== 'stopped';
+  slot.innerHTML = running
+    ? `<div class="ask compact"><textarea disabled placeholder="Writing the answer…"></textarea>
+        <div class="askrow"><span class="grow"></span>
+        <button class="send stop" data-act="stop" aria-label="Stop">${ico('stop',13,0)}</button></div></div>`
+    : composerHTML('ask2', true);
+  const ta = $('#ask2'); if(ta){ autosize(ta); syncSend(ta); }
 }
 
-/* — tokenizer: words, bold runs and citation markers ————————— */
+function turnHTML(i,t){
+  return `<article class="turn" id="turn-${i}">
+    <div class="qline">
+      <span class="qav">Q${i+1}</span>
+      <div style="flex:1;min-width:0">
+        <h2 class="qtext">${esc(t.q)}</h2>
+        ${t.doc?`<span class="qdoc">${ico('file',12)} ${esc(t.doc)}</span>`:''}
+      </div>
+    </div>
+    <div class="pipeslot" id="pipe-${i}"></div>
+    <div class="refslot" id="refs-${i}"></div>
+    <div class="ans" id="ans-${i}"></div>
+    <div id="faith-${i}"></div>
+    <div id="srcs-${i}"></div>
+    <div id="acts-${i}"></div>
+    <div id="next-${i}"></div>
+  </article>`;
+}
+
+/* — pipeline ————————————————————————————————————————— */
+function setPipe(i, html, spinning){
+  $('#pipe-'+i).innerHTML = `<div class="pipe">${spinning?'<span class="spin"></span>':''}
+    <span class="step">${html}</span></div>`;
+}
+function pipeDone(i){
+  const t = S.turns[i], a = A(i);
+  const kept = a.read.filter(r=>r.keep).length;
+  $('#pipe-'+i).innerHTML = `<button class="pipetog" data-tog="${i}" aria-expanded="${t.refsOpen}">
+      <span class="ok">${ico('check',13,2.4)}</span>
+      Read ${a.read.length} references, kept ${kept}
+      <span class="chev ${t.refsOpen?'up':''}">${ico('chev',12)}</span></button>`;
+}
+function renderReadList(i, ranked){
+  const t = S.turns[i], a = A(i);
+  if(!t.refsOpen){ $('#refs-'+i).innerHTML=''; return; }
+  $('#refs-'+i).innerHTML = `<div class="reflist">` + a.read.map((r,n)=>{
+    const out = ranked && !r.keep;
+    const tail = !ranked ? '' : (r.keep
+      ? `<span class="rrank">${r.rank}</span>`
+      : `<span class="rwhy">${esc(r.why)}</span>`);
+    return `<div class="refrow ${out?'out':''}" style="--i:${n}">
+      <span class="rtag">${esc(r.tag)}</span><span class="rt">${esc(r.t)}</span>${tail}</div>`;
+  }).join('') + `</div>`;
+}
+
+/* — tokenizer and delay budget ——————————————————————— */
+const CITE_RE = /\[[A-Za-z0-9][A-Za-z0-9 \-/]*\]/;
 function tokenize(text){
-  const out = []; let sp = false;
-  const push = (k,w)=>{ out.push({k,w,sp:sp && out.length>0}); sp = false; };
-  const words = (k,s)=>{
-    if(/^\s/.test(s)) sp = true;
-    const t = s.trim();
-    if(t) t.split(/\s+/).forEach((w,i)=>{ if(i>0) sp = true; push(k,w); });
-    if(/\s$/.test(s)) sp = true;
+  const out=[]; let sp=false;
+  const push=(k,w)=>{ out.push({k,w,sp:sp&&out.length>0}); sp=false; };
+  const words=(k,s)=>{
+    if(/^\s/.test(s)) sp=true;
+    const t=s.trim();
+    if(t) t.split(/\s+/).forEach((w,n)=>{ if(n>0) sp=true; push(k,w); });
+    if(/\s$/.test(s)) sp=true;
   };
-  text.split(/(\*\*[^*]+\*\*|\[\d+\])/g).forEach(seg=>{
+  text.split(/(\*\*[^*]+\*\*|\[[A-Za-z0-9][A-Za-z0-9 \-/]*\])/g).forEach(seg=>{
     if(!seg) return;
     if(seg.startsWith('**')) words('b', seg.slice(2,-2));
-    else if(/^\[\d+\]$/.test(seg)) push('c', seg.slice(1,-1));
+    else if(CITE_RE.test(seg) && seg[0]==='[') push('c', seg.slice(1,-1));
     else words('t', seg);
   });
   return out;
 }
-
-/* Delay budget. A reader's eye rests at a full stop, hesitates at a
-   comma, and stops dead on a citation — so the stream does too.
-   Deterministic jitter keeps it from feeling metronomic without
-   making two runs of the same answer look different. */
-const D = {BASE:7, JIT:13, SENT:55, CLAUSE:22, CITE:35, PARA:75, HEAD:170, CALLOUT:230};
+const D={BASE:6,JIT:12,SENT:60,CLAUSE:24,CITE:30,PARA:80,HEAD:200,CALL:240,LI:110};
 function delay(tok,i){
-  let d = D.BASE + ((i*2654435761)%997)/997 * D.JIT;
-  if(tok.k === 'c') d += D.CITE;
+  let d = D.BASE + ((i*2654435761)%997)/997*D.JIT;
+  if(tok.k==='c') d += D.CITE;
   else if(/[.!?]["')\]]?$/.test(tok.w)) d += D.SENT;
   else if(/[,;:—]$/.test(tok.w)) d += D.CLAUSE;
-  if(i === 0) d += D.PARA;
+  if(i===0) d += D.PARA;
   return d;
 }
-
 function buildOps(a){
-  const ops = [];
-  ops.push({o:'bl', d:120});
-  tokenize(a.bottom).forEach((tk,i)=>ops.push({o:'tok', tk, d:delay(tk,i)}));
+  const ops=[];
+  ops.push({o:'lead', d:100});
+  tokenize(a.lead).forEach((tk,i)=>ops.push({o:'tok',tk,d:delay(tk,i)}));
   a.body.forEach(b=>{
-    if(b.t === 'p'){
-      ops.push({o:'para', d:D.PARA});
-      tokenize(b.x).forEach((tk,i)=>ops.push({o:'tok', tk, d:delay(tk,i)}));
-    } else {
-      ops.push({o:'blk', b, d: b.t==='h' ? D.HEAD : D.CALLOUT});
-    }
+    if(b.t==='h') ops.push({o:'h', x:b.x, d:D.HEAD});
+    else if(b.t==='p'){ ops.push({o:'p', d:D.PARA});
+      tokenize(b.x).forEach((tk,i)=>ops.push({o:'tok',tk,d:delay(tk,i)})); }
+    else if(b.t==='ul'){ ops.push({o:'ul', d:D.LI});
+      b.items.forEach(it=>{ ops.push({o:'li', d:D.LI});
+        tokenize(it).forEach((tk,i)=>ops.push({o:'tok',tk,d:delay(tk,i)})); }); }
+    else ops.push({o:'call', kind:b.t, x:b.x, d:D.CALL});
   });
   return ops;
 }
 
-function caretEl(){
-  const c = document.createElement('span'); c.className = 'caret'; c.setAttribute('aria-hidden','true');
-  return c;
-}
-
 function applyOp(op){
-  const prose = $('#prose'); if(!prose) return;
-  if(op.o === 'bl'){ stream.cur = $('#blp'); return; }
-  if(op.o === 'para'){
-    const p = document.createElement('p'); prose.appendChild(p); stream.cur = p; return;
+  const c = stream, root = c.root;
+  if(op.o==='lead'){ const p=document.createElement('p'); p.className='lead'; root.appendChild(p); c.cur=p; c.list=null; return; }
+  if(op.o==='p'){ const p=document.createElement('p'); root.appendChild(p); c.cur=p; c.list=null; return; }
+  if(op.o==='h'){ const h=document.createElement('h3'); h.textContent=op.x; root.appendChild(h); c.cur=null; c.list=null; return; }
+  if(op.o==='ul'){ const u=document.createElement('ul'); root.appendChild(u); c.list=u; c.cur=null; return; }
+  if(op.o==='li'){ const li=document.createElement('li'); (c.list||root).appendChild(li); c.cur=li; return; }
+  if(op.o==='call'){
+    const d=document.createElement('div');
+    d.className = 'callout' + (op.kind==='warn'?' warn':'');
+    d.innerHTML = ico(op.kind==='warn'?'alert':'info',14) + '<span>' + esc(op.x) + '</span>';
+    root.appendChild(d); c.cur=null; c.list=null; return;
   }
-  if(op.o === 'blk'){
-    const b = op.b, n = document.createElement(b.t === 'h' ? 'h3' : 'div');
-    if(b.t === 'h'){ n.textContent = b.x; }
-    else {
-      n.className = b.t === 'warn' ? 'inlinewarn' : 'inlinenote';
-      n.innerHTML = ico(b.t === 'warn' ? 'info' : 'alert', 14) + '<span>' + esc(b.x) + '</span>';
-    }
-    prose.appendChild(n); stream.cur = null; return;
-  }
-  // a token
-  const t = op.tk, cur = stream.cur; if(!cur) return;
+  const t=op.tk, cur=c.cur; if(!cur) return;
   if(t.sp) cur.appendChild(document.createTextNode(' '));
-  if(t.k === 'c'){
-    const b = document.createElement('button');
-    b.className = 'citemark'; b.textContent = t.w; b.dataset.cite = t.w;
-    b.setAttribute('aria-label', 'Source ' + t.w);
+  if(t.k==='c'){
+    const b=document.createElement('button');
+    b.className='cite'; b.textContent=t.w; b.dataset.tag=t.w; b.dataset.turn=c.turn;
+    b.setAttribute('aria-label','Source: '+t.w);
     cur.appendChild(b);
-  } else if(t.k === 'b'){
-    const s = document.createElement('strong'); s.textContent = t.w; cur.appendChild(s);
-  } else {
-    cur.appendChild(document.createTextNode(t.w));
-  }
+  } else if(t.k==='b'){
+    const s=document.createElement('strong'); s.textContent=t.w; cur.appendChild(s);
+  } else cur.appendChild(document.createTextNode(t.w));
 }
 
 function tick(){
-  if(!stream || S.halted) return;
+  if(!stream) return;
   const op = stream.ops[stream.i];
-  if(!op){ finishComposing(); return; }
+  if(!op){ endWrite(); return; }
   stream.i++;
   applyOp(op);
   if(stream.cur && stream.caret) stream.cur.appendChild(stream.caret);
   follow();
-  stream.timer = setTimeout(tick, reduced() ? 0 : op.d);
+  stream.timer = setTimeout(tick, reduced()?0:op.d);
 }
-
-function startComposing(){
-  const a = A();
-  buildAnswerCard();
-  stream = {ops:buildOps(a), i:0, timer:null, cur:null, caret:caretEl()};
-  if(reduced()){                       // no theatre where it is unwelcome
-    while(stream.i < stream.ops.length){ applyOp(stream.ops[stream.i]); stream.i++; }
-    finishComposing(); return;
-  }
+function startWrite(i){
+  const a=A(i);
+  stream = {ops:buildOps(a), i:0, root:$('#ans-'+i), cur:null, list:null,
+            caret:Object.assign(document.createElement('span'),{className:'caret'}), turn:i, idx:i};
+  setPipe(i, 'Writing the answer, citing as it goes', true);
+  if(reduced()){ while(stream.i<stream.ops.length){ applyOp(stream.ops[stream.i]); stream.i++; } endWrite(); return; }
   tick();
 }
-
-function finishComposing(){
-  if(stream && stream.caret && stream.caret.parentNode) stream.caret.parentNode.removeChild(stream.caret);
-  if(stream && stream.timer) clearTimeout(stream.timer);
+function killCaret(){ if(stream&&stream.caret&&stream.caret.parentNode) stream.caret.parentNode.removeChild(stream.caret); }
+function endWrite(){
+  const i = stream ? stream.idx : -1;
+  killCaret();
+  if(stream&&stream.timer) clearTimeout(stream.timer);
   stream = null;
-  if(S.halted){ return; }
-  setPhase('verifying');
+  if(i>=0 && S.turns[i].phase!=='stopped') verifyPass(i);
+}
+function stopRun(){
+  const i = S.turns.length-1, t = S.turns[i];
+  if(!t || t.phase==='done') return;
+  t.phase='stopped';
+  killCaret(); if(stream&&stream.timer) clearTimeout(stream.timer); stream=null; clearTimers();
+  $('#pipe-'+i).innerHTML = `<div class="pipe"><span style="color:var(--amber)">${ico('alert',13)}</span>
+    Stopped. The partial answer below is kept, and its citations still open.</div>`;
+  renderSources(i, true); renderActs(i); renderComposer();
+  say('Stopped.');
 }
 
-function haltStream(){
-  S.halted = true;
-  if(stream && stream.timer) clearTimeout(stream.timer);
-  if(stream && stream.caret && stream.caret.parentNode) stream.caret.parentNode.removeChild(stream.caret);
-  clearTimers();
-  const dot = $('#livedot'); if(dot){ dot.textContent = 'stopped'; dot.className = 'live halted'; }
-  fillMeta(); fillTail('partial');
-  say('Stopped. Partial answer retained.');
+/* — the faithfulness pass: does each cited source actually say it —
+   the check Evidence exists to make, so it happens where you can
+   watch it rather than silently before the answer appears. */
+function verifyPass(i){
+  const t=S.turns[i]; t.phase='verify';
+  const chips = $$('#turn-'+i+' .cite');
+  const total = chips.length;
+  const slot = $('#faith-'+i);
+  let n = 0;
+  const paint = ()=>{
+    slot.innerHTML = `<div class="faith running">${ico('shield',14)}
+      <span>Checking each statement against the passage it cites</span>
+      <span class="fgrow"></span><span>${n}/${total}</span>
+      <span class="fbar"><i style="width:${total?Math.round(n/total*100):100}%"></i></span></div>`;
+  };
+  paint();
+  const step = ()=>{
+    if(n>0 && chips[n-1]) chips[n-1].classList.remove('checking');
+    if(n>=total){ finishVerify(i,total); return; }
+    chips[n].classList.add('checking'); n++;
+    paint();
+    later(step, reduced()?0:Math.max(38, 420/Math.max(total,1)));
+  };
+  later(step, 260);
 }
-
-/* — sources, actions, conflicts, follow-ups ————————————————— */
-function fillSources(resolving){
-  const a = A();
-  $('#srcwrap').innerHTML = `
-    <div class="srchead">${ico('quote',12)} Sources <span class="sgrow"></span>
-      <span style="letter-spacing:0;text-transform:none;font-weight:500">
-        ${resolving ? 'resolving citations&hellip;' : 'every claim above resolves to one of these'}</span>
-    </div>
-    <div class="srcs ${resolving?'resolving':''}" id="srcs">
-      ${a.sources.map(s=>`
-        <button class="src" id="src-${s.n}" data-src="${s.n}">
-          <span class="snum">${s.n}</span>
-          <span class="sbody">
-            <span class="sorg">${esc(s.org)}
-              <em class="tierbadge ${s.tier==='2'?'t2':''}">Tier ${s.tier}</em>
-              <em class="tierbadge why">${s.d}</em>
-            </span>
-            <span class="stitle">${esc(s.t)}</span>
-            <span class="sage"><span class="agedot ${s.old?'old':''}"></span>${esc(s.age)}</span>
-          </span>
-          <span class="sgo">${ico('arrow',14)}</span>
-        </button>`).join('')}
-    </div>`;
-}
-
-function fillActions(){
-  $('#actwrap').innerHTML = `
-    <div class="actions">
-      <button class="act ${S.saved?'on':''}" data-act="save">${ico('save',14)} ${S.saved?'Saved':'Save'}</button>
-      <button class="act" data-act="copy">${ico('copy',14)} Copy with citations</button>
-      <button class="act" data-act="cite">${ico('quote',14)} Export reference list</button>
-      <span class="agrow"></span>
-      <button class="act ${S.vote==='up'?'on':''}" data-act="up" aria-label="Useful">${ico('up',14)}</button>
-      <button class="act ${S.vote==='down'?'on down':''}" data-act="down" aria-label="Not useful">${ico('down',14)}</button>
-    </div>
-    <p class="adisc" style="margin:9px 0 0">Not a treatment decision. Figures are illustrative — check each against the cited document.</p>`;
-}
-
-function fillTail(mode){
-  const a = A();
-  const showBlocks = mode !== 'running';
-  const split = showBlocks && a.split && a.split.length ? `
-    <div class="block split">
-      <div class="bhead">${ico('split',15)} Where the sources disagree
-        <span class="bcount">${a.split.length} conflict${a.split.length>1?'s':''}</span></div>
-      ${a.split.map(s=>`
-        <div class="splitrow">
-          <div class="sclaim">${esc(s.claim)}</div>
-          <div class="sides">
-            <div class="sidebox"><b>${esc(s.a.src)}</b><span>${esc(s.a.pos)}</span></div>
-            <div class="sidebox"><b>${esc(s.b.src)}</b><span>${esc(s.b.pos)}</span></div>
-          </div>
-          <div class="stake">${ico('info',14)}<span><b>Where that leaves you.</b> ${esc(s.take)}</span></div>
-        </div>`).join('')}
-    </div>` : '';
-
-  const changers = showBlocks && a.changers && a.changers.length ? `
-    <div class="block changers">
-      <div class="bhead">${ico('key',15)} What would change this answer</div>
-      ${a.changers.map((c,i)=>`
-        <div class="chline"><span class="chdot">${i+1}</span><span>${md(c)}</span></div>`).join('')}
-    </div>` : '';
-
-  const follow = mode === 'done' ? `
-    <div class="followups">
-      <span class="flabel">Next</span>
-      ${a.followups.map(f=>`<button class="fchip" data-follow="${esc(f)}">${esc(f)} ${ico('arrow',12)}</button>`).join('')}
-    </div>` : '';
-
-  const composer = `
-    <div class="composer compact">
-      <label class="sr" for="ask2">Ask a follow-up</label>
-      <textarea id="ask2" placeholder="Ask a follow-up, or start a new question&hellip;"></textarea>
-      <div class="crow">
-        <button class="iconbtn" aria-label="Attach a document">${ico('clip',15)}</button>
-        <span class="grow"></span>
-        ${ mode === 'running'
-          ? `<button class="send stop" id="stopbtn" aria-label="Stop">${ico('stop',14,0)}</button>`
-          : `<kbd class="hint">&#8984;&#8629;</kbd>
-             <button class="send" id="sendbtn2" aria-label="Ask" disabled>${ico('send',16,2.2)}</button>` }
-      </div>
-    </div>`;
-
-  $('#t-tail').innerHTML = split + changers + follow + composer;
-}
-
-/* the tiny bit of markdown the changer lines need */
-function md(s){ return esc(s).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>'); }
-
-/* ══════════════════════════════════════════════════════════════
-   9. The run — one phase machine, one place that decides what is
-      on screen at each moment
-   ══════════════════════════════════════════════════════════════ */
-function setPhase(p){
-  S.phase = p;
-  fillMeta();
-  if(p !== 'done' && p !== 'composing') say(PHASE_LABEL[p] || '');
-
-  switch(p){
-    case 'reading':
-      fillRead(); later(()=>setPhase('searching'), 950); break;
-    case 'searching':
-      fillRetr(); later(()=>setPhase('screening'), 780); break;
-    case 'screening':
-      fillRetr(); later(()=>setPhase('grading'), A().retrieved.length * 55 + 780); break;
-    case 'grading':
-      fillRetr(); fillLedger(); later(()=>setPhase('outlining'), 1000); break;
-    case 'outlining':
-      fillOutline(); later(()=>setPhase('composing'), A().outline.length * 110 + 620); break;
-    case 'composing':
-      startComposing(); break;
-    case 'verifying':
-      fillSources(true); fillActions(); later(()=>setPhase('done'), 850); break;
-    case 'done':
-      S.retrOpen = false; fillRetr();
-      fillSources(false); fillActions(); fillTail('done');
-      const dot = $('#livedot'); if(dot) dot.remove();
-      say('Answer complete. ' + A().sources.length + ' sources cited.');
-      break;
-  }
+function finishVerify(i,total){
+  const t=S.turns[i]; t.phase='done'; t.refsOpen=false;
+  $('#faith-'+i).innerHTML = `<div class="faith">${ico('shield',14)}
+    <span><b>${total} of ${total} statements</b> resolve to a passage in the source they cite.
+    Click any citation to read that passage.</span></div>`;
+  pipeDone(i); renderReadList(i,true);
+  renderSources(i); renderActs(i); renderNext(i); renderComposer();
+  say('Answer complete. '+Object.keys(A(i).refs).length+' sources cited.');
   follow();
 }
 
-function startRun(q, replay){
-  clearTimers();
-  if(stream && stream.timer) clearTimeout(stream.timer);
-  stream = null;
-  S.q = q.trim(); S.key = route(S.q); S.view = 'thread';
-  if(S.key !== 'fallback') S.scope = ANSWERS[S.key].scope;   // the question sets the setting
-  S.halted = false; S.vote = null; S.saved = false; S.retrOpen = true; S.hot = null;
-  if(!S.history.some(h=>h.q === S.q)) S.history.unshift({q:S.q, key:S.key});
-  renderNav(); renderTop(); renderThread();
+/* ══════════════════════════════════════════════════════════════
+   References, actions, follow-ups
+   ══════════════════════════════════════════════════════════════ */
+function allText(a){
+  return [a.lead].concat(a.body.map(b=>b.t==='ul'?b.items.join(' '):b.x)).join(' ');
+}
+function citedTags(a){
+  const seen=[], re=/\[([A-Za-z0-9][A-Za-z0-9 \-/]*)\]/g; let m;
+  const txt = allText(a);
+  while((m=re.exec(txt))) if(a.refs[m[1]] && seen.indexOf(m[1])<0) seen.push(m[1]);
+  return seen;
+}
+function claimsFor(a, tag){
+  const out=[];
+  const add = (label, text)=>{
+    (text.match(/[^.!?]+[.!?]*\s*/g) || [text]).forEach(s=>{
+      if(s.indexOf('['+tag+']')>=0) out.push({label, s:s.replace(/\[[A-Za-z0-9][A-Za-z0-9 \-/]*\]/g,'').replace(/\*\*/g,'').replace(/\s+([.,;])/g,'$1').trim()});
+    });
+  };
+  add('Direct answer', a.lead);
+  let head = 'Answer';
+  a.body.forEach(b=>{
+    if(b.t==='h'){ head=b.x; return; }
+    if(b.t==='ul') b.items.forEach(it=>add(head,it));
+    else add(head, b.x);
+  });
+  return out;
+}
 
-  if(replay){                       // reopened from history — no theatre
-    S.phase = 'done';
-    fillRead(); S.retrOpen = false; fillRetr(); fillLedger();
-    buildAnswerCard();
-    const ops = buildOps(A());
-    stream = {ops, i:0, cur:null, caret:null};
-    ops.forEach(op=>applyOp(op));
-    stream = null;
-    const dot = $('#livedot'); if(dot) dot.remove();
-    fillSources(false); fillActions(); fillTail('done'); fillMeta();
-    stage.scrollTop = 0;
-    return;
-  }
-  stage.scrollTop = 0; stuck = true;
-  setPhase('reading');
+function renderSources(i, partial){
+  const a=A(i);
+  // on a stopped run, list only what the partial answer actually cited
+  const tags = partial
+    ? $$('#turn-'+i+' .cite').map(c=>c.dataset.tag).filter((t,n,arr)=>a.refs[t] && arr.indexOf(t)===n)
+    : citedTags(a);
+  if(!tags.length){ $('#srcs-'+i).innerHTML=''; return; }
+  $('#srcs-'+i).innerHTML = `
+    <div class="refshead">${ico('quote',12)} References <span class="rgrow"></span>
+      <span>${partial?'cited in the part that was written':'cited in the order they appear'}</span></div>
+    <div class="srcs">
+      ${tags.map(tag=>{
+        const r=a.refs[tag];
+        return `<button class="src" id="src-${i}-${cssId(tag)}" data-src="${esc(tag)}" data-turn="${i}">
+          <span class="stag">${esc(tag)}</span>
+          <span class="sbody">
+            <span class="stitle">${esc(r.title)}</span>
+            <span class="smeta">
+              <span class="styp ${r.type==='Guideline'?'guide':''}">${esc(r.type)}</span>
+              ${esc(r.publisher)} <span class="dot"></span> ${esc(r.date)} <span class="dot"></span> ${esc(r.region)}
+            </span>
+          </span>
+          <span class="sgo2">${ico('ext',13)}</span></button>`;
+      }).join('')}
+    </div>`;
+}
+const cssId = s => s.replace(/[^A-Za-z0-9]/g,'_');
+
+function renderActs(i){
+  const t=S.turns[i];
+  $('#acts-'+i).innerHTML = `
+    <div class="acts">
+      <button class="act ${t.saved?'on':''}" data-act="save" data-turn="${i}">${ico('book',13)} ${t.saved?'Saved':'Save'}</button>
+      <button class="act" data-act="copy" data-turn="${i}">${ico('copy',13)} Copy</button>
+      <span class="menu">
+        <button class="act" data-act="menu" data-turn="${i}">${ico('share',13)} Export ${ico('chev',11)}</button>
+        ${S.menuOpen===i?exportMenu(i):''}
+      </span>
+      <button class="act" data-act="session" data-turn="${i}">${ico('link',13)} Link to session</button>
+      <button class="act" data-act="cpd" data-turn="${i}">${ico('award',13)} Log CPD</button>
+      <span class="agrow"></span>
+      <button class="act ${t.vote==='up'?'on':''}" data-act="up" data-turn="${i}" aria-label="Useful">${ico('up',13)}</button>
+      <button class="act ${t.vote==='down'?'on down':''}" data-act="down" data-turn="${i}" aria-label="Not useful">${ico('down',13)}</button>
+    </div>`;
+}
+function exportMenu(i){
+  return `<span class="mpop">
+    <button data-act="dl" data-turn="${i}">${ico('file',14)} Download as Markdown</button>
+    <button data-act="print" data-turn="${i}">${ico('print',14)} Print, or save as PDF</button>
+    <button data-act="refs" data-turn="${i}">${ico('quote',14)} Copy the reference list</button>
+    <span class="mrule"></span>
+    <small>Word and spreadsheet export are not wired in this prototype.</small></span>`;
+}
+
+function renderNext(i){
+  const a=A(i);
+  $('#next-'+i).innerHTML = `<div class="nexts">
+    <p class="nexthead">Keep going</p>
+    ${a.next.map(n=>`<button class="next" data-ex="${esc(n.q)}">
+      <span class="nkind">${esc(n.kind)}</span><span class="nq">${esc(n.q)}</span>
+      <span class="sgo">${ico('ext',13)}</span></button>`).join('')}
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   The source drawer — Evidence's whole point is that this is one
+   click from any statement, not a search in another tab.
+   ══════════════════════════════════════════════════════════════ */
+function openSource(i, tag){
+  const a=A(i), r=a.refs[tag];
+  if(!r){ toast('That source is not in this answer'); return; }
+  const claims = claimsFor(a, tag);
+  const body = r.excerpt.map(p=>{
+    if(r.hi && p.indexOf(r.hi)>=0){
+      const parts = p.split(r.hi);
+      return `<p>${esc(parts[0])}<mark>${esc(r.hi)}</mark>${esc(parts.slice(1).join(r.hi))}</p>`;
+    }
+    return `<p>${esc(p)}</p>`;
+  }).join('');
+  drawer.innerHTML = `
+    <div class="dhead">
+      <span class="dtag">${esc(tag)}</span>
+      <span class="dlab">Source</span>
+      <button class="dclose" data-act="closedrawer" aria-label="Close">${ico('x',15)}</button>
+    </div>
+    <div class="dbody">
+      <h3 class="dtitle">${esc(r.title)}</h3>
+      <div class="dmeta">
+        <span class="styp ${r.type==='Guideline'?'guide':''}">${esc(r.type)}</span>
+        ${esc(r.publisher)} <span class="dot"></span> ${esc(r.date)} <span class="dot"></span> ${esc(r.region)}
+      </div>
+      <button class="dopen" data-act="openext" data-url="${esc(r.url)}">${ico('ext',14)} Open ${esc(r.url)}</button>
+
+      <p class="dsec">The passage this rests on</p>
+      <div class="excerpt">${body}</div>
+
+      <p class="dsec">Statements citing this source &middot; ${claims.length}</p>
+      ${claims.map(c=>`<button class="dclaim" data-act="jumpclaim" data-turn="${i}" data-tag="${esc(tag)}">
+          <em>${esc(c.label)}</em>${esc(c.s)}</button>`).join('') ||
+        `<p class="emptyq">No statement in this answer cites it directly.</p>`}
+
+      <div class="dnote">${ico('info',13)}<span>Excerpts on this page are illustrative stand-ins for the
+        published text. In production this pane shows the retrieved passage verbatim, with the sentence
+        the claim was grounded in highlighted.</span></div>
+    </div>`;
+  drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false');
+  $$('.cite.on').forEach(e=>e.classList.remove('on'));
+  $$('.src.on').forEach(e=>e.classList.remove('on'));
+  $$(`#turn-${i} .cite[data-tag="${tag}"]`).forEach(e=>e.classList.add('on'));
+  const row = $('#src-'+i+'-'+cssId(tag)); if(row) row.classList.add('on');
+}
+function closeDrawer(){
+  drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true');
+  $$('.cite.on').forEach(e=>e.classList.remove('on'));
+  $$('.src.on').forEach(e=>e.classList.remove('on'));
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Modals
+   ══════════════════════════════════════════════════════════════ */
+let specQuery = '';
+function renderModal(){
+  const host = $('#modalhost');
+  if(!S.modal){ host.innerHTML=''; return; }
+  if(S.modal==='spec') host.innerHTML = specModal();
+  if(S.modal==='src')  host.innerHTML = srcModal();
+  if(S.modal==='about')host.innerHTML = aboutModal();
+  const inp = $('#specq'); if(inp){ inp.focus(); inp.value = specQuery; }
+}
+function specModal(){
+  const q = specQuery.trim().toLowerCase();
+  const list = SPECIALTIES.filter(s=>!q || s.toLowerCase().indexOf(q)>=0);
+  return `<div class="scrim" data-act="closemodal"><div class="modal" role="dialog" aria-modal="true" aria-label="Set your specialty">
+    <div class="mhead"><div><div class="mtitle">Your specialty</div>
+      <div class="msub">Retrieval is weighted by this. A cardiologist and a GP asking the same question
+      should not get the same guideline stack.</div></div>
+      <button class="dclose" data-act="closemodal" aria-label="Close">${ico('x',15)}</button></div>
+    <div class="mbody">
+      <div class="search">${ico('search',14)}<input id="specq" placeholder="Search 200+ specialties" autocomplete="off"></div>
+      ${list.length?`<div class="specgrid">${list.map(s=>
+        `<button class="specbtn ${s===S.specialty?'on':''}" data-spec="${esc(s)}">${esc(s)}</button>`).join('')}</div>`
+        : `<p class="emptyq">Nothing matches &ldquo;${esc(specQuery)}&rdquo;. In production the full register covers
+           200+ specialties and subspecialties; this prototype ships ${SPECIALTIES.length}.</p>`}
+    </div></div></div>`;
+}
+function srcModal(){
+  return `<div class="scrim" data-act="closemodal"><div class="modal" role="dialog" aria-modal="true" aria-label="Source control">
+    <div class="mhead"><div><div class="mtitle">Source control</div>
+      <div class="msub">Shape the evidence base behind every answer. Changes apply to the next question you ask.</div></div>
+      <button class="dclose" data-act="closemodal" aria-label="Close">${ico('x',15)}</button></div>
+    <div class="mbody">
+      <p class="dsec" style="margin-top:0">Ranking preset</p>
+      ${PRESETS.map(p=>`<button class="preset ${S.preset===p.id?'on':''}" data-preset="${p.id}">
+        <span class="radio"></span><span><b>${p.name}</b><small>${p.sub}</small></span></button>`).join('')}
+
+      <p class="dsec">Source sets</p>
+      ${SOURCE_SETS.map(s=>`<div class="togrow">
+        <span class="tg">${s.name}<small>${s.sub}</small></span>
+        <button class="switch ${S.sources[s.id]?'on':''}" data-tog-src="${s.id}"
+          role="switch" aria-checked="${!!S.sources[s.id]}" aria-label="${esc(s.name)}"></button></div>`).join('')}
+
+      <p class="dsec">Blocked domains</p>
+      <p class="msub" style="margin:0">Nothing from these is retrieved, ranked or cited. Use it to hold the
+        answer to your own governance rather than ours.</p>
+      <div class="blocked">${S.blocked.map(b=>`<span class="btag">${ico('block',12)} ${esc(b)}
+        <button data-unblock="${esc(b)}" aria-label="Unblock ${esc(b)}">${ico('x',11)}</button></span>`).join('')
+        || '<span class="emptyq">Nothing blocked.</span>'}</div>
+    </div>
+    <div class="mfoot"><span class="mgrow">${enabledCount()} of ${SOURCE_SETS.length} sets enabled</span>
+      <button class="btn pri" data-act="closemodal">Done</button></div>
+  </div></div>`;
+}
+function aboutModal(){
+  return `<div class="scrim" data-act="closemodal"><div class="modal" role="dialog" aria-modal="true" aria-label="How this works">
+    <div class="mhead"><div><div class="mtitle">How an answer is built</div>
+      <div class="msub">Six steps, in this order, every time.</div></div>
+      <button class="dclose" data-act="closemodal" aria-label="Close">${ico('x',15)}</button></div>
+    <div class="mbody">
+      ${[['Interpret','Your question is read against your specialty setting and region, which decides which guideline stack is searched first.'],
+         ['Search','Only the source sets you have enabled are queried. Blocked domains are excluded before ranking, not filtered out after.'],
+         ['Re-rank','Results are re-ordered by source tier and by how directly they answer the question asked, rather than by keyword overlap.'],
+         ['Screen','Sources that do not apply are dropped with a stated reason, and you can read the whole list, kept and dropped.'],
+         ['Write','The answer is composed with a named citation on each statement, so the source is legible before you click it.'],
+         ['Check','Every citation is re-read against the passage it points to. A statement that cannot be grounded is removed before you see it.']]
+        .map((s,i)=>`<div class="togrow"><span class="qav" style="margin:0">${i+1}</span>
+          <span class="tg"><b style="color:var(--ink)">${s[0]}</b><small>${s[1]}</small></span></div>`).join('')}
+      <div class="dnote">${ico('info',13)}<span>This is a prototype: the pipeline above is real in shape and
+        simulated in substance. Guideline bodies, document names and source types are real; every figure,
+        date and quoted excerpt is illustrative.</span></div>
+    </div></div></div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Running a question
+   ══════════════════════════════════════════════════════════════ */
+function ask(text){
+  const q=(text||'').trim(); if(!q) return;
+  if(stream || (S.turns.length && ['search','rank','write','verify'].indexOf(S.turns[S.turns.length-1].phase)>=0)) return;
+  if(S.view!=='thread') enterThread();
+  closeDrawer();
+  const i = S.turns.length;
+  S.turns.push({q, key:route(q), phase:'search', refsOpen:true, vote:null, saved:false, doc:S.attached});
+  if(S.history.indexOf(q)<0) S.history.unshift(q);
+  S.attached = null;
+  renderNav();
+  $('#composerslot').insertAdjacentHTML('beforebegin', turnHTML(i, S.turns[i]));
+  renderComposer();
+  stuck = true;
+  $('#turn-'+i).scrollIntoView({block:'start'});
+  runPipeline(i);
+}
+
+function runPipeline(i){
+  const a=A(i), t=S.turns[i];
+  const kept = a.read.filter(r=>r.keep).length;
+  const steps = [
+    [700,  `Reading your question against <b>${esc(S.specialty)}</b>`],
+    [850,  `Searching <b>${enabledCount()} source sets</b>, ranked for Ireland`]
+  ];
+  // the specialty setting is not decoration: when the question sits outside it,
+  // say which stack got pulled in rather than silently reordering
+  if(a.specialty !== S.specialty)
+    steps.push([800, `Question reads as <b>${esc(a.specialty)}</b> — that guidance ranked in alongside ${esc(S.specialty)}`]);
+  steps.push(
+    [900,  `Read <b>${a.read.length} references</b>`, ()=>renderReadList(i,false)],
+    [950,  `Re-ranking by source tier and how directly each answers the question`],
+    [700,  `Kept <b>${kept}</b>, dropped <b>${a.read.length-kept}</b> with a stated reason`, ()=>{ t.phase='rank'; renderReadList(i,true); }]
+  );
+  let n=0;
+  const next = ()=>{
+    if(t.phase==='stopped') return;
+    if(n>=steps.length){ t.phase='write'; startWrite(i); return; }
+    const [ms, html, after] = steps[n++];
+    setPipe(i, html, true);
+    if(after) after();
+    say(html.replace(/<[^>]+>/g,''));
+    follow();
+    later(next, ms);
+  };
+  next();
 }
 
 function goHome(){
-  clearTimers();
-  if(stream && stream.timer) clearTimeout(stream.timer);
-  stream = null;
-  S.view = 'home'; S.phase = 'idle'; S.thread = []; S.draft = ''; S.halted = false;
-  stuck = true; jumpBtn.hidden = true;
+  clearTimers(); killCaret();
+  if(stream&&stream.timer) clearTimeout(stream.timer);
+  stream=null; S.turns=[]; S.view='home'; S.draft=''; S.attached=null; S.menuOpen=null;
+  closeDrawer(); stuck=true; jumpBtn.hidden=true;
   renderNav(); renderTop(); renderHome();
 }
 
-/* — scrolling: follow the stream, but never fight the reader ——— */
-function nearBottom(){ return stage.scrollHeight - stage.scrollTop - stage.clientHeight < 120; }
-let stuck = true;
-function jumpVisible(){
-  // only while an answer is actually forming — never on the home screen
-  return !stuck && S.view === 'thread' && S.phase !== 'done' && S.phase !== 'idle' && !S.halted;
-}
-function follow(){
-  if(stuck && !reduced()) stage.scrollTop = stage.scrollHeight;
-  jumpBtn.hidden = !jumpVisible();
-}
-stage.addEventListener('scroll', ()=>{
-  stuck = nearBottom();
-  jumpBtn.hidden = !jumpVisible();
-});
-jumpBtn.addEventListener('click', ()=>{ stuck = true; stage.scrollTop = stage.scrollHeight; jumpBtn.hidden = true; });
+/* — scroll —————————————————————————————————————————— */
+const nearBottom = ()=> stage.scrollHeight - stage.scrollTop - stage.clientHeight < 130;
+function running(){ const t=S.turns[S.turns.length-1]; return !!t && ['search','rank','write','verify'].indexOf(t.phase)>=0; }
+function jumpVisible(){ return !stuck && S.view==='thread' && running(); }
+function follow(){ if(stuck && !reduced()) stage.scrollTop = stage.scrollHeight; jumpBtn.hidden = !jumpVisible(); }
+stage.addEventListener('scroll', ()=>{ stuck = nearBottom(); jumpBtn.hidden = !jumpVisible(); });
+jumpBtn.addEventListener('click', ()=>{ stuck=true; stage.scrollTop=stage.scrollHeight; jumpBtn.hidden=true; });
 
 /* ══════════════════════════════════════════════════════════════
-   10. Actions
+   Export
    ══════════════════════════════════════════════════════════════ */
-function plainText(){
-  const a = A();
-  const lines = ['Q: ' + S.q, '', 'BOTTOM LINE', a.bottom.replace(/\*\*/g,'')];
+function plain(i, forMd){
+  const a=A(i), t=S.turns[i], B=forMd?'**':'';
+  const strip = s => s.replace(/\*\*/g, B);
+  const L=[];
+  L.push(forMd?('# '+t.q):('Q: '+t.q), '');
+  L.push(strip(a.lead));
   a.body.forEach(b=>{
-    const x = b.x.replace(/\*\*/g,'');
-    if(b.t === 'h') lines.push('', x.toUpperCase());
-    else if(b.t === 'p') lines.push('', x);
-    else lines.push('', (b.t === 'warn' ? 'NOTE: ' : 'CAUTION: ') + x);
+    if(b.t==='h') L.push('', forMd?('## '+b.x):b.x.toUpperCase());
+    else if(b.t==='p') L.push('', strip(b.x));
+    else if(b.t==='ul'){ L.push(''); b.items.forEach(x=>L.push('- '+strip(x))); }
+    else L.push('', (b.t==='warn'?'CAUTION: ':'NOTE: ')+strip(b.x));
   });
-  lines.push('', 'SOURCES');
-  a.sources.forEach(s=>lines.push(`[${s.n}] ${s.org}. ${s.t}. ${s.d}. Tier ${s.tier}.`));
-  lines.push('', 'Assembled by MedNav Evidence on ' + STAMP + '. Figures illustrative — verify against each cited document.');
-  return lines.join('\n');
+  L.push('', forMd?'## References':'REFERENCES');
+  citedTags(a).forEach(tag=>{
+    const r=a.refs[tag];
+    L.push(`[${tag}] ${r.publisher}. ${r.title}. ${r.type}, ${r.date}. ${r.url}`);
+  });
+  L.push('', `Assembled by MedNav Evidence on ${STAMP}, specialty setting: ${S.specialty}, preset: ${presetName()}.`,
+            'Figures are illustrative — verify each against the cited document. Not a treatment decision.');
+  return L.join('\n');
 }
-function refList(){
-  return A().sources.map(s=>`[${s.n}] ${s.org}. ${s.t}. ${s.d}. Tier ${s.tier}. Accessed ${STAMP}.`).join('\n');
+function refsOnly(i){
+  const a=A(i);
+  return citedTags(a).map(tag=>{
+    const r=a.refs[tag];
+    return `[${tag}] ${r.publisher}. ${r.title}. ${r.type}, ${r.date}. ${r.url}. Accessed ${STAMP}.`;
+  }).join('\n');
 }
-function copy(text, msg){
-  const done = ()=>toast(msg);
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(done, ()=>fallbackCopy(text, done));
-  } else fallbackCopy(text, done);
+function copy(text,msg){
+  const ok=()=>toast(msg);
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok,()=>fb(text,ok));
+  else fb(text,ok);
 }
-function fallbackCopy(text, done){
-  const ta = document.createElement('textarea');
-  ta.value = text; ta.setAttribute('readonly',''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+function fb(text,ok){
+  const ta=document.createElement('textarea');
+  ta.value=text; ta.setAttribute('readonly',''); ta.style.cssText='position:fixed;opacity:0';
   document.body.appendChild(ta); ta.select();
-  try{ document.execCommand('copy'); done(); }catch(e){ toast('Copy failed — select the text manually'); }
+  try{ document.execCommand('copy'); ok(); }catch(e){ toast('Copy failed — select the text manually'); }
   ta.remove();
 }
-
-function highlightCite(n){
-  $$('.citemark.hot').forEach(e=>e.classList.remove('hot'));
-  $$('.src.hot').forEach(e=>e.classList.remove('hot'));
-  $$(`.citemark[data-cite="${n}"]`).forEach(e=>e.classList.add('hot'));
-  const row = $('#src-' + n);
-  if(row){
-    row.classList.add('hot');
-    stuck = false;
-    row.scrollIntoView({block:'center', behavior: reduced() ? 'auto' : 'smooth'});
-  }
-  S.hot = n;
+function download(i){
+  try{
+    const blob = new Blob([plain(i,true)], {type:'text/markdown'});
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href=url; a.download='evidence-answer.md'; document.body.appendChild(a); a.click();
+    a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 1000);
+    toast('Downloaded evidence-answer.md');
+  }catch(e){ copy(plain(i,true),'Download blocked here — copied the Markdown instead'); }
 }
 
 /* ══════════════════════════════════════════════════════════════
-   11. Wiring
+   Wiring
    ══════════════════════════════════════════════════════════════ */
-function ask(text){
-  const q = (text || '').trim();
-  if(!q) return;
-  if(S.view === 'thread' && S.phase === 'done') S.thread.push({q:S.q, key:S.key});
-  startRun(q, false);
-}
-
 document.addEventListener('click', e=>{
-  const t = e.target.closest('button'); if(!t) return;
+  const scrim = e.target.classList && e.target.classList.contains('scrim');
+  if(scrim){ S.modal=null; renderModal(); return; }
+  const b = e.target.closest('button');
+  if(S.menuOpen!==null && !e.target.closest('.mpop') && !(b && b.dataset.act==='menu')){
+    const i=S.menuOpen; S.menuOpen=null; renderActs(i);
+  }
+  if(!b) return;
 
-  if(t.id === 'themebtn'){
-    const dark = document.documentElement.dataset.theme === 'dark';
-    setTheme(dark ? 'light' : 'dark'); return;
-  }
-  if(t.id === 'burger'){ S.sideOpen = !S.sideOpen; $('#side').classList.toggle('open', S.sideOpen); return; }
-  if(t.id === 'newsearch'){ goHome(); return; }
-  if(t.id === 'policybtn'){
-    toast('Tier 1: national or specialty guidance. Tier 2: peer-reviewed synthesis.'); return;
-  }
-  if(t.id === 'scopebtn'){
-    const i = SCOPES.findIndex(s=>s.id === S.scope);
-    S.scope = SCOPES[(i+1) % SCOPES.length].id;
-    renderTop(); if(S.view === 'thread') fillMeta(); else renderHome();
+  if(b.id==='themebtn'){ setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'); return; }
+  if(b.id==='burger'){ S.sideOpen=!S.sideOpen; $('#side').classList.toggle('open',S.sideOpen); return; }
+  if(b.id==='newq'){ goHome(); return; }
+  if(b.id==='aboutbtn'){ S.modal='about'; renderModal(); return; }
+
+  const open=b.dataset.open;
+  if(open){ S.modal=open; specQuery=''; renderModal(); S.sideOpen=false; $('#side').classList.remove('open'); return; }
+  if(b.dataset.spec){ S.specialty=b.dataset.spec; S.modal=null; renderModal(); renderTop(); renderNav();
+    if(S.view==='home') renderHome(); else renderComposer();
+    toast('Specialty set to '+S.specialty+'. The next answer is ranked for it.'); return; }
+  if(b.dataset.preset){ S.preset=b.dataset.preset; renderModal(); renderTop(); return; }
+  if(b.dataset.togSrc){ const id=b.dataset.togSrc; S.sources[id]=!S.sources[id]; renderModal(); renderTop();
+    if(S.view==='home') renderHome(); return; }
+  if(b.dataset.unblock){ S.blocked=S.blocked.filter(x=>x!==b.dataset.unblock); renderModal(); return; }
+  if(b.dataset.ex){ ask(b.dataset.ex); return; }
+  if(b.dataset.hist!==undefined && b.dataset.hist!==''){ ask(S.history[+b.dataset.hist]);
+    S.sideOpen=false; $('#side').classList.remove('open'); return; }
+  if(b.dataset.tog!==undefined && b.dataset.tog!==''){ const i=+b.dataset.tog;
+    S.turns[i].refsOpen=!S.turns[i].refsOpen; pipeDone(i); renderReadList(i,true); return; }
+  if(b.dataset.tag && b.classList.contains('cite')){ openSource(+b.dataset.turn, b.dataset.tag); return; }
+  if(b.dataset.src){ openSource(+b.dataset.turn, b.dataset.src); return; }
+
+  const act=b.dataset.act, i=b.dataset.turn!==undefined?+b.dataset.turn:-1;
+  if(act==='closemodal'){ S.modal=null; renderModal(); return; }
+  if(act==='closedrawer'){ closeDrawer(); return; }
+  if(act==='openext'){ toast('Opening '+b.dataset.url+' is not wired in this prototype'); return; }
+  if(act==='jumpclaim'){
+    const c=$(`#turn-${b.dataset.turn} .cite[data-tag="${b.dataset.tag}"]`);
+    if(c){ stuck=false; c.scrollIntoView({block:'center',behavior:reduced()?'auto':'smooth'}); }
     return;
   }
-  if(t.dataset.scope){ S.scope = t.dataset.scope; renderTop(); renderHome(); return; }
-  if(t.dataset.ex){ ask(t.dataset.ex); return; }
-  if(t.dataset.follow){ ask(t.dataset.follow); return; }
-  if(t.dataset.hist){
-    const h = S.history[+t.dataset.hist];
-    S.thread = []; startRun(h.q, true); S.sideOpen = false; $('#side').classList.remove('open'); return;
-  }
-  if(t.dataset.prior){
-    const p = S.thread[+t.dataset.prior];
-    S.thread = S.thread.slice(0, +t.dataset.prior);
-    startRun(p.q, true); return;
-  }
-  if(t.id === 'sendbtn'){ ask($('#ask') ? $('#ask').value : ''); return; }
-  if(t.id === 'sendbtn2'){ ask($('#ask2') ? $('#ask2').value : ''); return; }
-  if(t.id === 'stopbtn'){ haltStream(); return; }
-  if(t.id === 'ctxbtn'){ t.classList.toggle('on'); toast('Patient context stays on this device'); return; }
-  if(t.id === 'retrtoggle'){ S.retrOpen = !S.retrOpen; fillRetr(); return; }
-  if(t.dataset.cite){ highlightCite(t.dataset.cite); return; }
-  if(t.dataset.src){ highlightCite(t.dataset.src); toast('Opening the source is not wired in this prototype'); return; }
-
-  const act = t.dataset.act;
-  if(act === 'save'){ S.saved = !S.saved; fillActions(); toast(S.saved ? 'Saved to your answers' : 'Removed'); return; }
-  if(act === 'copy'){ copy(plainText(), 'Answer copied with its citations'); return; }
-  if(act === 'cite'){ copy(refList(), 'Reference list copied'); return; }
-  if(act === 'up' || act === 'down'){
-    S.vote = S.vote === act ? null : act; fillActions();
-    if(S.vote === 'down') toast('Logged. Tell us which claim was wrong and we will re-grade the source.');
-    else if(S.vote === 'up') toast('Logged.');
+  if(act==='send'){ const ta=$('#'+b.dataset.for); if(ta) ask(ta.value); return; }
+  if(act==='stop'){ stopRun(); return; }
+  if(act==='attach'){ const f=b.closest('.ask').querySelector('input[type=file]'); if(f) f.click(); return; }
+  if(act==='unattach'){ S.attached=null; if(S.view==='home') renderHome(); else renderComposer(); return; }
+  if(act==='menu'){ S.menuOpen = S.menuOpen===i?null:i; renderActs(i); return; }
+  if(act==='save'){ S.turns[i].saved=!S.turns[i].saved; renderActs(i);
+    toast(S.turns[i].saved?'Saved to your answers':'Removed'); return; }
+  if(act==='copy'){ copy(plain(i,false),'Answer copied with its citations'); return; }
+  if(act==='refs'){ S.menuOpen=null; renderActs(i); copy(refsOnly(i),'Reference list copied'); return; }
+  if(act==='dl'){ S.menuOpen=null; renderActs(i); download(i); return; }
+  if(act==='print'){ S.menuOpen=null; renderActs(i); setTimeout(()=>window.print(),60); return; }
+  if(act==='session'){ toast('Linking to a patient session is not wired in this prototype'); return; }
+  if(act==='cpd'){ toast('Logged 5 minutes of self-directed CPD against this question'); return; }
+  if(act==='up'||act==='down'){
+    const t=S.turns[i]; t.vote = t.vote===act?null:act; renderActs(i);
+    if(t.vote==='down') toast('Logged. Tell us which statement was wrong and we re-check it against its source.');
+    else if(t.vote==='up') toast('Logged.');
     return;
   }
 });
 
 document.addEventListener('input', e=>{
-  if(e.target.id === 'ask'){ S.draft = e.target.value; autosize(e.target); const b = $('#sendbtn'); if(b) b.disabled = !S.draft.trim(); }
-  if(e.target.id === 'ask2'){ autosize(e.target); const b = $('#sendbtn2'); if(b) b.disabled = !e.target.value.trim(); }
-});
-
-document.addEventListener('keydown', e=>{
-  const meta = e.metaKey || e.ctrlKey;
-  if(meta && e.key.toLowerCase() === 'k'){ e.preventDefault(); goHome(); return; }
-  if(meta && e.key === 'Enter'){
-    e.preventDefault();
-    if(S.view === 'home') ask($('#ask') ? $('#ask').value : '');
-    else if($('#ask2')) ask($('#ask2').value);
-    return;
+  const t=e.target;
+  if(t.id==='specq'){ specQuery=t.value; renderModal(); return; }
+  if(t.tagName==='TEXTAREA' && t.closest('.ask')){
+    if(t.id==='ask') S.draft=t.value;
+    autosize(t); syncSend(t);
   }
-  if(e.key === 'Escape'){
-    if(S.sideOpen){ S.sideOpen = false; $('#side').classList.remove('open'); }
-    else if(S.view === 'thread' && S.phase !== 'done' && !S.halted) haltStream();
+});
+document.addEventListener('change', e=>{
+  if(e.target.type==='file' && e.target.files && e.target.files[0]){
+    S.attached = e.target.files[0].name;          // the name only — nothing is read or uploaded
+    if(S.view==='home') renderHome(); else renderComposer();
+    toast('Attached. The next answer is read against it.');
+  }
+});
+document.addEventListener('keydown', e=>{
+  const meta = e.metaKey||e.ctrlKey;
+  if(meta && e.key.toLowerCase()==='k'){ e.preventDefault(); goHome(); return; }
+  if(meta && e.key==='Enter'){
+    e.preventDefault();
+    const ta = $('#ask2') || $('#ask'); if(ta) ask(ta.value); return;
+  }
+  if(e.key==='Escape'){
+    if(S.modal){ S.modal=null; renderModal(); }
+    else if(drawer.classList.contains('open')) closeDrawer();
+    else if(S.sideOpen){ S.sideOpen=false; $('#side').classList.remove('open'); }
+    else if(running()) stopRun();
   }
 });
 
 /* ══════════════════════════════════════════════════════════════
-   12. Theme and boot
+   Theme and boot
    ══════════════════════════════════════════════════════════════ */
-function setTheme(mode){
-  document.documentElement.dataset.theme = mode;
-  try{ localStorage.setItem('mednav-evidence-theme', mode); }catch(err){}
+function setTheme(m){
+  document.documentElement.dataset.theme=m;
+  try{ localStorage.setItem('mednav-evidence-theme',m); }catch(err){}
   renderTop();
 }
 (function boot(){
-  let saved = null;
-  try{ saved = localStorage.getItem('mednav-evidence-theme'); }catch(err){}
-  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  document.documentElement.dataset.theme = saved || (prefersDark ? 'dark' : 'light');
+  let saved=null; try{ saved=localStorage.getItem('mednav-evidence-theme'); }catch(err){}
+  const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.dataset.theme = saved || (dark?'dark':'light');
   renderNav(); renderTop(); renderHome();
 })();
 })();

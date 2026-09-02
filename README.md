@@ -16,7 +16,8 @@ Static marketing site for MedNav, the Irish medical career navigation platform.
 | `tools/index.html` | Career Tools | One profile driving seven live tool cards |
 | `onboarding/index.html` | Onboarding | Seven steps, split brand panel |
 | `app/index.html` | Dashboard (signed in) | App shell, nine views over one record |
-| `evidence/index.html` | Evidence — clinical answer engine | App shell, streamed answer over a retrieval funnel |
+| `evidence/index.html` | Evidence v2 — clinical answer engine | Reading column, source drawer, named citations |
+| `evidence/v1.html` | Evidence v1 (superseded) | Card stack over a retrieval funnel |
 
 Each page is a single self-contained file. Fonts load remotely — Sora and Inter
 from jsDelivr for the site, Instrument Sans and Instrument Serif from Google
@@ -221,67 +222,85 @@ inherited it, so the fix is applied in all six files.
 ## Evidence
 
 `evidence/index.html` is a working clinical answer engine: ask a question, watch
-the answer get assembled, read it with every claim cited to a named guideline.
+the answer get assembled, read it with every statement carrying the guideline it
+came from and every citation one click from the passage it rests on.
 
 It is the one page not in the homepage's design language. It runs on its own
 palette and typeface — the lime and off-white system, Instrument Sans and
 Instrument Serif — because it is a tool used inside a consultation rather than a
-page read before one. It is self-contained like every other page here: one file,
-no build step, no server.
+page read before one. Self-contained like every other page here: one file, no
+build step, no server.
 
-### The pipeline is the product
+### v2, and why v1 is still in the repo
 
-Most answer tools show you prose and hide the retrieval. This one shows the
-retrieval first, in the order it happens, because the reason to trust an answer
-is what it read and what it refused to read:
+`evidence/v1.html` is the first pass and is kept for comparison. It was a stack
+of bordered cards with numbered `[1]` citations and a lot of invented apparatus —
+a PICO decomposition, an evidence ledger, a conflict panel. v2 was rebuilt after
+reading how the category's tools actually behave, and the differences are the
+point:
 
-1. **How the question was read** — the question decomposed into population,
-   intervention, comparator and outcome, so you can see immediately whether it
-   was understood.
-2. **The funnel** — every candidate document, then the same list re-rendered with
-   what was kept and, for everything dropped, the reason it was dropped. Nothing
-   disappears silently.
-3. **The evidence ledger** — four numbers that bound how much weight the answer
-   can carry: how much of it is Tier 1, how old the oldest cited document is,
-   whether the sources agree, and the confidence that falls out of those three.
-4. **The outline** — the answer's section structure, drawn before a single word
-   of prose arrives. You know the shape of what is coming while it is still
-   being written.
-5. **The answer** — bottom line first, then sections, streamed a word at a time
-   with citation markers landing as each claim is made. Clicking a marker jumps
-   to the source.
+| | v1 | v2 |
+| --- | --- | --- |
+| Citations | numbered `[1]` | **named** — `[NICE]`, `[Cochrane]`, `[HSE]` |
+| Verification | a reference list | **source drawer** with the cited passage, highlighted |
+| Retrieval control | four scope chips | **specialty setting** and full **source control** |
+| Grounding | asserted | a visible **check pass** over every citation |
+| Shape | card stack | one reading column |
+| Output | copy | copy, Markdown, print to PDF, session link, CPD |
 
-### The two blocks that are ours
+A named citation is legible before you click it. A clinician reads `[Cochrane]`
+and `[HSE]` and already knows what weight the claim carries; `[3]` and `[5]`
+tell them nothing until they scroll. That single change does more for the page
+than everything v1 invented.
 
-**Where the sources disagree** is a first-class block, not a footnote. When two
-guideline bodies take different positions the answer names both, states each
-position in its own terms, and then says where that leaves you. An answer that
-smooths over a real disagreement between NICE and the ESC is worse than no
-answer, because it hides the one fact that changes the decision.
+### The pipeline, in the order it runs
 
-**What would change this answer** lists the specific findings that move the
-patient out of the answer's scope. It is the part a doctor actually reads
-second: not what the guidance says for this patient, but at what point this
-patient stops being that patient.
+1. **Interpret** — the question is read against your specialty setting. When the
+   question sits outside it, the pipeline says which other stack it pulled in
+   rather than silently reordering.
+2. **Search** — only the source sets you have enabled, ranked for Ireland first.
+3. **Re-rank** — by source tier and by how directly each document answers the
+   question asked, not by keyword overlap.
+4. **Screen** — everything dropped carries its reason, and the whole list stays
+   readable behind one toggle: read 11, kept 6.
+5. **Write** — the answer streams a word at a time, direct answer first, with a
+   named citation landing on each statement as it is made.
+6. **Check** — every citation is walked against the passage it points to before
+   the answer is called finished.
+
+### The source drawer
+
+Clicking any citation, inline or in the reference list, opens the source beside
+the answer: publisher, type, date, region, the passage the claim rests on with
+the grounding sentence highlighted, and every other statement in the answer that
+cites the same document. That last list is the one that catches a bad answer —
+if a source is carrying more claims than it can bear, you see it at a glance.
+
+### Source control
+
+The evidence base is the clinician's to set, not ours. A ranking preset
+(guidelines first, balanced, primary evidence first), per-set switches for HSE,
+ICGP, NICE, Cochrane, HPRA, indexed journals, international guidance and your
+own uploaded Practice Library, and a domain blocklist applied before ranking
+rather than as a filter afterwards.
 
 ### The streaming is deliberate
 
-Words arrive on a delay budget, not a fixed tick — longer at a full stop, a
-little longer at a comma, longest at a citation marker, because that is where a
-reader's eye rests. Jitter is derived from the token index rather than random,
-so two runs of the same answer look identical. Under `prefers-reduced-motion`
-the whole sequence resolves immediately to the finished answer.
+Words arrive on a delay budget, not a fixed tick — longer at a full stop, longer
+at a comma, longest at a citation, because that is where a reader's eye rests.
+Jitter is derived from the token index rather than random, so two runs of the
+same answer look identical. Under `prefers-reduced-motion` the whole sequence
+resolves immediately to the finished answer. Stopping mid-answer keeps what was
+written, and lists only the references that part actually cited.
 
 ### What is real on this page, and what is not
 
-Guideline bodies, document names, and the shape of each disagreement are real.
-**Every dose, threshold, percentage, score cut-off and date is illustrative** and
-must be replaced with each body's published values before clinical use.
+Guideline bodies, document names and source types are real. **Every dose,
+threshold, percentage, date and quoted excerpt is illustrative** and must be
+replaced with each body's published text before clinical use. The excerpts in
+the source drawer are stand-ins written to be plausible, not transcriptions.
 
 Three questions are wired end to end — acute otitis media in a young child, a
 primary prevention statin decision, and new atrial fibrillation at routine
-review. They were chosen to exercise different parts of the structure: one where
-the sources disagree about *when* to treat, one where they disagree about *the
-threshold*, and one where they agree completely and the conflict block correctly
-does not appear. Anything else routes to a fallback that says so rather than
-inventing an answer.
+review. Anything else routes to a fallback that says so rather than inventing an
+answer.
