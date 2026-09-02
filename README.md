@@ -183,6 +183,41 @@ overflowed the header by up to 39 px. The breakpoint that swaps in the burger
 was 960 px and is now 1000 px. This originated in the homepage and every page
 inherited it, so the fix is applied in all six files.
 
+## CarZone storefront (`carzone/index.html`)
+
+Separate from MedNav and unrelated to it: a self-contained demo storefront for
+CarZone, a Kuwaiti auto-parts retailer. Same house rule as the rest of the
+repo, one file, no build step, opens from disk. Chakra Petch, Barlow, IBM Plex
+Mono and IBM Plex Sans Arabic load from jsDelivr; GSAP loads after first paint
+and the page renders fully without it.
+
+It is a hash-routed single-page app with thirteen views (home, catalogue,
+product, compare, fitting, bundles, guides, guide, garage, account, help,
+checkout, tracking). The whole thing runs off one idea: pick your car once, and
+every fitment verdict, labour figure and installed total on the site is
+computed from it. The ~520-product catalogue, prices, ratings and reviews are
+generated deterministically at load from a seeded PRNG, so the same SKU always
+produces the same numbers. State (car, garage, cart, comparison, orders) lives
+in `localStorage` under `carzone.v2`. English and Arabic, with RTL, and a
+light/dark toggle.
+
+Three fixes were made against the source it was recreated from, all of which
+stopped the page working:
+
+- `wireCheckout` was missing a closing parenthesis on the payment-radio
+  handler. That is a parse error, so the checkout and tracking views were never
+  defined and the router threw on load, leaving a blank page.
+- The hero headline used `class="split"`, which also matches the two-column
+  grid utility in the stylesheet, squeezing the headline into half the column.
+  It is now `splitch`, matched by the same name in the GSAP text splitter.
+- Three `e.target.closest?('.sel'):null` ternaries evaluated to the selector
+  string rather than an element, so the button glow, the magnetic buttons and
+  the custom cursor threw on every pointer move. They now call `closest()`.
+
+Everything in it is invented: the catalogue, the brands' prices, the reviews,
+the technician, the KNET link, the parc-verified fitment counts and the "523
+parts" figure in the hero. Nothing is a real product, price or claim.
+
 ## Placeholders to replace before launch
 
 - `https://mednav.ie` and `/og-image.png` in every page head
