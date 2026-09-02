@@ -210,6 +210,10 @@ stopped the page working:
 - The hero headline used `class="split"`, which also matches the two-column
   grid utility in the stylesheet, squeezing the headline into half the column.
   It is now `splitch`, matched by the same name in the GSAP text splitter.
+- The same naming slip left the section-heading reveal dead: it looked for
+  `.splitfx.split-done`, and nothing ever added `split-done` to those elements.
+  The `.mask{overflow:hidden}` wrappers around every heading exist only to clip
+  that animation, so the intent is unambiguous. Now `.splitfx:not(.sfx-anim)`.
 - Three `e.target.closest?('.sel'):null` ternaries evaluated to the selector
   string rather than an element, so the button glow, the magnetic buttons and
   the custom cursor threw on every pointer move. They now call `closest()`.

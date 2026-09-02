@@ -2298,7 +2298,7 @@ const txt=el.textContent;el.textContent='';
 const s=document.createElement('span');s.className='ch';
 s.innerHTML=c===' '?'&nbsp;':c;el.appendChild(s);});
 });
-$$('.splitfx.split-done:not(.sfx-anim)').forEach(el=>{
+$$('.splitfx:not(.sfx-anim)').forEach(el=>{
 el.classList.add('sfx-anim');
 const txt=el.textContent;el.textContent='';
 [...txt].forEach(c=>{
