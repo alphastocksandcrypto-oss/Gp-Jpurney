@@ -16,10 +16,13 @@ Static marketing site for MedNav, the Irish medical career navigation platform.
 | `tools/index.html` | Career Tools | One profile driving seven live tool cards |
 | `onboarding/index.html` | Onboarding | Seven steps, split brand panel |
 | `app/index.html` | Dashboard (signed in) | App shell, nine views over one record |
+| `evidence/index.html` | Evidence — clinical answer engine | App shell, streamed answer over a retrieval funnel |
 
-Each page is a single self-contained file. Fonts (Sora, Inter) load from
-jsDelivr; everything else is inline, so a page opens straight from disk with no
-build step and no server.
+Each page is a single self-contained file. Fonts load remotely — Sora and Inter
+from jsDelivr for the site, Instrument Sans and Instrument Serif from Google
+Fonts for Evidence — and everything else is inline, so a page opens straight from
+disk with no build step and no server. Every face has a real fallback stack, so a
+page with no network still lays out correctly.
 
 The layouts are deliberately different. The hub and Career Tools are read, so
 they are editorial. The three boards are operated, so each is shaped by the
@@ -213,3 +216,72 @@ inherited it, so the fix is applied in all six files.
 - Milestones and the roadmap trail now derive from the record, so a doctor who
   says they hold two exam stages is not shown a third as passed. The historical
   dates that used to be hardcoded are gone.
+
+
+## Evidence
+
+`evidence/index.html` is a working clinical answer engine: ask a question, watch
+the answer get assembled, read it with every claim cited to a named guideline.
+
+It is the one page not in the homepage's design language. It runs on its own
+palette and typeface — the lime and off-white system, Instrument Sans and
+Instrument Serif — because it is a tool used inside a consultation rather than a
+page read before one. It is self-contained like every other page here: one file,
+no build step, no server.
+
+### The pipeline is the product
+
+Most answer tools show you prose and hide the retrieval. This one shows the
+retrieval first, in the order it happens, because the reason to trust an answer
+is what it read and what it refused to read:
+
+1. **How the question was read** — the question decomposed into population,
+   intervention, comparator and outcome, so you can see immediately whether it
+   was understood.
+2. **The funnel** — every candidate document, then the same list re-rendered with
+   what was kept and, for everything dropped, the reason it was dropped. Nothing
+   disappears silently.
+3. **The evidence ledger** — four numbers that bound how much weight the answer
+   can carry: how much of it is Tier 1, how old the oldest cited document is,
+   whether the sources agree, and the confidence that falls out of those three.
+4. **The outline** — the answer's section structure, drawn before a single word
+   of prose arrives. You know the shape of what is coming while it is still
+   being written.
+5. **The answer** — bottom line first, then sections, streamed a word at a time
+   with citation markers landing as each claim is made. Clicking a marker jumps
+   to the source.
+
+### The two blocks that are ours
+
+**Where the sources disagree** is a first-class block, not a footnote. When two
+guideline bodies take different positions the answer names both, states each
+position in its own terms, and then says where that leaves you. An answer that
+smooths over a real disagreement between NICE and the ESC is worse than no
+answer, because it hides the one fact that changes the decision.
+
+**What would change this answer** lists the specific findings that move the
+patient out of the answer's scope. It is the part a doctor actually reads
+second: not what the guidance says for this patient, but at what point this
+patient stops being that patient.
+
+### The streaming is deliberate
+
+Words arrive on a delay budget, not a fixed tick — longer at a full stop, a
+little longer at a comma, longest at a citation marker, because that is where a
+reader's eye rests. Jitter is derived from the token index rather than random,
+so two runs of the same answer look identical. Under `prefers-reduced-motion`
+the whole sequence resolves immediately to the finished answer.
+
+### What is real on this page, and what is not
+
+Guideline bodies, document names, and the shape of each disagreement are real.
+**Every dose, threshold, percentage, score cut-off and date is illustrative** and
+must be replaced with each body's published values before clinical use.
+
+Three questions are wired end to end — acute otitis media in a young child, a
+primary prevention statin decision, and new atrial fibrillation at routine
+review. They were chosen to exercise different parts of the structure: one where
+the sources disagree about *when* to treat, one where they disagree about *the
+threshold*, and one where they agree completely and the conflict block correctly
+does not appear. Anything else routes to a fallback that says so rather than
+inventing an answer.
