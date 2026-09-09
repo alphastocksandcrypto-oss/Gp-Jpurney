@@ -14,7 +14,7 @@ Static marketing site for MedNav, the Irish medical career navigation platform.
 | `preparation/exams.html` | Exams index | Exam families as stage sequences |
 | `preparation/interviews.html` | Interviews index | Scoring weights on the front of the card |
 | `tools/index.html` | Career Tools | One profile driving seven live tool cards |
-| `onboarding/index.html` | Onboarding | Adaptive tree, 11 to 15 steps, split brand panel |
+| `onboarding/index.html` | Onboarding | Adaptive tree, 11 to 18 steps, split brand panel |
 | `app/index.html` | Dashboard (signed in) | App shell, nine views over one record |
 
 Each page is a single self-contained file. Fonts (Sora, Inter) load from
@@ -123,12 +123,44 @@ plain disclaimer, a Skip control, and a note that it never leaves the profile.
 Ireland's training and posts are regionalised; without it every job, locum and
 course is nationally scoped.
 
-**What we deliberately do not ask.** Nothing about previous applications, their
-outcomes or any feedback received. It is the most predictive data we could hold
-and the least defensible to store, so we work from the published scoring
-criteria instead. Referee status, career gaps and less-than-full-time interest
-are all better handled on the dashboard's gap analysis than at signup, where
-they read as interrogation.
+### Quick onboarding, then a full profile
+
+Onboarding is split in two, and the split is a sequence rather than a choice at
+the door. Everyone does the quick version and reaches a working dashboard.
+The last screen then offers three more questions, badged optional, and opting in
+grows the tree: `A.full` flips, three `when()`-gated steps become active, and
+`goId("society")` drops the doctor back into the flow, which walks forward and
+returns them to the same summary.
+
+The offer is made *after* the score, the gaps and the roadmap are already on
+screen. Asking for depth before anyone has seen anything is how you get a
+half-filled form and an abandoned signup; asking once the value is visible is a
+different question with a different answer rate. Nobody is made to answer these
+to get a dashboard, and the payload records which version was completed
+(`profile: "quick" | "full"`) so the dashboard can prompt for the rest later.
+
+The full profile currently holds:
+
+- **Specialty society**, as free text with a specialty-aware placeholder. It is
+  free text on purpose: we would rather record what a doctor actually belongs to
+  than have them pick from a register we have not verified. `SOCIETY_HINT` is
+  keyed like `EXAMS` and is deliberately sparse. **Only three specialties have a
+  hint, and even those are phrased as examples rather than asserted.** Building
+  the verified per-specialty list is a launch task, and the same rule applies as
+  everywhere else here: where we have nothing, we say nothing.
+- **References**, which is the quiet deadline. Most schemes want two from recent
+  supervisors and consultants take weeks to reply, so it feeds the dashboard's
+  gap analysis rather than the score.
+- **Clinical gaps**, asked *only* as whether one exists and whether they want
+  help framing it. There is nowhere to say why, deliberately: the reason is
+  frequently health, caring or parental leave, which would be special-category
+  data we have no business holding. A "rather not say" option is always present.
+
+**What we deliberately do not ask, anywhere.** Nothing about previous
+applications, their outcomes or any feedback received. It is the most predictive
+data we could hold and the least defensible to store, so we work from the
+published scoring criteria instead. Less-than-full-time interest is not asked
+yet either.
 
 **Presentation level is captured, and honestly.** Local and departmental
 presentations are recorded at zero points, national and international ones

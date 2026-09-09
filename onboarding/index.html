@@ -230,6 +230,14 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
 /* multi-select reuses .opt but squares the marker, because a circle promises
    that picking one unpicks the others */
 .opt.multi .tick{border-radius:6px}
+/* ============ THE OFFER TO GO DEEPER ============ */
+.more{display:flex;align-items:center;gap:13px;width:100%;text-align:left;border:1.5px dashed var(--line);background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:18px;transition:border-color .18s,background .18s}
+.more:hover{border-color:var(--mint);background:var(--mint-soft)}
+.more .ml{flex:1;min-width:0}
+.more b{display:block;font-size:13.5px;font-weight:600;color:var(--deep)}
+.more small{display:block;font-size:12px;color:var(--txt-soft);margin-top:2px}
+.more .mt{font-family:var(--fd);font-size:10.5px;font-weight:700;letter-spacing:.04em;color:var(--good-text);background:var(--mint-soft);border-radius:999px;padding:4px 10px;flex:none;white-space:nowrap}
+.more:hover .mt{background:#fff}
 /* ============ CONTEXT BANNER ============ */
 .ctx{display:flex;align-items:flex-start;gap:11px;background:var(--mint-soft);color:var(--good-text);border-radius:13px;padding:12px 15px;font-size:12.5px;font-weight:600;margin-bottom:18px;line-height:1.45}
 .ctx svg{flex:none;margin-top:1px}
@@ -518,7 +526,7 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
   /* everyone sees these two, because both score in every specialty */
   var PORTFOLIO_TAIL = [{g:"Commitment to the specialty", items:[
     {id:"conf",   n:"Attended a specialty conference", d:"Evidence you are serious about the route", p:0, dom:"commit"},
-    {id:"society",n:"Member of the specialty society", d:"Usually cheap and often forgotten",         p:0, dom:"commit"},
+    {id:"society",n:"Member of a specialty society or trainee association", d:"For example a national society for your specialty. Usually a small annual fee", p:0, dom:"commit"},
     {id:"taster", n:"Taster, elective or rotation in the specialty", d:"Strongest single piece of commitment evidence", p:0, dom:"commit"}
   ]}];
 
@@ -567,6 +575,17 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     {id:"none",  label:"No email at all",                   sub:"It is all still on your dashboard when you want it"}
   ];
 
+  /* Society hints, keyed like EXAMS. These are HINTS shown in a placeholder,
+     never facts stated to the doctor, because the register of current society
+     names has not been verified. Where we have nothing we say nothing, and the
+     free text field captures whatever they actually belong to. Building the
+     verified per-specialty list is a launch task, flagged in the README. */
+  var SOCIETY_HINT = {
+    medicine: "for example the Irish Cardiac Society or the Irish Thoracic Society",
+    surgery:  "for example the Association of Surgeons in Training",
+    em:       "for example the Irish Association for Emergency Medicine"
+  };
+
   /* recorded but not scored, because we do not have a published band for them
      and inventing one would put the onboarding total out of step with the
      dashboard. See the README on the two figures having to agree. */
@@ -600,7 +619,9 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     target:"",
     exams:{},            /* stage id -> passed, booked, no */
     ticks:{},            /* portfolio item id -> true */
-    applyWhen:""
+    applyWhen:"",
+    /* the full profile is opted into from the last screen, never forced up front */
+    full:false, societyName:"", refs:"", gap:""
   };
 
   /* ================= adaptive lookups ================= */
@@ -1110,6 +1131,76 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
       },
       cta:"Build my roadmap", valid:function(){ return !!A.applyWhen && !!A.alerts; }
     },
+    /* ---------- the full profile. Every step here is gated on A.full, which is
+       only ever set from the last screen, so nobody is made to answer these to
+       get a dashboard. They exist because a doctor who wants better advice
+       should be able to give us more to work with. ---------- */
+    {
+      id:"society", label:"Society",
+      when:function(){ return A.full; },
+      brandH:"The cheap evidence people forget.",
+      brandP:"Panels score commitment to the specialty, and membership is the least effort for the most credit. It is usually a small annual fee and it takes ten minutes.",
+      title:"Which specialty society are you in?", sub:"",
+      body:function(){
+        var hint = SOCIETY_HINT[specialtyOf()];
+        var out = ctx("A specialty society is separate from your training college. The college examines and trains you; the society is where the specialty's clinicians meet, publish and run meetings. Membership evidences a sustained interest rather than a decision made the week of the deadline.");
+        if (A.ticks.society){
+          out += '<div class="field"><label for="fSoc">Which society or association?</label>' +
+            '<input id="fSoc" autocomplete="organization" placeholder="' + esc(hint ? "Name it, " + hint : "Name the society or association") + '" value="' + esc(A.societyName) + '">' +
+            '<span class="hint">Free text, because we would rather record what you actually belong to than make you pick from a list we have not verified.</span></div>';
+        } else {
+          out += '<p class="sub">You did not tick society membership earlier, which is worth a minute of your time to fix' +
+            (hint ? ", " + esc(hint) : "") + '. If you have since joined, or you ticked it by mistake, name it here.</p>' +
+            '<div class="field"><label for="fSoc">Society or association, if you have one</label>' +
+            '<input id="fSoc" autocomplete="organization" placeholder="Leave blank if you are not a member yet" value="' + esc(A.societyName) + '"></div>';
+        }
+        return out;
+      },
+      cta:"Continue",
+      valid:function(){
+        var el = document.getElementById("fSoc");
+        A.societyName = el ? el.value.trim() : "";
+        if (A.societyName) A.ticks.society = true;
+        return true;
+      }
+    },
+    {
+      id:"refs", label:"References",
+      when:function(){ return A.full; },
+      brandH:"References are the quiet deadline.",
+      brandP:"Most applications need two, covering your recent posts, and consultants take weeks to reply. It is the item people leave until three days before closing.",
+      title:"Are your references lined up?",
+      sub:"Most schemes want two, from consultants who have supervised you recently.",
+      body:function(){
+        return optList([
+          {id:"two",  label:"Yes, two or more secured",   sub:"Named, asked and willing"},
+          {id:"one",  label:"One secured",                sub:"Halfway there"},
+          {id:"asked",label:"Asked, waiting on replies",  sub:"We will keep it on your list until it is confirmed"},
+          {id:"none", label:"Not asked anyone yet",       sub:"Worth starting now rather than at the deadline"}
+        ], "refs", A.refs);
+      },
+      cta:"Continue", valid:function(){ return !!A.refs; }
+    },
+    {
+      /* not "Your record", which the portfolio step already owns. Two identical
+         rungs in the ladder read as a bug. */
+      id:"gap", label:"Clinical gaps",
+      when:function(){ return A.full; },
+      brandH:"A gap is a question, not a problem.",
+      brandP:"Panels ask about time out of clinical practice, and the applicants who struggle are the ones who had not thought about how to answer. Knowing it is coming is most of the work.",
+      title:"Any gaps in your clinical record?",
+      sub:"Any period of six months or more out of clinical practice.",
+      body:function(){
+        return ctx("We do not ask why, and there is nowhere here to tell us. The reason is frequently health, caring or parental leave, none of which is our business and all of which we would rather not hold. We only need to know whether a panel will ask, so we can help you have an answer ready.") +
+        optList([
+          {id:"none",  label:"No gaps",                          sub:"Continuous clinical practice"},
+          {id:"ready", label:"Yes, and I know how I will explain it", sub:"Nothing further needed from us"},
+          {id:"help",  label:"Yes, and I would like help framing it", sub:"We will put it in your interview preparation"},
+          {id:"skip",  label:"Rather not say",                   sub:"Perfectly fine, we move on"}
+        ], "gap", A.gap);
+      },
+      cta:"Finish my profile", valid:function(){ return !!A.gap; }
+    },
     {
       id:"done", label:"Your roadmap",
       brandH:"That is your roadmap built.",
@@ -1142,6 +1233,15 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
             out += ctx("Before any of the above matters, your roadmap opens with " + esc(pending.join(", ")) +
               ". Those are sequenced first because nothing else can proceed without them.", true);
           }
+        }
+        /* the offer to go deeper, made once the value is already visible rather
+           than as a wall of questions before anyone has seen anything */
+        if (!A.full){
+          out += '<button class="more" data-gofull="1"><span class="ml"><b>Add the detail we could not ask for up front</b>' +
+            "<small>Society membership, references and anything a panel will ask about. Three questions, about a minute.</small></span>" +
+            '<span class="mt">OPTIONAL</span></button>';
+        } else {
+          out += ctx("Full profile complete. Your gap analysis now covers references and interview preparation as well as the scored domains.");
         }
         out += '<p class="fineprint" style="max-width:none">The scoring bands used here are illustrative in this prototype. In the real product every band comes from the criteria the college published for the current cycle, and anything not yet published is marked rather than guessed.</p>';
         return out;
@@ -1258,6 +1358,8 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
       leadership: !!A.ticks.lead_course,
       ticks: A.ticks,
       applyWhen: A.applyWhen,
+      profile: A.full ? "full" : "quick",
+      societyName: A.societyName, refs: A.refs, gap: A.gap,
       deadlinesDone:{}, customMilestones:[], activity:[]
     };
     var b64 = window.btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
@@ -1372,6 +1474,15 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
 
     var al = t.closest("[data-alerts]");
     if (al){ A.alerts = al.getAttribute("data-alerts"); render(); return; }
+
+    var gf = t.closest("[data-gofull]");
+    if (gf){ A.full = true; goId("society"); return; }
+
+    var rf = t.closest("[data-refs]");
+    if (rf){ A.refs = rf.getAttribute("data-refs"); render(); return; }
+
+    var gp = t.closest("[data-gap]");
+    if (gp){ A.gap = gp.getAttribute("data-gap"); render(); return; }
 
     var gt = t.closest("[data-goto]");
     if (gt){ goId(gt.getAttribute("data-goto")); }
