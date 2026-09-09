@@ -227,6 +227,9 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
 .tally span{font-size:12.5px;color:#a9cdc3;white-space:nowrap}
 .tally .bar{flex:1;min-width:50px;height:6px;border-radius:99px;background:rgba(255,255,255,.16);overflow:hidden}
 .tally .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--mint-2));border-radius:99px;transition:width .45s cubic-bezier(.3,.9,.3,1)}
+/* multi-select reuses .opt but squares the marker, because a circle promises
+   that picking one unpicks the others */
+.opt.multi .tick{border-radius:6px}
 /* ============ CONTEXT BANNER ============ */
 .ctx{display:flex;align-items:flex-start;gap:11px;background:var(--mint-soft);color:var(--good-text);border-radius:13px;padding:12px 15px;font-size:12.5px;font-weight:600;margin-bottom:18px;line-height:1.45}
 .ctx svg{flex:none;margin-top:1px}
@@ -472,8 +475,10 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
       {id:"teach_qual",  n:"Formal teaching qualification",    d:"Certificate, diploma or MSc in education", p:1, dom:"teaching"}
     ]},
     {g:"Research and publications", items:[
-      {id:"res_poster",  n:"Poster presentation",              d:"Local, national or international",    p:1, dom:"research"},
-      {id:"res_oral",    n:"Oral presentation",                d:"National or international meeting",   p:1, dom:"research"},
+      {id:"res_poster_l",n:"Poster presentation, local or departmental", d:"Recorded, though the criteria score the national ones", p:0, dom:"research"},
+      {id:"res_poster",  n:"Poster presentation, national or international", d:"The level is what the criteria actually ask for", p:1, dom:"research"},
+      {id:"res_oral_l",  n:"Oral presentation, local or departmental", d:"Grand rounds, journal club, departmental meeting", p:0, dom:"research"},
+      {id:"res_oral",    n:"Oral presentation, national or international", d:"Scores above a poster at the same meeting", p:1, dom:"research"},
       {id:"res_co",      n:"Peer reviewed publication, co-author", d:"PubMed indexed",                  p:1, dom:"research"},
       {id:"res_first",   n:"Peer reviewed publication, first author", d:"Worth the most of any research item", p:2, dom:"research"}
     ]},
@@ -524,6 +529,53 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
   var GRADE_LABEL = {};
   GRADES.forEach(function(g){ GRADE_LABEL[g.id] = g.label; });
 
+  /* citizenship is asked at region level only. We need to know whether a work
+     permit applies; we do not need, and so do not ask for, a nationality. */
+  var CITIZEN = [
+    {id:"ie",    label:"Irish citizen",                     sub:"No permit needed to work here"},
+    {id:"eu",    label:"EU, EEA, Swiss or UK citizen",      sub:"Free movement, no permit needed"},
+    {id:"noneu", label:"Citizen outside the EU and EEA",    sub:"A work permit or a Stamp 4 applies"}
+  ];
+
+  /* bands, not a date. Grade and years post-graduation come apart badly: five
+     years out and still at SHO grade is a different application from two. */
+  var SINCE = [
+    {id:"0",  label:"Within the last year"},
+    {id:"1",  label:"One to two years ago"},
+    {id:"3",  label:"Three to five years ago"},
+    {id:"6",  label:"Six to ten years ago"},
+    {id:"10", label:"More than ten years ago"}
+  ];
+
+  var REGIONS = [
+    {id:"east", label:"Dublin and the east"},
+    {id:"sw",   label:"Cork and the south west"},
+    {id:"west", label:"Galway and the west"},
+    {id:"mw",   label:"Limerick and the mid west"},
+    {id:"se",   label:"The south east"},
+    {id:"mid",  label:"The midlands"},
+    {id:"ne",   label:"The north east"},
+    {id:"nw",   label:"The north west"}
+  ];
+  var BASED = REGIONS.concat([{id:"outside", label:"Outside Ireland"}]);
+  var WILLING = [{id:"any", label:"Anywhere in Ireland", sub:"Show me everything"}].concat(REGIONS);
+
+  var ALERTS = [
+    {id:"route", label:"Deadlines for my route only",       sub:"Scheme openings and exam windows, nothing else"},
+    {id:"jobs",  label:"Deadlines, plus posts that match me", sub:"Adds jobs and locums where you said you would work"},
+    {id:"all",   label:"Everything",                        sub:"Also conferences and courses that carry CPD"},
+    {id:"none",  label:"No email at all",                   sub:"It is all still on your dashboard when you want it"}
+  ];
+
+  /* recorded but not scored, because we do not have a published band for them
+     and inventing one would put the onboarding total out of step with the
+     dashboard. See the README on the two figures having to agree. */
+  var PORTFOLIO_ACADEMIC = [{g:"Academic record and awards", items:[
+    {id:"prize",    n:"Prize or award",             d:"Research, clinical or teaching, at any level", p:0, dom:"academic"},
+    {id:"deg_prog", n:"Higher degree in progress",  d:"MD, PhD or a masters you are part way through", p:0, dom:"academic"},
+    {id:"deg_done", n:"Higher degree completed",    d:"MD, PhD, MSc or a postgraduate diploma",        p:0, dom:"academic"}
+  ]}];
+
   /* non-EU doctors get one extra tick group, because these are the items that
      actually block a move to Ireland and nothing else on the page captures them */
   var PORTFOLIO_IMG = [{g:"Registration evidence", items:[
@@ -537,7 +589,10 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
   var A = {
     name:"", email:"", password:"",
     grade:"",            /* student, intern, sho, reg, spr, consultant */
-    origin:"",           /* ie, eu, noneu */
+    since:"",            /* years post-graduation, banded */
+    origin:"",           /* where they qualified: ie, eu, noneu */
+    citizen:"",          /* citizenship region: ie, eu, noneu. Not the same question. */
+    basedIn:"", willing:{}, alerts:"",   /* all optional */
     route:"",            /* here, coming   asked of non-EU only */
     imc:"", permit:"",
     inTraining:"",       /* yes, no */
@@ -545,7 +600,7 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     target:"",
     exams:{},            /* stage id -> passed, booked, no */
     ticks:{},            /* portfolio item id -> true */
-    applyWhen:"", applied:""
+    applyWhen:""
   };
 
   /* ================= adaptive lookups ================= */
@@ -568,7 +623,7 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     var spec = specialtyOf();
     var out = PORTFOLIO_COMMON.slice();
     if (PORTFOLIO_EXTRA[spec]) out = out.concat(PORTFOLIO_EXTRA[spec]);
-    out = out.concat(PORTFOLIO_TAIL);
+    out = out.concat(PORTFOLIO_ACADEMIC, PORTFOLIO_TAIL);
     if (A.origin === "noneu") out = out.concat(PORTFOLIO_IMG);
     return out;
   }
@@ -651,6 +706,14 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     return '<div class="opts' + (two ? " two" : "") + '">' + items.map(function(o){
       var on = current === o.id;
       return '<button class="opt' + (on ? " on" : "") + '" data-' + attr + '="' + esc(o.id) + '" aria-pressed="' + on + '">' +
+        '<span class="tick">' + ico(I.tick, 11) + "</span><span><b>" + esc(o.label) + "</b>" +
+        (o.sub ? "<small>" + esc(o.sub) + "</small>" : "") + "</span></button>";
+    }).join("") + "</div>";
+  }
+  function multiList(items, attr, sel){
+    return '<div class="opts two">' + items.map(function(o){
+      var on = !!sel[o.id];
+      return '<button class="opt multi' + (on ? " on" : "") + '" data-' + attr + '="' + esc(o.id) + '" aria-pressed="' + on + '">' +
         '<span class="tick">' + ico(I.tick, 11) + "</span><span><b>" + esc(o.label) + "</b>" +
         (o.sub ? "<small>" + esc(o.sub) + "</small>" : "") + "</span></button>";
     }).join("") + "</div>";
@@ -796,20 +859,38 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
       brandP:"Your grade, in the words you would use yourself. Everything after this adapts to the answer, so there is no long form to wade through.",
       title:"What grade are you?",
       sub:"Just your grade for now. We ask about training and route next, because those vary independently.",
-      body:function(){ return optList(GRADES, "grade", A.grade); },
-      cta:"Continue", valid:function(){ return !!A.grade; }
+      body:function(){
+        var out = optList(GRADES, "grade", A.grade);
+        /* grade and years out come apart: five years post-graduation and still at
+           SHO grade is a different application from two, and some schemes cap on it */
+        if (A.grade && A.grade !== "student"){
+          out += '<p class="group-h">When did you graduate?</p>' + optList(SINCE, "since", A.since);
+        }
+        return out;
+      },
+      cta:"Continue",
+      valid:function(){ return !!A.grade && (A.grade === "student" || !!A.since); }
     },
     {
       id:"origin", label:"Where you qualified",
       brandH:"Where you qualified changes the ladder.",
       brandP:"Two SHOs on the same ward can have completely different routes to a training post. This is the question that separates them.",
-      title:"Where did you qualify?",
-      sub:"This decides whether we show you the Irish training route, or the registration route into it first.",
+      title:"Where did you qualify, and where are you a citizen?",
+      sub:"Two questions, because they come apart. Your degree decides the registration route; your citizenship decides whether a work permit applies.",
       body:function(){
-        return optList(ORIGINS, "origin", A.origin) +
-          (A.origin === "noneu" ? ctx("Good. The next two questions are about registration and permission to work. They are the two things that most often stall a move to Ireland, so MedNav tracks them as part of your roadmap rather than assuming they are sorted.") : "");
+        var out = '<p class="group-h">Where did you qualify?</p>' + optList(ORIGINS, "origin", A.origin);
+        out += '<p class="group-h">Where are you a citizen?</p>' + optList(CITIZEN, "citizen", A.citizen);
+        out += '<p class="fineprint">Region only. We never ask for your nationality, because the permit rules do not turn on it and we would only be storing something we do not need.</p>';
+        if (A.origin === "noneu" && A.citizen && A.citizen !== "noneu"){
+          out = out.replace('<p class="fineprint">',
+            ctx("Worth knowing: your degree puts you on the IMC international route, but as a citizen you need no work permit. Plenty of people are told they need both. You do not.") + '<p class="fineprint">');
+        } else if (A.origin === "noneu" || A.citizen === "noneu"){
+          out = out.replace('<p class="fineprint">',
+            ctx("The next few questions cover registration and permission to work. Those are the two things that most often stall a move to Ireland, so MedNav puts them on your roadmap rather than assuming they are sorted.") + '<p class="fineprint">');
+        }
+        return out;
       },
-      cta:"Continue", valid:function(){ return !!A.origin; }
+      cta:"Continue", valid:function(){ return !!A.origin && !!A.citizen; }
     },
     {
       /* --- the three IMG-only steps --- */
@@ -845,7 +926,9 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     },
     {
       id:"permit", label:"Permission to work",
-      when:function(){ return A.origin === "noneu"; },
+      /* citizenship, not the degree. An Irish citizen with a non-EU degree needs
+         the IMC international route and no permit at all. */
+      when:function(){ return A.citizen === "noneu"; },
       brandH:"Permission to work is part of the plan.",
       brandP:"Which permission you hold decides which posts you can accept and how quickly you can move between them. It belongs on the roadmap, not in a drawer.",
       title:"What is your permission to work in Ireland?",
@@ -857,6 +940,24 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
             : "");
       },
       cta:"Continue", valid:function(){ return !!A.permit; }
+    },
+    {
+      /* the only optional step. It filters what we show rather than scoring the
+         doctor, so it says so, and skipping it costs nothing. */
+      id:"location", label:"Where you work",
+      brandH:"Ireland is not one job market.",
+      brandP:"Training is regionalised and so are the posts. Without a location every job, locum and course we show you is nationally scoped, which helps nobody.",
+      title:"Where do you want to work?", sub:"",
+      body:function(){
+        var out = '<p class="sub">Optional, and you can skip it. Answer and we narrow jobs, locums and courses to places you would actually go. Skip and everything stays nationally scoped. Nothing else changes either way, and none of it affects your score.</p>';
+        out += ctx("This is the only answer here we use to filter what you see rather than to score you. It stays on your profile, it is never sent to a college or an employer, and you can clear it from your dashboard in one click.");
+        out += '<p class="group-h">Where are you based now?</p>' + optList(BASED, "based", A.basedIn, true);
+        out += '<p class="group-h">Where would you take a post? Pick as many as you like</p>' + multiList(WILLING, "willing", A.willing);
+        return out;
+      },
+      cta:"Continue", skip:"Skip this",
+      onSkip:function(){ A.basedIn = ""; A.willing = {}; },
+      valid:function(){ return true; }
     },
     {
       /* --- training branch --- */
@@ -1003,14 +1104,11 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
           {id:"later", label:"Two or more cycles away", sub:"Time to fix the structural gaps properly"},
           {id:"none",  label:"Not applying for a scheme right now", sub:"Keeping the record current anyway"}
         ], "applywhen", A.applyWhen) +
-        '<p class="group-h">Have you applied before?</p>' +
-        optList([
-          {id:"nofb", label:"Yes, and I got no useful feedback", sub:"Common, and we will work from the scoring criteria instead"},
-          {id:"fb",   label:"Yes, and I have my scores or feedback", sub:"Best case, you can upload it and we score against it"},
-          {id:"no",   label:"No, this is my first application", sub:""}
-        ], "applied", A.applied);
+        '<p class="group-h">What should we email you about?</p>' +
+        optList(ALERTS, "alerts", A.alerts) +
+        '<p class="fineprint">Change this any time from your dashboard, and every email we send carries an unsubscribe link. We do not email you anything else.</p>';
       },
-      cta:"Build my roadmap", valid:function(){ return !!A.applyWhen; }
+      cta:"Build my roadmap", valid:function(){ return !!A.applyWhen && !!A.alerts; }
     },
     {
       id:"done", label:"Your roadmap",
@@ -1090,6 +1188,7 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
       '<div class="acts">' +
         (n > 0 ? '<button class="btn btn-ghost" id="backBtn">' + ico(I.back, 15) + "Back</button>" : "") +
         '<button class="btn btn-primary" id="nextBtn">' + esc(s.cta) + ico(I.arrow, 15) + "</button>" +
+        (s.skip ? '<button class="skip" id="skipBtn">' + esc(s.skip) + "</button>" : "") +
       "</div>";
 
     stepEl.classList.remove("enter");
@@ -1100,6 +1199,11 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     var back = document.getElementById("backBtn");
     if (back) back.addEventListener("click", function(){ goIdx(idx() - 1); });
     document.getElementById("nextBtn").addEventListener("click", next);
+    var skip = document.getElementById("skipBtn");
+    if (skip) skip.addEventListener("click", function(){
+      if (s.onSkip) s.onSkip();
+      goIdx(idx() + 1);
+    });
 
     var firstInput = stepEl.querySelector("input");
     if (firstInput) firstInput.focus(); else stepEl.focus();
@@ -1126,13 +1230,18 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
   function finish(){
     var c = examCounts(), s = schemeObj(), e = examSet();
     var teachTicks = ["teach_stud","teach_nchd","teach_course","teach_qual"].filter(function(k){ return A.ticks[k]; }).length;
+    /* scored items only. res_poster_l and res_oral_l are recorded at zero here,
+       so counting them would make the dashboard band someone up on a record
+       onboarding scored at nothing, and the two figures have to agree. */
     var resTicks   = ["res_poster","res_oral","res_co","res_first"].filter(function(k){ return A.ticks[k]; }).length;
     var payload = {
       name: A.name || "Doctor",
       grade: A.grade,
       stage: A.grade,
       stageLabel: GRADE_LABEL[A.grade] || "Doctor",
-      origin: A.origin, route: A.route, imc: A.imc, permit: A.permit,
+      since: A.since,
+      origin: A.origin, citizen: A.citizen, route: A.route, imc: A.imc, permit: A.permit,
+      basedIn: A.basedIn, willing: Object.keys(A.willing), alerts: A.alerts,
       inTraining: A.inTraining, scheme: A.scheme, schemeYear: A.schemeYear,
       specialty: A.target || (s ? s.n : ""),
       target: routeLabel(),
@@ -1148,7 +1257,7 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
       research: resTicks,
       leadership: !!A.ticks.lead_course,
       ticks: A.ticks,
-      applyWhen: A.applyWhen, applied: A.applied,
+      applyWhen: A.applyWhen,
       deadlinesDone:{}, customMilestones:[], activity:[]
     };
     var b64 = window.btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
@@ -1162,13 +1271,35 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
 
     var g = t.closest("[data-grade]");
     if (g){ A.grade = g.getAttribute("data-grade");
-      if (A.grade === "student" || A.grade === "consultant") A.inTraining = "";
+      if (A.grade === "student"){ A.inTraining = ""; A.since = ""; }
+      if (A.grade === "consultant") A.inTraining = "";
       render(); return; }
+
+    var sn = t.closest("[data-since]");
+    if (sn){ A.since = sn.getAttribute("data-since"); render(); return; }
 
     var o = t.closest("[data-origin]");
     if (o){ A.origin = o.getAttribute("data-origin");
-      if (A.origin !== "noneu"){ A.route = ""; A.imc = ""; A.permit = ""; }
+      if (A.origin !== "noneu"){ A.route = ""; A.imc = ""; }
       render(); return; }
+
+    var cz = t.closest("[data-citizen]");
+    if (cz){ A.citizen = cz.getAttribute("data-citizen");
+      if (A.citizen !== "noneu") A.permit = "";
+      render(); return; }
+
+    var bs = t.closest("[data-based]");
+    if (bs){ var bid = bs.getAttribute("data-based");
+      A.basedIn = A.basedIn === bid ? "" : bid; render(); return; }
+
+    var wl = t.closest("[data-willing]");
+    if (wl){
+      var wid = wl.getAttribute("data-willing");
+      /* "anywhere" and a named region are contradictory, so picking one drops the other */
+      if (wid === "any"){ var was = A.willing.any; A.willing = {}; if (!was) A.willing.any = true; }
+      else { delete A.willing.any; if (A.willing[wid]) delete A.willing[wid]; else A.willing[wid] = true; }
+      render(); return;
+    }
 
     var r = t.closest("[data-route]");
     if (r){ A.route = r.getAttribute("data-route"); render(); return; }
@@ -1239,8 +1370,8 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     var aw = t.closest("[data-applywhen]");
     if (aw){ A.applyWhen = aw.getAttribute("data-applywhen"); render(); return; }
 
-    var ab = t.closest("[data-applied]");
-    if (ab){ A.applied = ab.getAttribute("data-applied"); render(); return; }
+    var al = t.closest("[data-alerts]");
+    if (al){ A.alerts = al.getAttribute("data-alerts"); render(); return; }
 
     var gt = t.closest("[data-goto]");
     if (gt){ goId(gt.getAttribute("data-goto")); }

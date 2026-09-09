@@ -14,7 +14,7 @@ Static marketing site for MedNav, the Irish medical career navigation platform.
 | `preparation/exams.html` | Exams index | Exam families as stage sequences |
 | `preparation/interviews.html` | Interviews index | Scoring weights on the front of the card |
 | `tools/index.html` | Career Tools | One profile driving seven live tool cards |
-| `onboarding/index.html` | Onboarding | Adaptive tree, 10 to 14 steps, split brand panel |
+| `onboarding/index.html` | Onboarding | Adaptive tree, 11 to 15 steps, split brand panel |
 | `app/index.html` | Dashboard (signed in) | App shell, nine views over one record |
 
 Each page is a single self-contained file. Fonts (Sora, Inter) load from
@@ -77,8 +77,8 @@ not the same set for everybody.
 **It is a tree, not a form.** Every step carries a `when()` predicate and
 `activeSteps()` re-filters the list on each render, so the progress bar and the
 ladder in the brand panel show the real remaining length for *this* person. A
-final-year student answers ten steps, an Irish SHO on a scheme twelve, a non-EU
-doctor still applying to come to Ireland fourteen. Three rules shape it:
+final-year student answers eleven steps, an Irish SHO on a scheme thirteen, a
+non-EU doctor still applying to come to Ireland fifteen. Three rules shape it:
 
 1. **Grade is asked on its own.** "Where are you now" is intern, SHO,
    registrar, consultant, and nothing else. Route is a separate question,
@@ -101,12 +101,41 @@ doctor still applying to come to Ireland fourteen. Three rules shape it:
    Someone heading for orthopaedics sees MRCS Part A, MRCS Part B and FRCS,
    plus Basic Surgical Skills and ATLS. They are never shown MRCPI.
 
-Non-EU doctors get three extra steps (already here or planning to move, IMC
-registration status, permission to work) and an extra tick group covering the
-English language test, EPIC verification, the Certificate of Experience and
-references, because those are the four things that actually stall a move to
-Ireland and no other part of the product captures them. Their final screen
-leads with whichever of those is outstanding, ahead of the score.
+**Where you qualified and where you are a citizen are two questions.** The
+degree decides the registration route; the citizenship decides whether a work
+permit applies. An Irish citizen with a non-EU degree needs the IMC
+international route and no permit at all, and the flow now says so rather than
+asking them about permits they will never need. Citizenship is asked at region
+level only, because the permit rules do not turn on nationality and storing one
+would be collecting something we have no use for.
+
+Non-EU **degrees** get three extra steps (already here or planning to move, IMC
+registration status, and an extra tick group covering the English language test,
+EPIC verification, the Certificate of Experience and references), because those
+are the things that actually stall a move to Ireland and no other part of the
+product captures them. Their final screen leads with whichever of those is
+outstanding, ahead of the score. Non-EU **citizenship** adds the permit step,
+independently.
+
+**One step is optional and says so.** The location step is the only question we
+use to filter what a doctor is shown rather than to score them, so it carries a
+plain disclaimer, a Skip control, and a note that it never leaves the profile.
+Ireland's training and posts are regionalised; without it every job, locum and
+course is nationally scoped.
+
+**What we deliberately do not ask.** Nothing about previous applications, their
+outcomes or any feedback received. It is the most predictive data we could hold
+and the least defensible to store, so we work from the published scoring
+criteria instead. Referee status, career gaps and less-than-full-time interest
+are all better handled on the dashboard's gap analysis than at signup, where
+they read as interrogation.
+
+**Presentation level is captured, and honestly.** Local and departmental
+presentations are recorded at zero points, national and international ones
+score, because that is how the criteria actually read. Prizes and higher
+degrees are recorded but not scored: we do not have a published band for them,
+and inventing one would put the onboarding total out of step with the
+dashboard. The payload counts only the scored items for the same reason.
 
 Changing an earlier answer clears what it invalidates. Switching from "on a
 scheme" to "not on a scheme" drops the scheme, the year and every exam mark,
