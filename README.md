@@ -123,6 +123,14 @@ plain disclaimer, a Skip control, and a note that it never leaves the profile.
 Ireland's training and posts are regionalised; without it every job, locum and
 course is nationally scoped.
 
+**Hedging across specialties is asked, and named.** On the timing screen,
+anyone actually applying this cycle is asked whether they are applying anywhere
+else too. Answering "yes" opens a multi-select of every other target specialty,
+because knowing the breadth alone is not enough to show side-by-side deadlines;
+knowing which specialties is. It costs no extra rung in the ladder, since it
+folds into the existing timing step rather than adding one, and it is skipped
+outright for anyone who answered "not applying for a scheme right now".
+
 ### Quick onboarding, then a full profile
 
 Onboarding is split in two, and the split is a sequence rather than a choice at
@@ -312,3 +320,17 @@ inherited it, so the fix is applied in all six files.
 - Milestones and the roadmap trail now derive from the record, so a doctor who
   says they hold two exam stages is not shown a third as passed. The historical
   dates that used to be hardcoded are gone.
+- Onboarding captures `dualTrack` and `otherTargets` (hedging across
+  specialties) and `basedIn` / `willing` (location), but the dashboard does not
+  yet act on either: deadlines are not yet shown side by side for a second
+  target, and jobs and locums are not yet filtered to the chosen region. Both
+  are captured now so the data exists when that dashboard work happens.
+
+## Noted for later, deliberately not built
+
+- **Mentorship matching.** A toggle for "match me with a senior doctor in my
+  target specialty" was considered for onboarding and set aside. It is a real
+  and valuable feature, but it needs a supply of mentors and a matching
+  mechanism behind it before asking the question means anything. Worth
+  building once that exists; asking now would collect a preference nobody can
+  act on.

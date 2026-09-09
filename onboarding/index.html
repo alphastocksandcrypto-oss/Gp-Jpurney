@@ -568,6 +568,14 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
   var BASED = REGIONS.concat([{id:"outside", label:"Outside Ireland"}]);
   var WILLING = [{id:"any", label:"Anywhere in Ireland", sub:"Show me everything"}].concat(REGIONS);
 
+  /* whether they are hedging across more than one specialty this cycle. Common
+     and currently invisible: right now the whole dashboard assumes one target. */
+  var DUAL = [
+    {id:"single", label:"No, just this one",                        sub:"One target, one set of deadlines"},
+    {id:"narrow", label:"Yes, one or two similar specialties",       sub:"For example general and gastroenterology"},
+    {id:"wide",   label:"Yes, several different specialties",       sub:"Hedging widely while you decide"}
+  ];
+
   var ALERTS = [
     {id:"route", label:"Deadlines for my route only",       sub:"Scheme openings and exam windows, nothing else"},
     {id:"jobs",  label:"Deadlines, plus posts that match me", sub:"Adds jobs and locums where you said you would work"},
@@ -619,7 +627,7 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     target:"",
     exams:{},            /* stage id -> passed, booked, no */
     ticks:{},            /* portfolio item id -> true */
-    applyWhen:"",
+    applyWhen:"", dualTrack:"", otherTargets:{},
     /* the full profile is opted into from the last screen, never forced up front */
     full:false, societyName:"", refs:"", gap:""
   };
@@ -1119,17 +1127,33 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
       title:"When are you applying?",
       sub:"This sets which deadlines we alert you to and how hard we push on the gaps.",
       body:function(){
-        return optList([
+        var out = optList([
           {id:"this",  label:"The next cycle", sub:"Applying at the next opening, so the clock is short"},
           {id:"next",  label:"The cycle after next", sub:"About a year to build the record"},
           {id:"later", label:"Two or more cycles away", sub:"Time to fix the structural gaps properly"},
           {id:"none",  label:"Not applying for a scheme right now", sub:"Keeping the record current anyway"}
-        ], "applywhen", A.applyWhen) +
-        '<p class="group-h">What should we email you about?</p>' +
-        optList(ALERTS, "alerts", A.alerts) +
-        '<p class="fineprint">Change this any time from your dashboard, and every email we send carries an unsubscribe link. We do not email you anything else.</p>';
+        ], "applywhen", A.applyWhen);
+        /* hedging is moot if nobody is applying to anything right now */
+        if (A.applyWhen && A.applyWhen !== "none"){
+          out += '<p class="group-h">Are you applying anywhere else this cycle?</p>' + optList(DUAL, "dualtrack", A.dualTrack);
+          if (A.dualTrack === "narrow" || A.dualTrack === "wide"){
+            var mine = A.target || (schemeObj() ? schemeObj().n : "");
+            var others = TARGETS.filter(function(t){ return t.spec !== "undecided" && t.n !== mine; })
+              .map(function(t){ return {id:t.n, label:t.n}; });
+            out += ctx("Pick as many as apply. Your dashboard will show deadlines for all of them side by side rather than assuming this is your only route.") +
+              multiList(others, "othertarget", A.otherTargets);
+          }
+        }
+        out += '<p class="group-h">What should we email you about?</p>' +
+          optList(ALERTS, "alerts", A.alerts) +
+          '<p class="fineprint">Change this any time from your dashboard, and every email we send carries an unsubscribe link. We do not email you anything else.</p>';
+        return out;
       },
-      cta:"Build my roadmap", valid:function(){ return !!A.applyWhen && !!A.alerts; }
+      cta:"Build my roadmap",
+      valid:function(){
+        return !!A.applyWhen && !!A.alerts &&
+          (A.applyWhen === "none" || !!A.dualTrack);
+      }
     },
     /* ---------- the full profile. Every step here is gated on A.full, which is
        only ever set from the last screen, so nobody is made to answer these to
@@ -1358,6 +1382,7 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
       leadership: !!A.ticks.lead_course,
       ticks: A.ticks,
       applyWhen: A.applyWhen,
+      dualTrack: A.dualTrack || "single", otherTargets: Object.keys(A.otherTargets),
       profile: A.full ? "full" : "quick",
       societyName: A.societyName, refs: A.refs, gap: A.gap,
       deadlinesDone:{}, customMilestones:[], activity:[]
@@ -1471,6 +1496,16 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
 
     var aw = t.closest("[data-applywhen]");
     if (aw){ A.applyWhen = aw.getAttribute("data-applywhen"); render(); return; }
+
+    var dt = t.closest("[data-dualtrack]");
+    if (dt){ A.dualTrack = dt.getAttribute("data-dualtrack");
+      if (A.dualTrack !== "narrow" && A.dualTrack !== "wide") A.otherTargets = {};
+      render(); return; }
+
+    var ot = t.closest("[data-othertarget]");
+    if (ot){ var oid = ot.getAttribute("data-othertarget");
+      if (A.otherTargets[oid]) delete A.otherTargets[oid]; else A.otherTargets[oid] = true;
+      render(); return; }
 
     var al = t.closest("[data-alerts]");
     if (al){ A.alerts = al.getAttribute("data-alerts"); render(); return; }
