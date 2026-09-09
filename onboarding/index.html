@@ -321,8 +321,11 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     {id:"specialist", label:"Registered, Specialist Division",  sub:"Eligible for consultant posts"}
   ];
 
+  /* the "citizen" case used to sit here, but the permit step now only ever
+     shows to someone who already said, one screen earlier, that they are a
+     citizen outside the EU and EEA. Offering them "Irish, EU or EEA citizen"
+     as an answer contradicted what they had just told us, so it is gone. */
   var PERMITS = [
-    {id:"citizen",  label:"Irish, EU or EEA citizen",   sub:"No permit needed"},
     {id:"stamp4",   label:"Stamp 4 or spousal permission", sub:"Free to work without an employer permit"},
     {id:"critical", label:"Critical Skills Employment Permit", sub:"The usual route for doctors recruited to Ireland"},
     {id:"general",  label:"General Employment Permit",   sub:"More restrictive on changing employer"},
@@ -583,6 +586,18 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     {id:"none",  label:"No email at all",                   sub:"It is all still on your dashboard when you want it"}
   ];
 
+  /* what to lead with, not what to score. Multi select, because someone
+     sitting an exam next month and prepping for the interview after it
+     needs both, and "not sure" is exclusive with the rest the same way
+     "anywhere" is exclusive with named regions on the location step. */
+  var HELP = [
+    {id:"exams",     label:"Passing my exams",                 sub:"Prep, past papers, sitting strategy"},
+    {id:"interview", label:"Interview preparation",             sub:"Mock interviews, station practice, feedback"},
+    {id:"career",    label:"Career Tools and planning my route", sub:"Ladders, gap analysis, what to do next"},
+    {id:"jobs",      label:"Finding jobs, locums or posts",      sub:"Matching to open roles and shifts"},
+    {id:"notsure",   label:"Not sure yet, show me everything",  sub:""}
+  ];
+
   /* Society hints, keyed like EXAMS. These are HINTS shown in a placeholder,
      never facts stated to the doctor, because the register of current society
      names has not been verified. Where we have nothing we say nothing, and the
@@ -629,7 +644,8 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     ticks:{},            /* portfolio item id -> true */
     applyWhen:"", dualTrack:"", otherTargets:{},
     /* the full profile is opted into from the last screen, never forced up front */
-    full:false, societyName:"", refs:"", gap:""
+    full:false, societyName:"", refs:"", gap:"",
+    helpFocus:{}
   };
 
   /* ================= adaptive lookups ================= */
@@ -648,9 +664,32 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     return "undecided";
   }
   function examSet(){ return EXAMS[specialtyOf()] || null; }
+  /* true once someone has already got the place a shortlisting score would
+     have been competing for: a GP or HST trainee is IN the destination
+     scheme, not applying to enter it, and a consultant has no scheme ahead
+     of them at all. Everything downstream that talks about applying,
+     shortlisting or hedging across specialties checks this first. */
+  function pastEntry(){
+    if (A.grade === "consultant") return true;
+    if (A.inTraining !== "yes") return false;
+    var s = schemeObj();
+    return !!s && (s.tier === "GP" || s.tier === "HST");
+  }
+  /* still on a scheme, but one that is a step on the way to a further
+     application (BST, Core) rather than the destination itself */
+  function stillProgressing(){
+    if (A.inTraining !== "yes") return false;
+    var s = schemeObj();
+    return !!s && (s.tier === "BST" || s.tier === "Core");
+  }
   function portfolioSet(){
     var spec = specialtyOf();
     var out = PORTFOLIO_COMMON.slice();
+    /* GP does not score formal teaching the way a hospital HST scheme does.
+       Showing a tick list for a domain that carries no points at the end
+       would be exactly the generic, ungrounded question this rebuild set out
+       to remove, so the whole group is dropped rather than shown at zero. */
+    if (spec === "gp") out = out.filter(function(g){ return g.g !== "Teaching"; });
     if (PORTFOLIO_EXTRA[spec]) out = out.concat(PORTFOLIO_EXTRA[spec]);
     out = out.concat(PORTFOLIO_ACADEMIC, PORTFOLIO_TAIL);
     if (A.origin === "noneu") out = out.concat(PORTFOLIO_IMG);
@@ -701,25 +740,41 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
   }
   function pct(n, d){ return d > 0 ? Math.round(n / d * 100) : 0; }
 
+  /* the weights every specialty shares unless it has its own. Kept as a
+     single source rather than six hardcoded numbers, so a specialty that
+     needs a different balance overrides just the domains it disagrees on. */
+  var DEFAULT_WEIGHTS = {clinical:20, exams:15, auditqi:25, teaching:20, research:15, leadership:5};
+  /* GP does not score formal teaching, per portfolioSet() above, so its
+     weight has nowhere to go. Moved to audit and QI, which is the domain
+     ICGP actually weights heaviest, and to exams, since MICGP is sat
+     throughout the scheme rather than front-loaded like a hospital exam. */
+  var WEIGHTS_BY_SPEC = {
+    gp: {clinical:20, exams:25, auditqi:30, teaching:0, research:15, leadership:10}
+  };
+  function weightsFor(){ return WEIGHTS_BY_SPEC[specialtyOf()] || DEFAULT_WEIGHTS; }
+
   function domains(){
-    var ec = examCounts();
+    var ec = examCounts(), w = weightsFor();
     var months = GRADE_MONTHS[A.grade] || 0;
+    /* a domain with no weight for this specialty is left out entirely rather
+       than shown at zero, which is exactly the "asked about something that
+       does not apply" pattern this rebuild exists to remove */
     return [
-      {id:"clinical", name:"Clinical experience", weight:20, maxPts:5,
+      {id:"clinical", name:"Clinical experience", weight:w.clinical, maxPts:5,
        ready: Math.min(100, pct(months, 28)),
        pts: months >= 24 ? 5 : (months >= 12 ? 3 : 0)},
-      {id:"exams", name:"Exams and membership", weight:15, maxPts:8,
+      {id:"exams", name:"Exams and membership", weight:w.exams, maxPts:8,
        ready: pct(ec.passed, ec.total),
        pts: ec.total ? Math.round(8 * ec.passed / ec.total) : 0},
-      {id:"auditqi", name:"Audit and QI", weight:25, maxPts:domMax("auditqi"),
+      {id:"auditqi", name:"Audit and QI", weight:w.auditqi, maxPts:domMax("auditqi"),
        ready: pct(domPts("auditqi"), domMax("auditqi")), pts: domPts("auditqi")},
-      {id:"teaching", name:"Teaching", weight:20, maxPts:domMax("teaching"),
+      {id:"teaching", name:"Teaching", weight:w.teaching, maxPts:domMax("teaching"),
        ready: pct(domPts("teaching"), domMax("teaching")), pts: domPts("teaching")},
-      {id:"research", name:"Research and publications", weight:15, maxPts:domMax("research"),
+      {id:"research", name:"Research and publications", weight:w.research, maxPts:domMax("research"),
        ready: pct(domPts("research"), domMax("research")), pts: domPts("research")},
-      {id:"leadership", name:"Leadership and management", weight:5, maxPts:domMax("leadership"),
+      {id:"leadership", name:"Leadership and management", weight:w.leadership, maxPts:domMax("leadership"),
        ready: pct(domPts("leadership"), domMax("leadership")), pts: domPts("leadership")}
-    ];
+    ].filter(function(d){ return d.weight > 0; });
   }
   function readiness(){ var t = 0; domains().forEach(function(d){ t += d.ready * d.weight; }); return Math.round(t / 100); }
   function pts(){ var t = 0; domains().forEach(function(d){ t += d.pts; }); return t; }
@@ -891,14 +946,15 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
       body:function(){
         var out = optList(GRADES, "grade", A.grade);
         /* grade and years out come apart: five years post-graduation and still at
-           SHO grade is a different application from two, and some schemes cap on it */
-        if (A.grade && A.grade !== "student"){
+           SHO grade is a different application from two, and some schemes cap on it.
+           Not asked of a consultant, who has no ladder left for it to place them on. */
+        if (A.grade && A.grade !== "student" && A.grade !== "consultant"){
           out += '<p class="group-h">When did you graduate?</p>' + optList(SINCE, "since", A.since);
         }
         return out;
       },
       cta:"Continue",
-      valid:function(){ return !!A.grade && (A.grade === "student" || !!A.since); }
+      valid:function(){ return !!A.grade && (A.grade === "student" || A.grade === "consultant" || !!A.since); }
     },
     {
       id:"origin", label:"Where you qualified",
@@ -1042,13 +1098,28 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     },
     {
       id:"target", label:"Your target",
+      /* a consultant has no scheme ahead of them, so this step still runs for
+         them, just asking a different question: not what they are aiming
+         for, but what they already practise, so exams and portfolio items
+         resolve to the right specialty rather than to none at all */
       when:function(){ return A.inTraining !== "yes"; },
-      brandH:"Every specialty, one route to consultant.",
-      brandP:"Pick what you are aiming for. If you are not sure yet, say so, and MedNav shows you the comparison instead of guessing on your behalf.",
-      title:"What are you aiming for?",
-      sub:"This decides the exams you are shown, the criteria you are scored against and the deadlines you get alerted to.",
+      brandH:function(){ return A.grade === "consultant" ? "Even settled, the specialty still matters." : "Every specialty, one route to consultant."; },
+      brandP:function(){
+        return A.grade === "consultant"
+          ? "Not an application question for you, just so anything specialty specific on your dashboard, like CPD categories, points the right way."
+          : "Pick what you are aiming for. If you are not sure yet, say so, and MedNav shows you the comparison instead of guessing on your behalf.";
+      },
+      title:function(){ return A.grade === "consultant" ? "What is your specialty?" : "What are you aiming for?"; },
+      sub:function(){
+        return A.grade === "consultant"
+          ? "You are not applying to anything here. This just tells the rest of the dashboard which specialty to speak to."
+          : "This decides the exams you are shown, the criteria you are scored against and the deadlines you get alerted to.";
+      },
       body:function(){
-        var rows = TARGETS.map(function(t){
+        /* a consultant already has a specialty, so "still deciding" is not a
+           real answer for them the way it is for someone earlier on */
+        var pool = A.grade === "consultant" ? TARGETS.filter(function(t){ return t.spec !== "undecided"; }) : TARGETS;
+        var rows = pool.map(function(t){
           var g = t.spec === "undecided" ? "Still deciding"
                 : (t.spec === "surgery" ? "Surgical specialties"
                 : (t.spec === "medicine" ? "Medical specialties" : "Other specialties"));
@@ -1122,26 +1193,59 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     },
     {
       id:"timeline", label:"Your timing",
-      brandH:"When you apply changes what matters now.",
-      brandP:"With one cycle to go, the advice is what you can still finish. With three, it is what to start. Same record, different next step.",
-      title:"When are you applying?",
-      sub:"This sets which deadlines we alert you to and how hard we push on the gaps.",
+      /* asking "when are you applying" only makes sense for someone with an
+         application still ahead of them. A GP or HST trainee already holds
+         the place that question is about, and a consultant has no scheme
+         left to apply to at all, so both skip straight to email preferences.
+         A BST or Core trainee is on a scheme too, but it is a step on the way
+         to a further one, so the question still applies, reframed as what it
+         actually is: their next move, not a first one. */
+      brandH:function(){ return pastEntry() ? "Nothing left here to time." : "When you apply changes what matters now."; },
+      brandP:function(){
+        return pastEntry()
+          ? "You already hold the place this would be about, so there is no application to schedule. We just need to know what to email you."
+          : "With one cycle to go, the advice is what you can still finish. With three, it is what to start. Same record, different next step.";
+      },
+      title:function(){ return pastEntry() ? "One last thing" : "When are you applying?"; },
+      sub:function(){
+        if (pastEntry()) return "";
+        if (stillProgressing()){
+          /* name the actual next tier in this person's own specialty, never
+             a specific scheme in a different one: a medicine BST trainee
+             progresses to HST medicine, never to the GP scheme, which is
+             entered directly rather than progressed into */
+          var mySpec = specialtyOf();
+          var nextGroup = SCHEMES.filter(function(s){ return s.tier === "HST" && s.spec === mySpec; })[0];
+          return "For your application to " + (nextGroup ? nextGroup.g : "higher specialist training") + " or wherever you progress to next.";
+        }
+        return "This sets which deadlines we alert you to and how hard we push on the gaps.";
+      },
       body:function(){
-        var out = optList([
-          {id:"this",  label:"The next cycle", sub:"Applying at the next opening, so the clock is short"},
-          {id:"next",  label:"The cycle after next", sub:"About a year to build the record"},
-          {id:"later", label:"Two or more cycles away", sub:"Time to fix the structural gaps properly"},
-          {id:"none",  label:"Not applying for a scheme right now", sub:"Keeping the record current anyway"}
-        ], "applywhen", A.applyWhen);
-        /* hedging is moot if nobody is applying to anything right now */
-        if (A.applyWhen && A.applyWhen !== "none"){
-          out += '<p class="group-h">Are you applying anywhere else this cycle?</p>' + optList(DUAL, "dualtrack", A.dualTrack);
-          if (A.dualTrack === "narrow" || A.dualTrack === "wide"){
-            var mine = A.target || (schemeObj() ? schemeObj().n : "");
-            var others = TARGETS.filter(function(t){ return t.spec !== "undecided" && t.n !== mine; })
-              .map(function(t){ return {id:t.n, label:t.n}; });
-            out += ctx("Pick as many as apply. Your dashboard will show deadlines for all of them side by side rather than assuming this is your only route.") +
-              multiList(others, "othertarget", A.otherTargets);
+        var out = "";
+        if (pastEntry()){
+          out += ctx((A.grade === "consultant" ? "You are already a consultant, so nothing here is timed against an application." :
+            "You are already in " + esc(routeLabel()) + ", so there is no entry application to time.") +
+            " Your exams and portfolio still build your record for what comes after, and stay on your dashboard either way.");
+        } else {
+          if (stillProgressing()){
+            out += ctx("You are on " + esc(routeLabel()) + " now. This is about your next application, to progress from here, not about getting onto the scheme you are already on.");
+          }
+          out += optList([
+            {id:"this",  label:"The next cycle", sub:"Applying at the next opening, so the clock is short"},
+            {id:"next",  label:"The cycle after next", sub:"About a year to build the record"},
+            {id:"later", label:"Two or more cycles away", sub:"Time to fix the structural gaps properly"},
+            {id:"none",  label:"Not applying for a scheme right now", sub:"Keeping the record current anyway"}
+          ], "applywhen", A.applyWhen);
+          /* hedging is moot if nobody is applying to anything right now */
+          if (A.applyWhen && A.applyWhen !== "none"){
+            out += '<p class="group-h">Are you applying anywhere else this cycle?</p>' + optList(DUAL, "dualtrack", A.dualTrack);
+            if (A.dualTrack === "narrow" || A.dualTrack === "wide"){
+              var mine = A.target || (schemeObj() ? schemeObj().n : "");
+              var others = TARGETS.filter(function(t){ return t.spec !== "undecided" && t.n !== mine; })
+                .map(function(t){ return {id:t.n, label:t.n}; });
+              out += ctx("Pick as many as apply. Your dashboard will show deadlines for all of them side by side rather than assuming this is your only route.") +
+                multiList(others, "othertarget", A.otherTargets);
+            }
           }
         }
         out += '<p class="group-h">What should we email you about?</p>' +
@@ -1149,11 +1253,22 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
           '<p class="fineprint">Change this any time from your dashboard, and every email we send carries an unsubscribe link. We do not email you anything else.</p>';
         return out;
       },
-      cta:"Build my roadmap",
+      cta:"Continue",
       valid:function(){
+        if (pastEntry()) return !!A.alerts;
         return !!A.applyWhen && !!A.alerts &&
           (A.applyWhen === "none" || !!A.dualTrack);
       }
+    },
+    {
+      id:"focus", label:"Your priority",
+      brandH:"Not everything at once.",
+      brandP:"Every doctor here needs a different first thing. Telling us which one means your dashboard opens on that, instead of on all seven views at equal volume.",
+      title:"What do you need the most help with right now?",
+      sub:"Pick as many as apply. This changes what your dashboard leads with, nothing about your score.",
+      body:function(){ return multiList(HELP, "help", A.helpFocus); },
+      cta:"Build my roadmap",
+      valid:function(){ return Object.keys(A.helpFocus).length > 0; }
     },
     /* ---------- the full profile. Every step here is gated on A.full, which is
        only ever set from the last screen, so nobody is made to answer these to
@@ -1231,13 +1346,24 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
       brandP:"Everything from here is derived from what you just told us. Change any of it and the whole dashboard recalculates.",
       title:"Here is where you stand", sub:"",
       body:function(){
-        var ds = domains(), c = examCounts();
-        var out = '<p class="sub">Against ' + esc(routeLabel()) + " criteria, as published by " + esc(collegeOf()) +
-          ", computed from what you ticked. Nothing here is estimated.</p>";
+        var ds = domains(), c = examCounts(), arrived = pastEntry();
+        /* "shortlisting" and "readiness" both describe competing to get in.
+           Someone who already holds the place is not competing for it, so
+           the labels and the opening line change, not the underlying maths:
+           the same ticks still build the record they carry into CCT sign-off
+           or their next application. */
+        var out = '<p class="sub">' + (arrived
+          ? "Your training record so far, built from what you ticked. This is not a shortlisting score, you already hold your place on " + esc(routeLabel()) + "."
+          : "Against " + esc(routeLabel()) + " criteria, as published by " + esc(collegeOf()) + ", computed from what you ticked. Nothing here is estimated.") + "</p>";
+        if (Object.keys(A.helpFocus).length && !A.helpFocus.notsure){
+          var leadWith = {exams:"exam prep", interview:"interview preparation", career:"Career Tools", jobs:"job and locum matching"};
+          var picked = Object.keys(A.helpFocus).map(function(k){ return leadWith[k]; }).filter(Boolean);
+          if (picked.length) out += '<p class="sub" style="margin-top:-8px">Your dashboard will open on ' + esc(picked.join(" and ")) + " first, since that is what you said you needed.</p>";
+        }
         out += '<div class="sum-grid">' +
-            '<div class="sum"><p class="k">Readiness</p><p class="v num">' + readiness() + '%</p></div>' +
-            '<div class="sum"><p class="k">Shortlisting</p><p class="v num">' + pts() + '<small>/' + maxPts() + '</small></p></div>' +
-            '<div class="sum"><p class="k">Open gaps</p><p class="v num">' + losing() + '<small>/6</small></p></div>' +
+            '<div class="sum"><p class="k">' + (arrived ? "Progress" : "Readiness") + '</p><p class="v num">' + readiness() + '%</p></div>' +
+            '<div class="sum"><p class="k">' + (arrived ? "Portfolio points" : "Shortlisting") + '</p><p class="v num">' + pts() + '<small>/' + maxPts() + '</small></p></div>' +
+            '<div class="sum"><p class="k">Open gaps</p><p class="v num">' + losing() + '<small>/' + domains().length + '</small></p></div>' +
           "</div>";
         out += '<div class="sum-list">' + ds.map(function(d){
             var full = d.maxPts - d.pts === 0;
@@ -1294,20 +1420,27 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
 
   var stepEl = document.getElementById("step");
 
+  /* title, sub, brandH and brandP may be a plain string or a function of the
+     current answers, so a step's own copy can adapt without needing a
+     separate step: a consultant and a final-year student can share one step
+     with two different questions on it. */
+  function textOf(v){ return typeof v === "function" ? v() : v; }
+
   function render(){
     var as = activeSteps(), n = idx(), s = as[n];
-    document.getElementById("brandH").textContent = s.brandH;
-    document.getElementById("brandP").textContent = s.brandP;
+    document.getElementById("brandH").textContent = textOf(s.brandH);
+    document.getElementById("brandP").textContent = textOf(s.brandP);
     document.getElementById("blad").innerHTML = as.map(function(x, k){
       var cls = k < n ? "on" : (k === n ? "now" : "");
       return '<div class="blad-item ' + cls + '"><span class="k">' + (k < n ? ico(I.tick, 11) : (k + 1)) + "</span>" + esc(x.label) + "</div>";
     }).join("");
 
+    var title = textOf(s.title), sub = textOf(s.sub);
     stepEl.innerHTML =
       '<div class="prog"><span class="prog-track"><i style="width:' + Math.round(n / (as.length - 1) * 100) + '%"></i></span>' +
       '<span class="num">Step ' + (n + 1) + " of " + as.length + "</span></div>" +
-      "<h1>" + esc(s.title) + "</h1>" +
-      (s.sub ? '<p class="sub">' + esc(s.sub) + "</p>" : "") +
+      "<h1>" + esc(title) + "</h1>" +
+      (sub ? '<p class="sub">' + esc(sub) + "</p>" : "") +
       s.body() +
       '<div class="acts">' +
         (n > 0 ? '<button class="btn btn-ghost" id="backBtn">' + ico(I.back, 15) + "Back</button>" : "") +
@@ -1331,7 +1464,7 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
 
     var firstInput = stepEl.querySelector("input");
     if (firstInput) firstInput.focus(); else stepEl.focus();
-    document.title = s.title + " · MedNav";
+    document.title = title + " · MedNav";
   }
 
   function goIdx(k){
@@ -1383,6 +1516,8 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
       ticks: A.ticks,
       applyWhen: A.applyWhen,
       dualTrack: A.dualTrack || "single", otherTargets: Object.keys(A.otherTargets),
+      helpFocus: Object.keys(A.helpFocus),
+      pastEntry: pastEntry(),
       profile: A.full ? "full" : "quick",
       societyName: A.societyName, refs: A.refs, gap: A.gap,
       deadlinesDone:{}, customMilestones:[], activity:[]
@@ -1425,6 +1560,14 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
       /* "anywhere" and a named region are contradictory, so picking one drops the other */
       if (wid === "any"){ var was = A.willing.any; A.willing = {}; if (!was) A.willing.any = true; }
       else { delete A.willing.any; if (A.willing[wid]) delete A.willing[wid]; else A.willing[wid] = true; }
+      render(); return;
+    }
+
+    var hf = t.closest("[data-help]");
+    if (hf){
+      var hid = hf.getAttribute("data-help");
+      if (hid === "notsure"){ var wasSure = A.helpFocus.notsure; A.helpFocus = {}; if (!wasSure) A.helpFocus.notsure = true; }
+      else { delete A.helpFocus.notsure; if (A.helpFocus[hid]) delete A.helpFocus[hid]; else A.helpFocus[hid] = true; }
       render(); return;
     }
 

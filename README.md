@@ -181,6 +181,68 @@ Changing an earlier answer clears what it invalidates. Switching from "on a
 scheme" to "not on a scheme" drops the scheme, the year and every exam mark,
 rather than carrying MRCPI answers into an orthopaedic route.
 
+**Nobody is asked a question their own answers already rule out.** Three
+places this showed up and got fixed:
+
+1. The permission-to-work step only ever appears after someone has said they
+   are a citizen outside the EU and EEA, so its option list no longer offers
+   "Irish, EU or EEA citizen" back to them. It used to, because the list was
+   shared with a screen that has since been split apart, and nobody had gone
+   back to prune it.
+2. Whether someone is "applying to a scheme" only makes sense for someone with
+   an application still ahead of them. `pastEntry()` is true for a GP or HST
+   trainee, who already holds the place that question is about, and for a
+   consultant, who has no scheme left to apply to at all: both skip straight
+   to email preferences, with a line saying why. A BST or Core trainee is
+   still asked, because their scheme is a step on the way to a further one,
+   but the question is now reframed as their *next* application rather than a
+   first one, and the screen says so.
+3. A consultant is asked what specialty they practise, not what they are
+   aiming for, since they are not applying to anything, and "Not decided yet"
+   is dropped from their list of options.
+
+`title`, `sub`, `brandH` and `brandP` can now be a function of the current
+answers as well as a plain string, which is what makes a single step able to
+carry two different questions for two different kinds of person, rather than
+needing a second near-duplicate step.
+
+**Readiness and shortlisting adapt to the specialty, not just to the score.**
+GP does not score formal teaching, so a GP trainee is not shown a teaching
+group at all, and the readiness weight that would have gone to it moves to
+audit and QI and to exams, where ICGP actually weights heaviest.
+`WEIGHTS_BY_SPEC` overrides `DEFAULT_WEIGHTS` per specialty, and a domain with
+no weight for that specialty is dropped from the summary entirely rather than
+shown pinned at zero, which is exactly the "asked about something that does
+not apply" pattern this rebuild exists to remove. Only GP has an override so
+far, because it is the one case with a concrete, defensible reason to differ;
+extending this to other specialties needs the same kind of reasoning, not a
+guess at what feels right.
+
+For anyone `pastEntry()` is true for, the summary itself relabels: "Shortlisting"
+becomes "Portfolio points" and "Readiness" becomes "Progress", and the opening
+line says outright that this is not a shortlisting score because they already
+hold their place. The underlying maths does not change, since the same ticks
+still build the record they carry into CCT sign-off or their next application:
+only the frame does, because "shortlisting" describes competing for a place,
+and someone who already has it is not competing for it.
+
+**This has not yet reached the dashboard.** `app/index.html` still scores
+every specialty on the same fixed six domains with the same fixed weights, and
+still calls the figure "Shortlisting score" regardless of whether the doctor
+holds their place already. The two scoring mirrors, already flagged below as a
+known duplication, have now drifted in a second way. Porting the specialty
+weight override and the pastEntry reframing to the dashboard is follow-up
+work, not done here.
+
+**What do you need help with, now asks too.** A new step, gated on nothing so
+everyone sees it, lets a doctor tick as many of exam prep, interview prep,
+Career Tools, and job or locum matching as apply, or say they are not sure and
+want to see everything. It changes nothing about the score. The summary
+screen echoes it back ("Your dashboard will open on exam prep and interview
+preparation first"), and the payload carries it as `helpFocus` for the
+dashboard to act on, which, like the location and hedging fields before it,
+it does not yet do.
+
 The last screen is the payoff. It computes the same readiness figure, the same
 banded shortlisting score and the same gap count the dashboard will show, from
 the answers just given, then hands those answers to the dashboard.
