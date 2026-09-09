@@ -14,7 +14,7 @@ Static marketing site for MedNav, the Irish medical career navigation platform.
 | `preparation/exams.html` | Exams index | Exam families as stage sequences |
 | `preparation/interviews.html` | Interviews index | Scoring weights on the front of the card |
 | `tools/index.html` | Career Tools | One profile driving seven live tool cards |
-| `onboarding/index.html` | Onboarding | Seven steps, split brand panel |
+| `onboarding/index.html` | Onboarding | Adaptive tree, 10 to 14 steps, split brand panel |
 | `app/index.html` | Dashboard (signed in) | App shell, nine views over one record |
 
 Each page is a single self-contained file. Fonts (Sora, Inter) load from
@@ -71,8 +71,46 @@ reporting is exactly the confident guess this product exists to avoid.
 ## Onboarding
 
 `onboarding/index.html` is the path the homepage promises: create an account,
-verify by magic link, set a password, answer three questions about where you
-are, what you are aiming for and what you already hold.
+verify by magic link, set a password, then answer a set of questions that is
+not the same set for everybody.
+
+**It is a tree, not a form.** Every step carries a `when()` predicate and
+`activeSteps()` re-filters the list on each render, so the progress bar and the
+ladder in the brand panel show the real remaining length for *this* person. A
+final-year student answers ten steps, an Irish SHO on a scheme twelve, a non-EU
+doctor still applying to come to Ireland fourteen. Three rules shape it:
+
+1. **Grade is asked on its own.** "Where are you now" is intern, SHO,
+   registrar, consultant, and nothing else. Route is a separate question,
+   because the two vary independently: an SHO who qualified in Lagos and an SHO
+   who qualified in Galway are the same grade and a completely different
+   journey. Bundling them, as the first version did, forced people to pick the
+   label that was least wrong.
+
+2. **Nothing is asked as a score.** We never ask "how many exams have you
+   passed". We list the named exams for that specialty and the doctor marks
+   each one passed, booked or not yet; we never ask "how many audits", we list
+   completed an audit, closed the loop, completed a QI project, presented it.
+   The score is computed from the ticks. A number typed into a box cannot be
+   turned back into advice, because it does not say *which* part is missing. A
+   ticked list can, and it is also faster to answer.
+
+3. **The list adapts to the specialty.** `specialtyOf()` resolves a specialty
+   key from the training scheme if they are on one and from their target if
+   they are not; `EXAMS[spec]` and `PORTFOLIO_EXTRA[spec]` follow from it.
+   Someone heading for orthopaedics sees MRCS Part A, MRCS Part B and FRCS,
+   plus Basic Surgical Skills and ATLS. They are never shown MRCPI.
+
+Non-EU doctors get three extra steps (already here or planning to move, IMC
+registration status, permission to work) and an extra tick group covering the
+English language test, EPIC verification, the Certificate of Experience and
+references, because those are the four things that actually stall a move to
+Ireland and no other part of the product captures them. Their final screen
+leads with whichever of those is outstanding, ahead of the score.
+
+Changing an earlier answer clears what it invalidates. Switching from "on a
+scheme" to "not on a scheme" drops the scheme, the year and every exam mark,
+rather than carrying MRCPI answers into an orthopaedic route.
 
 The last screen is the payoff. It computes the same readiness figure, the same
 banded shortlisting score and the same gap count the dashboard will show, from

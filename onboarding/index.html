@@ -1,21 +1,35 @@
 <!--
-  MedNav onboarding. The path the homepage promises: create a free account,
-  verify with a magic link, set a password, answer a few questions, and the
-  roadmap is built.
+  MedNav onboarding, adaptive.
 
-  The last screen is the payoff: it computes the same readiness figure, the same
-  banded shortlisting score and the same gap count the dashboard will show, from
-  the answers just given. Then it hands those answers to the dashboard in the
-  URL, because the two are separate documents and cannot share storage across
-  origins.
+  The step list is not fixed. Every step carries a when() predicate and
+  activeSteps() re-filters on each render, so an Irish SHO in BST answers a
+  different, shorter set of questions than a non-EU doctor still applying to
+  come to Ireland, and the progress bar tells each of them the truth.
+
+  Three ideas run through it:
+
+  1. Grade is asked on its own. "Where are you now" is intern, SHO, registrar,
+     not a bundle of grade and route. Route is asked separately, because the
+     two vary independently: an SHO who qualified in Lagos and an SHO who
+     qualified in Galway are the same grade and a completely different journey.
+
+  2. Nothing is asked as a score. We never ask "how many exams", we list the
+     named exams and the doctor ticks them. The score is computed from the
+     ticks. A number typed into a box cannot be turned back into advice; a
+     ticked list can, because we know WHICH part is missing.
+
+  3. The list adapts to the specialty. Someone heading for orthopaedics sees
+     MRCS Part A, MRCS Part B and FRCS, plus Basic Surgical Skills and ATLS.
+     They are never shown MRCPI. specialtyOf() resolves the specialty from the
+     training scheme if they are on one, and from their target if they are not.
 
   KNOWN DUPLICATION: the scoring model below is a second copy of the one in
-  app/index.html. Two copies can drift. When this gets a build step, both should
-  import one module. Flagged in the README.
+  app/index.html. Two copies can drift. When this gets a build step, both
+  should import one module. Flagged in the README.
 
-  TEMP: no account is created and no email is sent. The magic-link screen has an
-  explicit demo control that says so, rather than pretending to wait for a click
-  that will never come.
+  TEMP: no account is created and no email is sent. The magic-link screen has
+  an explicit demo control that says so, rather than pretending to wait for a
+  click that will never come.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -23,7 +37,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Create your account · MedNav</title>
-<meta name="description" content="Create a free MedNav account. A few questions and your roadmap, gaps and deadlines are built.">
+<meta name="description" content="Create a free MedNav account. A few questions, adapted to your grade, route and specialty, and your roadmap is built.">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/sora@latest/600.css">
@@ -164,6 +178,65 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
   .acts .btn{flex:1;justify-content:center}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ============ SCHEME PICKER ============ */
+.picker{border:1.5px solid var(--line);border-radius:14px;background:#fff;overflow:hidden;margin-bottom:14px}
+.picker-search{position:relative;display:flex;align-items:center;border-bottom:1px solid var(--line)}
+.picker-search svg{position:absolute;left:14px;color:var(--txt-soft);pointer-events:none}
+.picker-search input{width:100%;border:0;padding:13px 14px 13px 40px;font-size:14px;outline:none;background:transparent;color:var(--ink)}
+.picker-list{max-height:296px;overflow-y:auto}
+.picker-group{font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt-mute);padding:11px 16px 6px;background:var(--paper);position:sticky;top:0;z-index:1}
+.picker-opt{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:11px 16px;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--ink);transition:background .15s}
+.picker-opt:last-child{border-bottom:0}
+.picker-opt:hover{background:var(--mint-soft)}
+.picker-opt.on{background:var(--mint-soft)}
+.picker-opt .pk{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line);flex:none;display:grid;place-items:center;background:#fff;color:transparent}
+.picker-opt.on .pk{background:var(--mint);border-color:var(--mint);color:#052a22}
+.picker-opt b{font-weight:600;display:block}
+.picker-opt small{display:block;color:var(--txt-soft);font-size:11.5px;font-weight:400;margin-top:1px}
+.picker-empty{padding:26px 16px;text-align:center;color:var(--txt-soft);font-size:13px}
+/* ============ EXAM SEGMENTED CONTROL ============ */
+.exam-row{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
+.exam-row:last-of-type{border-bottom:0}
+.er-l{flex:1;min-width:160px}
+.er-l b{font-size:13.5px;color:var(--deep);font-weight:600;display:block}
+.er-l small{font-size:11.5px;color:var(--txt-soft)}
+.seg{display:inline-flex;background:var(--paper);border:1.5px solid var(--line);border-radius:11px;padding:2px;flex:none}
+.seg button{font-size:12px;font-weight:600;padding:6px 12px;border-radius:8px;color:var(--txt-soft);transition:background .16s,color .16s;white-space:nowrap}
+.seg button:hover{color:var(--deep)}
+.seg button.on{background:var(--mint);color:#052a22}
+.seg button.on[data-v="booked"]{background:var(--amber);color:#5a3d0a}
+.seg button.on[data-v="no"]{background:#dfe8e5;color:var(--txt-soft)}
+/* ============ TICKABLE PORTFOLIO ITEMS ============ */
+.item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:13px;padding:12px 15px;margin-bottom:8px;transition:border-color .18s,background .18s}
+.item:hover{border-color:var(--mint)}
+.item.on{border-color:var(--mint);background:var(--mint-soft)}
+.item .tk{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);flex:none;display:grid;place-items:center;background:#fff;color:transparent}
+.item.on .tk{background:var(--mint);border-color:var(--mint);color:#052a22}
+.item .il{flex:1;min-width:0}
+.item b{font-size:13.5px;color:var(--deep);font-weight:600;display:block}
+.item small{font-size:11.5px;color:var(--txt-soft);display:block;margin-top:1px}
+.item .pts{font-family:var(--fd);font-size:11px;font-weight:700;color:var(--txt-mute);background:var(--paper);border-radius:999px;padding:3px 9px;flex:none}
+.item.on .pts{background:var(--mint);color:#052a22}
+.group-h{font-family:var(--fd);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt-mute);margin:20px 0 9px}
+.group-h:first-child{margin-top:0}
+/* ============ RUNNING TALLY ============ */
+.tally{position:sticky;bottom:-1px;padding:16px 0 2px;margin-top:10px;background:linear-gradient(to top,var(--paper) 72%,transparent)}
+.tally-in{display:flex;align-items:center;gap:13px;background:var(--deep);color:#fff;border-radius:13px;padding:12px 17px}
+.tally b{font-family:var(--fd);font-size:19px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tally span{font-size:12.5px;color:#a9cdc3;white-space:nowrap}
+.tally .bar{flex:1;min-width:50px;height:6px;border-radius:99px;background:rgba(255,255,255,.16);overflow:hidden}
+.tally .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--mint-2));border-radius:99px;transition:width .45s cubic-bezier(.3,.9,.3,1)}
+/* ============ CONTEXT BANNER ============ */
+.ctx{display:flex;align-items:flex-start;gap:11px;background:var(--mint-soft);color:var(--good-text);border-radius:13px;padding:12px 15px;font-size:12.5px;font-weight:600;margin-bottom:18px;line-height:1.45}
+.ctx svg{flex:none;margin-top:1px}
+.ctx.warn{background:var(--amber-soft);color:var(--warn-text)}
+@media(max-width:560px){
+  .exam-row{align-items:flex-start}
+  .seg{width:100%}
+  .seg button{flex:1;text-align:center;padding:7px 4px}
+}
+
 </style>
 </head>
 <body>
@@ -192,7 +265,6 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     <div class="step" id="step" tabindex="-1"></div>
   </main>
 </div>
-
 <script>
 (function(){
   "use strict";
@@ -206,55 +278,363 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
   var I = {
     tick:'<path d="M4 12.5l5 5L20 6.5"/>',
     warn:'<path d="M12 8v5"/><circle cx="12" cy="16.4" r="1"/><circle cx="12" cy="12" r="9"/>',
+    info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r="1"/>',
     arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
     back:'<path d="M19 12H5M11 18l-6-6 6-6"/>',
-    mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
-    plus:'<path d="M12 5v14M5 12h14"/>',
-    minus:'<path d="M5 12h14"/>'
+    search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/>',
+    globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/>'
   };
 
-  /* answers, in the shape the dashboard record expects */
-  var A = {
-    name:"", email:"", password:"",
-    stage:"", specialty:"", clinicalMonths:24,
-    examStages:0, auditComplete:0, teachingDone:0, teachingTarget:4, research:0, leadership:false
-  };
 
-  var SPEC = {
-    "Cardiology":         {target:"HST Cardiology",         body:"RCPI",  exam:"MRCPI"},
-    "General Practice":   {target:"GP training scheme",     body:"ICGP",  exam:"MICGP"},
-    "Psychiatry":         {target:"HST Psychiatry",         body:"College of Psychiatrists", exam:"MRCPsych"},
-    "Emergency Medicine": {target:"HST Emergency Medicine", body:"RCSI",  exam:"MRCEM"},
-    "General Surgery":    {target:"HST General Surgery",    body:"RCSI",  exam:"MRCS"}
-  };
-  var STAGES = [
-    {id:"student", label:"Final-year student",        sub:"Not yet on the ladder",              months:0},
-    {id:"intern",  label:"Intern",                    sub:"In your intern year now",            months:6},
-    {id:"sho",     label:"SHO or BST trainee",        sub:"Past intern, before higher training", months:24},
-    {id:"reg",     label:"Registrar or HST trainee",  sub:"In higher specialist training",      months:60},
-    {id:"img",     label:"Qualified outside Ireland", sub:"Registering or recently registered",  months:12}
+  /* grade is asked on its own, exactly as a doctor would describe themselves */
+  var GRADES = [
+    {id:"student", label:"Final year medical student", sub:"Not yet graduated"},
+    {id:"intern",  label:"Intern",                     sub:"In your intern year"},
+    {id:"sho",     label:"SHO",                        sub:"Senior house officer"},
+    {id:"reg",     label:"Registrar",                  sub:"Registrar grade"},
+    {id:"spr",     label:"Specialist Registrar",       sub:"On or past higher training"},
+    {id:"consultant", label:"Consultant",              sub:"Appointed consultant"}
   ];
 
-  /* ---- the same model the dashboard uses. KNOWN DUPLICATION, see the header ---- */
+  var ORIGINS = [
+    {id:"ie",    label:"Ireland",                    sub:"Irish medical school"},
+    {id:"eu",    label:"EU, EEA, Switzerland or UK", sub:"Qualification recognised without further assessment"},
+    {id:"noneu", label:"Outside the EU and EEA",     sub:"Registration runs through the IMC international route"}
+  ];
+
+  var IMC_STATES = [
+    {id:"none",       label:"Not started yet",                  sub:"You have not applied to the Irish Medical Council"},
+    {id:"applied",    label:"Application in progress",          sub:"Submitted, waiting on a decision"},
+    {id:"general",    label:"Registered, General Division",     sub:"You can work but not in a training post"},
+    {id:"trainee",    label:"Registered, Trainee Specialist",   sub:"You hold a training post"},
+    {id:"specialist", label:"Registered, Specialist Division",  sub:"Eligible for consultant posts"}
+  ];
+
+  var PERMITS = [
+    {id:"citizen",  label:"Irish, EU or EEA citizen",   sub:"No permit needed"},
+    {id:"stamp4",   label:"Stamp 4 or spousal permission", sub:"Free to work without an employer permit"},
+    {id:"critical", label:"Critical Skills Employment Permit", sub:"The usual route for doctors recruited to Ireland"},
+    {id:"general",  label:"General Employment Permit",   sub:"More restrictive on changing employer"},
+    {id:"none",     label:"No permission yet",           sub:"You would need an employer to sponsor you"}
+  ];
+
+  /* specialty keys drive which exams and which portfolio items get shown */
+  var SCHEMES = [
+    {g:"Basic Specialist Training", n:"BST General Internal Medicine", spec:"medicine", yrs:2, body:"RCPI", tier:"BST"},
+    {g:"Basic Specialist Training", n:"BST Paediatrics",              spec:"paeds",    yrs:2, body:"RCPI", tier:"BST"},
+    {g:"Basic Specialist Training", n:"BST Obstetrics and Gynaecology", spec:"og",     yrs:2, body:"RCPI", tier:"BST"},
+    {g:"Basic Specialist Training", n:"BST Psychiatry",               spec:"psych",    yrs:3, body:"College of Psychiatrists", tier:"BST"},
+    {g:"Basic Specialist Training", n:"BST Emergency Medicine",       spec:"em",       yrs:2, body:"RCSI", tier:"BST"},
+    {g:"Basic Specialist Training", n:"Core Surgical Training",       spec:"surgery",  yrs:2, body:"RCSI", tier:"Core"},
+
+    {g:"General Practice", n:"GP Training Scheme", spec:"gp", yrs:4, body:"ICGP", tier:"GP"},
+
+    {g:"Higher Specialist Training, Medicine", n:"HST Cardiology",            spec:"medicine", yrs:6, body:"RCPI", tier:"HST"},
+    {g:"Higher Specialist Training, Medicine", n:"HST Respiratory Medicine",  spec:"medicine", yrs:5, body:"RCPI", tier:"HST"},
+    {g:"Higher Specialist Training, Medicine", n:"HST Gastroenterology",      spec:"medicine", yrs:5, body:"RCPI", tier:"HST"},
+    {g:"Higher Specialist Training, Medicine", n:"HST Nephrology",            spec:"medicine", yrs:5, body:"RCPI", tier:"HST"},
+    {g:"Higher Specialist Training, Medicine", n:"HST Endocrinology and Diabetes", spec:"medicine", yrs:5, body:"RCPI", tier:"HST"},
+    {g:"Higher Specialist Training, Medicine", n:"HST Rheumatology",          spec:"medicine", yrs:5, body:"RCPI", tier:"HST"},
+    {g:"Higher Specialist Training, Medicine", n:"HST Infectious Diseases",   spec:"medicine", yrs:5, body:"RCPI", tier:"HST"},
+    {g:"Higher Specialist Training, Medicine", n:"HST Geriatric Medicine",    spec:"medicine", yrs:5, body:"RCPI", tier:"HST"},
+    {g:"Higher Specialist Training, Medicine", n:"HST Neurology",             spec:"medicine", yrs:6, body:"RCPI", tier:"HST"},
+    {g:"Higher Specialist Training, Medicine", n:"HST Dermatology",           spec:"medicine", yrs:5, body:"RCPI", tier:"HST"},
+    {g:"Higher Specialist Training, Medicine", n:"HST Medical Oncology",      spec:"medicine", yrs:5, body:"RCPI", tier:"HST"},
+    {g:"Higher Specialist Training, Medicine", n:"HST Haematology",           spec:"medicine", yrs:5, body:"RCPI", tier:"HST"},
+    {g:"Higher Specialist Training, Medicine", n:"HST Palliative Medicine",   spec:"medicine", yrs:4, body:"RCPI", tier:"HST"},
+    {g:"Higher Specialist Training, Medicine", n:"HST General Internal Medicine", spec:"medicine", yrs:5, body:"RCPI", tier:"HST"},
+
+    {g:"Higher Specialist Training, Surgery", n:"HST General Surgery",              spec:"surgery", yrs:6, body:"RCSI", tier:"HST"},
+    {g:"Higher Specialist Training, Surgery", n:"HST Trauma and Orthopaedic Surgery", spec:"surgery", yrs:6, body:"RCSI", tier:"HST"},
+    {g:"Higher Specialist Training, Surgery", n:"HST Urology",                      spec:"surgery", yrs:6, body:"RCSI", tier:"HST"},
+    {g:"Higher Specialist Training, Surgery", n:"HST Otolaryngology, ENT",          spec:"surgery", yrs:6, body:"RCSI", tier:"HST"},
+    {g:"Higher Specialist Training, Surgery", n:"HST Plastic Surgery",              spec:"surgery", yrs:6, body:"RCSI", tier:"HST"},
+    {g:"Higher Specialist Training, Surgery", n:"HST Cardiothoracic Surgery",       spec:"surgery", yrs:6, body:"RCSI", tier:"HST"},
+    {g:"Higher Specialist Training, Surgery", n:"HST Neurosurgery",                 spec:"surgery", yrs:8, body:"RCSI", tier:"HST"},
+    {g:"Higher Specialist Training, Surgery", n:"HST Paediatric Surgery",           spec:"surgery", yrs:6, body:"RCSI", tier:"HST"},
+    {g:"Higher Specialist Training, Surgery", n:"HST Vascular Surgery",             spec:"surgery", yrs:6, body:"RCSI", tier:"HST"},
+
+    {g:"Higher and specialist training, other", n:"Anaesthesiology Specialist Training", spec:"anaes", yrs:6, body:"College of Anaesthesiologists", tier:"HST"},
+    {g:"Higher and specialist training, other", n:"HST Emergency Medicine",   spec:"em",        yrs:5, body:"RCSI and IAEM", tier:"HST"},
+    {g:"Higher and specialist training, other", n:"HST Radiology",            spec:"radiology", yrs:5, body:"Faculty of Radiologists", tier:"HST"},
+    {g:"Higher and specialist training, other", n:"HST Histopathology",       spec:"path",      yrs:5, body:"Faculty of Pathology", tier:"HST"},
+    {g:"Higher and specialist training, other", n:"HST Paediatrics",          spec:"paeds",     yrs:5, body:"RCPI", tier:"HST"},
+    {g:"Higher and specialist training, other", n:"HST Obstetrics and Gynaecology", spec:"og",  yrs:6, body:"RCPI", tier:"HST"},
+    {g:"Higher and specialist training, other", n:"HST Ophthalmology",        spec:"ophth",     yrs:5, body:"RCSI", tier:"HST"},
+    {g:"Higher and specialist training, other", n:"HST Psychiatry, General Adult",     spec:"psych", yrs:3, body:"College of Psychiatrists", tier:"HST"},
+    {g:"Higher and specialist training, other", n:"HST Psychiatry, Child and Adolescent", spec:"psych", yrs:3, body:"College of Psychiatrists", tier:"HST"},
+    {g:"Higher and specialist training, other", n:"HST Psychiatry, Old Age",           spec:"psych", yrs:3, body:"College of Psychiatrists", tier:"HST"},
+    {g:"Higher and specialist training, other", n:"HST Public Health Medicine",        spec:"pubh",  yrs:4, body:"Faculty of Public Health", tier:"HST"}
+  ];
+
+  /* target specialties for anyone not in a scheme yet */
+  var TARGETS = [
+    {n:"General Internal Medicine",   spec:"medicine"},
+    {n:"Cardiology",                  spec:"medicine"},
+    {n:"Respiratory Medicine",        spec:"medicine"},
+    {n:"Gastroenterology",            spec:"medicine"},
+    {n:"Nephrology",                  spec:"medicine"},
+    {n:"Geriatric Medicine",          spec:"medicine"},
+    {n:"Neurology",                   spec:"medicine"},
+    {n:"General Surgery",             spec:"surgery"},
+    {n:"Trauma and Orthopaedics",     spec:"surgery"},
+    {n:"Urology",                     spec:"surgery"},
+    {n:"Otolaryngology, ENT",         spec:"surgery"},
+    {n:"Plastic Surgery",             spec:"surgery"},
+    {n:"General Practice",            spec:"gp"},
+    {n:"Psychiatry",                  spec:"psych"},
+    {n:"Emergency Medicine",          spec:"em"},
+    {n:"Anaesthesiology",             spec:"anaes"},
+    {n:"Paediatrics",                 spec:"paeds"},
+    {n:"Obstetrics and Gynaecology",  spec:"og"},
+    {n:"Radiology",                   spec:"radiology"},
+    {n:"Histopathology",              spec:"path"},
+    {n:"Ophthalmology",               spec:"ophth"},
+    {n:"Public Health Medicine",      spec:"pubh"},
+    {n:"Not decided yet",             spec:"undecided"}
+  ];
+
+  /* the exam sequence that actually applies to each specialty. This is the
+     whole point: an orthopaedic trainee is never shown MRCPI. */
+  var EXAMS = {
+    medicine: {fam:"MRCPI", stages:[
+      {id:"mrcpi1", n:"MRCPI Part 1", d:"Written, 2 papers"},
+      {id:"mrcpi2w", n:"MRCPI Part 2 Written", d:"Written, 2 papers"},
+      {id:"mrcpi2c", n:"MRCPI Part 2 Clinical", d:"Clinical, gives full membership"}
+    ]},
+    paeds: {fam:"MRCPI Paediatrics", stages:[
+      {id:"paed1", n:"MRCPI Paediatrics Part 1", d:"Written"},
+      {id:"paed2w", n:"MRCPI Paediatrics Part 2 Written", d:"Written"},
+      {id:"paed2c", n:"MRCPI Paediatrics Part 2 Clinical", d:"Clinical"}
+    ]},
+    og: {fam:"MRCPI Obstetrics and Gynaecology", stages:[
+      {id:"og1", n:"MRCPI O and G Part 1", d:"Written"},
+      {id:"og2", n:"MRCPI O and G Part 2", d:"Written and clinical"}
+    ]},
+    surgery: {fam:"MRCS", stages:[
+      {id:"mrcsA", n:"MRCS Part A", d:"Written, single best answer"},
+      {id:"mrcsB", n:"MRCS Part B", d:"OSCE, gives full membership"},
+      {id:"frcs", n:"FRCS, specialty fellowship", d:"Taken near the end of higher training"}
+    ]},
+    em: {fam:"MRCEM", stages:[
+      {id:"emP", n:"MRCEM Primary", d:"Written, basic sciences"},
+      {id:"emI", n:"MRCEM Intermediate SBA", d:"Written"},
+      {id:"emO", n:"MRCEM OSCE", d:"Clinical, gives full membership"},
+      {id:"frcem", n:"FRCEM Final", d:"Taken in higher training"}
+    ]},
+    psych: {fam:"MRCPsych", stages:[
+      {id:"psyA", n:"MRCPsych Paper A", d:"Written"},
+      {id:"psyB", n:"MRCPsych Paper B", d:"Written"},
+      {id:"casc", n:"MRCPsych CASC", d:"Clinical, gives full membership"}
+    ]},
+    gp: {fam:"MICGP", stages:[
+      {id:"icgpM", n:"MICGP MCQ", d:"Applied knowledge test"},
+      {id:"icgpC", n:"MICGP Clinical Competency Test", d:"Simulated consultations"},
+      {id:"icgpP", n:"MICGP Practice Based Assessment", d:"Workplace portfolio"}
+    ]},
+    anaes: {fam:"FFARCSI", stages:[
+      {id:"ffP", n:"FFARCSI Primary", d:"Written and viva"},
+      {id:"ffF", n:"FFARCSI Final", d:"Written, viva and clinical"}
+    ]},
+    radiology: {fam:"FRCR", stages:[
+      {id:"frcr1", n:"First FRCR", d:"Physics and anatomy"},
+      {id:"frcr2a", n:"FRCR Part 2A", d:"Written"},
+      {id:"frcr2b", n:"FRCR Part 2B", d:"Reporting and viva"}
+    ]},
+    path: {fam:"FRCPath", stages:[
+      {id:"path1", n:"FRCPath Part 1", d:"Written"},
+      {id:"path2", n:"FRCPath Part 2", d:"Practical and viva"}
+    ]},
+    ophth: {fam:"FRCOphth", stages:[
+      {id:"oph1", n:"FRCOphth Part 1", d:"Written"},
+      {id:"ophR", n:"Refraction Certificate", d:"Practical"},
+      {id:"oph2", n:"FRCOphth Part 2", d:"Written and oral"}
+    ]},
+    pubh: {fam:"MFPHMI", stages:[
+      {id:"mfph1", n:"MFPHMI Part 1", d:"Written"},
+      {id:"mfph2", n:"MFPHMI Part 2", d:"Oral and practical"}
+    ]}
+  };
+
+  /* portfolio items, with the points each one is worth. Common items apply to
+     everyone; the extras only appear for the specialties that score them. */
+  var PORTFOLIO_COMMON = [
+    {g:"Audit and quality improvement", items:[
+      {id:"audit_done",  n:"Completed an audit",              d:"Data collected, analysed and written up", p:3, dom:"auditqi"},
+      {id:"audit_loop",  n:"Closed the loop with a re-audit", d:"The part most applicants are missing",     p:2, dom:"auditqi"},
+      {id:"qi_done",     n:"Completed a QI project",          d:"Distinct from an audit, with a change idea", p:3, dom:"auditqi"},
+      {id:"qi_present",  n:"Presented audit or QI at a meeting", d:"Departmental counts, national counts more", p:2, dom:"auditqi"}
+    ]},
+    {g:"Teaching", items:[
+      {id:"teach_stud",  n:"Formal teaching to medical students", d:"Timetabled, not corridor teaching", p:1, dom:"teaching"},
+      {id:"teach_nchd",  n:"Formal teaching to NCHDs",         d:"Departmental or regional teaching",   p:1, dom:"teaching"},
+      {id:"teach_course",n:"Completed a teaching course",      d:"Teaching the Teacher or equivalent",  p:2, dom:"teaching"},
+      {id:"teach_qual",  n:"Formal teaching qualification",    d:"Certificate, diploma or MSc in education", p:1, dom:"teaching"}
+    ]},
+    {g:"Research and publications", items:[
+      {id:"res_poster",  n:"Poster presentation",              d:"Local, national or international",    p:1, dom:"research"},
+      {id:"res_oral",    n:"Oral presentation",                d:"National or international meeting",   p:1, dom:"research"},
+      {id:"res_co",      n:"Peer reviewed publication, co-author", d:"PubMed indexed",                  p:1, dom:"research"},
+      {id:"res_first",   n:"Peer reviewed publication, first author", d:"Worth the most of any research item", p:2, dom:"research"}
+    ]},
+    {g:"Leadership and management", items:[
+      {id:"lead_course", n:"Leadership or management course",  d:"Recognised course, often a weekend",  p:2, dom:"leadership"}
+    ]}
+  ];
+
+  /* specialty specific additions, appended to the common set */
+  var PORTFOLIO_EXTRA = {
+    surgery: [{g:"Surgical requirements", items:[
+      {id:"bss",      n:"Basic Surgical Skills course", d:"Effectively mandatory for core training", p:0, dom:"courses"},
+      {id:"atls",     n:"ATLS current",                 d:"Advanced Trauma Life Support",            p:0, dom:"courses"},
+      {id:"logbook",  n:"Operative logbook maintained", d:"eLogbook, scored on numbers and complexity", p:0, dom:"courses"}
+    ]}],
+    em: [{g:"Emergency medicine requirements", items:[
+      {id:"atls",  n:"ATLS current",  d:"Advanced Trauma Life Support", p:0, dom:"courses"},
+      {id:"apls",  n:"APLS current",  d:"Advanced Paediatric Life Support", p:0, dom:"courses"},
+      {id:"usound",n:"Point of care ultrasound course", d:"FAST or equivalent", p:0, dom:"courses"}
+    ]}],
+    paeds: [{g:"Paediatric requirements", items:[
+      {id:"apls", n:"APLS or EPLS current", d:"Paediatric life support", p:0, dom:"courses"}
+    ]}],
+    anaes: [{g:"Anaesthesiology requirements", items:[
+      {id:"als",  n:"ALS current",            d:"Advanced Life Support",   p:0, dom:"courses"},
+      {id:"sim",  n:"Simulation course completed", d:"Crisis resource management", p:0, dom:"courses"}
+    ]}],
+    gp: [{g:"General practice requirements", items:[
+      {id:"als",   n:"ALS current",                    d:"Advanced Life Support", p:0, dom:"courses"},
+      {id:"chronic", n:"Chronic disease management training", d:"Diabetes, asthma, COPD cycles", p:0, dom:"courses"}
+    ]}],
+    psych: [{g:"Psychiatry requirements", items:[
+      {id:"mha", n:"Mental Health Act training", d:"Involuntary admission and detention law", p:0, dom:"courses"}
+    ]}]
+  };
+
+  /* everyone sees these two, because both score in every specialty */
+  var PORTFOLIO_TAIL = [{g:"Commitment to the specialty", items:[
+    {id:"conf",   n:"Attended a specialty conference", d:"Evidence you are serious about the route", p:0, dom:"commit"},
+    {id:"society",n:"Member of the specialty society", d:"Usually cheap and often forgotten",         p:0, dom:"commit"},
+    {id:"taster", n:"Taster, elective or rotation in the specialty", d:"Strongest single piece of commitment evidence", p:0, dom:"commit"}
+  ]}];
+
+
+  /* how many months of clinical practice each grade implies. Used only to seed
+     the clinical domain, and the doctor can correct it on the dashboard. */
+  var GRADE_MONTHS = {student:0, intern:6, sho:24, reg:60, spr:84, consultant:120};
+  var GRADE_LABEL = {};
+  GRADES.forEach(function(g){ GRADE_LABEL[g.id] = g.label; });
+
+  /* non-EU doctors get one extra tick group, because these are the items that
+     actually block a move to Ireland and nothing else on the page captures them */
+  var PORTFOLIO_IMG = [{g:"Registration evidence", items:[
+    {id:"english", n:"English language test in date", d:"IELTS or OET, IMC will not register without it", p:0, dom:"reg"},
+    {id:"epic",    n:"EPIC primary source verification", d:"Verifying your degree, the slowest step, start early", p:0, dom:"reg"},
+    {id:"coe",     n:"Certificate of Experience or internship equivalence", d:"Proof your internship meets the Irish standard", p:0, dom:"reg"},
+    {id:"refs",    n:"Two clinical references ready", d:"Signed, dated, and covering your last 12 months", p:0, dom:"reg"}
+  ]}];
+
+  /* ================= answers ================= */
+  var A = {
+    name:"", email:"", password:"",
+    grade:"",            /* student, intern, sho, reg, spr, consultant */
+    origin:"",           /* ie, eu, noneu */
+    route:"",            /* here, coming   asked of non-EU only */
+    imc:"", permit:"",
+    inTraining:"",       /* yes, no */
+    scheme:"", schemeYear:0,
+    target:"",
+    exams:{},            /* stage id -> passed, booked, no */
+    ticks:{},            /* portfolio item id -> true */
+    applyWhen:"", applied:""
+  };
+
+  /* ================= adaptive lookups ================= */
+  function schemeObj(){
+    for (var k = 0; k < SCHEMES.length; k++) if (SCHEMES[k].n === A.scheme) return SCHEMES[k];
+    return null;
+  }
+  function targetObj(){
+    for (var k = 0; k < TARGETS.length; k++) if (TARGETS[k].n === A.target) return TARGETS[k];
+    return null;
+  }
+  /* the single function the whole adaptive behaviour hangs off */
+  function specialtyOf(){
+    if (A.inTraining === "yes"){ var s = schemeObj(); if (s) return s.spec; }
+    var t = targetObj(); if (t) return t.spec;
+    return "undecided";
+  }
+  function examSet(){ return EXAMS[specialtyOf()] || null; }
+  function portfolioSet(){
+    var spec = specialtyOf();
+    var out = PORTFOLIO_COMMON.slice();
+    if (PORTFOLIO_EXTRA[spec]) out = out.concat(PORTFOLIO_EXTRA[spec]);
+    out = out.concat(PORTFOLIO_TAIL);
+    if (A.origin === "noneu") out = out.concat(PORTFOLIO_IMG);
+    return out;
+  }
+  /* what this person is working towards, in words, for the summary and the payload */
+  function routeLabel(){
+    var s = schemeObj();
+    if (s) return s.n + (A.schemeYear ? ", year " + A.schemeYear : "");
+    if (A.target && A.target !== "Not decided yet") return A.target;
+    return "a training route still to be decided";
+  }
+  function collegeOf(){
+    var s = schemeObj(); if (s) return s.body;
+    var e = examSet();
+    var BODIES = {medicine:"RCPI", paeds:"RCPI", og:"RCPI", surgery:"RCSI", em:"RCSI",
+                  psych:"College of Psychiatrists", gp:"ICGP", anaes:"College of Anaesthesiologists",
+                  radiology:"Faculty of Radiologists", path:"Faculty of Pathology",
+                  ophth:"RCSI", pubh:"Faculty of Public Health Medicine"};
+    return BODIES[specialtyOf()] || "your college";
+  }
+
+  /* ================= scoring, computed from ticks ================= */
+  function examCounts(){
+    var e = examSet();
+    if (!e) return {passed:0, booked:0, total:0};
+    var p = 0, b = 0;
+    e.stages.forEach(function(st){
+      if (A.exams[st.id] === "passed") p++;
+      else if (A.exams[st.id] === "booked") b++;
+    });
+    return {passed:p, booked:b, total:e.stages.length};
+  }
+  /* sum the points of every ticked item in one scored domain */
+  function domPts(dom){
+    var t = 0;
+    portfolioSet().forEach(function(g){
+      g.items.forEach(function(it){ if (it.dom === dom && A.ticks[it.id]) t += it.p; });
+    });
+    return t;
+  }
+  function domMax(dom){
+    var t = 0;
+    portfolioSet().forEach(function(g){
+      g.items.forEach(function(it){ if (it.dom === dom) t += it.p; });
+    });
+    return t;
+  }
+  function pct(n, d){ return d > 0 ? Math.round(n / d * 100) : 0; }
+
   function domains(){
+    var ec = examCounts();
+    var months = GRADE_MONTHS[A.grade] || 0;
     return [
-      {id:"clinical",  name:"Clinical experience",      weight:20, maxPts:5,
-       ready: Math.min(100, Math.round(A.clinicalMonths / 28 * 100)),
-       pts:   A.clinicalMonths >= 24 ? 5 : (A.clinicalMonths >= 12 ? 3 : 0)},
-      {id:"exams",     name:"Exams and membership",     weight:15, maxPts:8,
-       ready: Math.round(A.examStages / 3 * 100),
-       pts:   A.examStages >= 3 ? 8 : (A.examStages >= 1 ? 3 : 0)},
-      {id:"auditqi",   name:"Audit and QI",             weight:25, maxPts:10,
-       ready: Math.round(A.auditComplete / 2 * 100),
-       pts:   A.auditComplete >= 2 ? 10 : (A.auditComplete >= 1 ? 5 : 0)},
-      {id:"teaching",  name:"Teaching",                 weight:20, maxPts:5,
-       ready: Math.round(A.teachingDone / A.teachingTarget * 100),
-       pts:   A.teachingDone >= 4 ? 5 : (A.teachingDone >= 2 ? 2 : 0)},
-      {id:"research",  name:"Research and publications", weight:15, maxPts:5,
-       ready: Math.min(100, Math.round(A.research / 2 * 100)),
-       pts:   A.research >= 2 ? 5 : (A.research >= 1 ? 2 : 0)},
-      {id:"leadership",name:"Leadership and management", weight:5, maxPts:2,
-       ready: A.leadership ? 100 : 0, pts: A.leadership ? 2 : 0}
+      {id:"clinical", name:"Clinical experience", weight:20, maxPts:5,
+       ready: Math.min(100, pct(months, 28)),
+       pts: months >= 24 ? 5 : (months >= 12 ? 3 : 0)},
+      {id:"exams", name:"Exams and membership", weight:15, maxPts:8,
+       ready: pct(ec.passed, ec.total),
+       pts: ec.total ? Math.round(8 * ec.passed / ec.total) : 0},
+      {id:"auditqi", name:"Audit and QI", weight:25, maxPts:domMax("auditqi"),
+       ready: pct(domPts("auditqi"), domMax("auditqi")), pts: domPts("auditqi")},
+      {id:"teaching", name:"Teaching", weight:20, maxPts:domMax("teaching"),
+       ready: pct(domPts("teaching"), domMax("teaching")), pts: domPts("teaching")},
+      {id:"research", name:"Research and publications", weight:15, maxPts:domMax("research"),
+       ready: pct(domPts("research"), domMax("research")), pts: domPts("research")},
+      {id:"leadership", name:"Leadership and management", weight:5, maxPts:domMax("leadership"),
+       ready: pct(domPts("leadership"), domMax("leadership")), pts: domPts("leadership")}
     ];
   }
   function readiness(){ var t = 0; domains().forEach(function(d){ t += d.ready * d.weight; }); return Math.round(t / 100); }
@@ -262,13 +642,72 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
   function maxPts(){ var t = 0; domains().forEach(function(d){ t += d.maxPts; }); return t; }
   function losing(){ return domains().filter(function(d){ return d.maxPts - d.pts > 0; }).length; }
 
-  /* ================= STEPS ================= */
+  /* the portfolio step shows a live total of only the scored items */
+  function tallyNow(){ return domPts("auditqi") + domPts("teaching") + domPts("research") + domPts("leadership"); }
+  function tallyMax(){ return domMax("auditqi") + domMax("teaching") + domMax("research") + domMax("leadership"); }
+
+  /* ================= markup helpers ================= */
+  function optList(items, attr, current, two){
+    return '<div class="opts' + (two ? " two" : "") + '">' + items.map(function(o){
+      var on = current === o.id;
+      return '<button class="opt' + (on ? " on" : "") + '" data-' + attr + '="' + esc(o.id) + '" aria-pressed="' + on + '">' +
+        '<span class="tick">' + ico(I.tick, 11) + "</span><span><b>" + esc(o.label) + "</b>" +
+        (o.sub ? "<small>" + esc(o.sub) + "</small>" : "") + "</span></button>";
+    }).join("") + "</div>";
+  }
+  function ctx(text, warn){
+    return '<div class="ctx' + (warn ? " warn" : "") + '">' + ico(warn ? I.warn : I.info, 15) + "<span>" + text + "</span></div>";
+  }
+  /* the searchable grouped picker, used for both schemes and targets */
+  function picker(rows, attr, current, placeholder){
+    var lastG = "", out = "";
+    rows.forEach(function(r){
+      if (r.g !== lastG){ out += '<p class="picker-group">' + esc(r.g) + "</p>"; lastG = r.g; }
+      var on = current === r.n;
+      out += '<button class="picker-opt' + (on ? " on" : "") + '" data-' + attr + '="' + esc(r.n) + '"' +
+        ' data-search="' + esc((r.n + " " + r.g + " " + (r.sub || "")).toLowerCase()) + '" aria-pressed="' + on + '">' +
+        '<span class="pk">' + ico(I.tick, 10) + "</span><span><b>" + esc(r.n) + "</b>" +
+        (r.sub ? "<small>" + esc(r.sub) + "</small>" : "") + "</span></button>";
+    });
+    return '<div class="picker">' +
+      '<div class="picker-search">' + ico(I.search, 16) +
+      '<input id="pkSearch" type="search" autocomplete="off" placeholder="' + esc(placeholder) + '" aria-label="' + esc(placeholder) + '"></div>' +
+      '<div class="picker-list" id="pkList">' + out +
+      '<p class="picker-empty" id="pkEmpty" hidden>Nothing matches that. Clear the search to see the full list.</p></div></div>';
+  }
+  function bindPicker(){
+    var input = document.getElementById("pkSearch");
+    if (!input) return;
+    var list = document.getElementById("pkList"), empty = document.getElementById("pkEmpty");
+    input.addEventListener("input", function(){
+      var q = input.value.trim().toLowerCase(), shown = 0;
+      var opts = list.querySelectorAll(".picker-opt");
+      for (var k = 0; k < opts.length; k++){
+        var hit = !q || opts[k].getAttribute("data-search").indexOf(q) > -1;
+        opts[k].hidden = !hit;
+        if (hit) shown++;
+      }
+      var groups = list.querySelectorAll(".picker-group");
+      for (var m = 0; m < groups.length; m++){
+        var any = false, sib = groups[m].nextElementSibling;
+        while (sib && !sib.classList.contains("picker-group")){
+          if (sib.classList.contains("picker-opt") && !sib.hidden){ any = true; break; }
+          sib = sib.nextElementSibling;
+        }
+        groups[m].hidden = !any;
+      }
+      empty.hidden = shown > 0;
+    });
+  }
+
+  /* ================= steps ================= */
   var STEPS = [
     {
       id:"account", label:"Account",
       brandH:"Know exactly what to do next.",
       brandP:"A few questions and MedNav maps your whole route, checks it against what the colleges actually publish, and tells you the one thing to do next.",
-      title:"Create your free account", sub:"Everything on your dashboard is free. Nothing here is shared with a college or an employer.",
+      title:"Create your free account",
+      sub:"Everything on your dashboard is free. Nothing here is shared with a college or an employer.",
       body:function(){
         return '<div class="field"><label for="fName">Your name</label>' +
           '<input id="fName" autocomplete="name" placeholder="Jane Doyle" value="' + esc(A.name) + '"></div>' +
@@ -298,10 +737,9 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
         return '<p class="sub">We sent a magic link to <b>' + esc(A.email) + '</b>. Click it and you are verified.</p>' +
           '<div class="demo-note">' + ico(I.warn, 15) +
           "<span>This is a prototype. No account was created and no email was sent, so the button below stands in for clicking the link.</span></div>" +
-          '<p class="fineprint" style="margin-top:0">Wrong address? <button class="skip" data-goto="0" style="font-size:13px;color:var(--good-text);font-weight:700">Change it</button></p>';
+          '<p class="fineprint" style="margin-top:0">Wrong address? <button class="skip" data-goto="account" style="font-size:13px;color:var(--good-text);font-weight:700">Change it</button></p>';
       },
-      cta:"I clicked the link",
-      valid:function(){ return true; }
+      cta:"I clicked the link", valid:function(){ return true; }
     },
     {
       id:"password", label:"Password",
@@ -338,7 +776,7 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
         }
         function paint(){
           var n = score(el.value), bars = meter.children;
-          for (var i = 0; i < bars.length; i++) bars[i].classList.toggle("on", i < n);
+          for (var k = 0; k < bars.length; k++) bars[k].classList.toggle("on", k < n);
           label.textContent = "Strength: " + (el.value.length === 0 ? "not set" : ["too short","weak","fair","good","strong"][n]);
         }
         el.addEventListener("input", paint); paint();
@@ -352,52 +790,227 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
       }
     },
     {
-      id:"stage", label:"Your stage",
-      brandH:"Two doctors, same grade, different routes.",
-      brandP:"An SHO who qualified in Ireland and one who qualified abroad do not have the same ladder. This is the question that decides yours.",
-      title:"Where are you now?", sub:"This sets your ladder. You can change it later without losing anything.",
+      /* grade on its own. Not grade plus route bundled together. */
+      id:"grade", label:"Your grade",
+      brandH:"Start with the simplest question.",
+      brandP:"Your grade, in the words you would use yourself. Everything after this adapts to the answer, so there is no long form to wade through.",
+      title:"What grade are you?",
+      sub:"Just your grade for now. We ask about training and route next, because those vary independently.",
+      body:function(){ return optList(GRADES, "grade", A.grade); },
+      cta:"Continue", valid:function(){ return !!A.grade; }
+    },
+    {
+      id:"origin", label:"Where you qualified",
+      brandH:"Where you qualified changes the ladder.",
+      brandP:"Two SHOs on the same ward can have completely different routes to a training post. This is the question that separates them.",
+      title:"Where did you qualify?",
+      sub:"This decides whether we show you the Irish training route, or the registration route into it first.",
       body:function(){
-        return '<div class="opts">' + STAGES.map(function(s){
-          return '<button class="opt' + (A.stage === s.id ? " on" : "") + '" data-stage="' + s.id + '" aria-pressed="' + (A.stage === s.id) + '">' +
-            '<span class="tick">' + ico(I.tick, 11) + "</span><span><b>" + esc(s.label) + "</b><small>" + esc(s.sub) + "</small></span></button>";
-        }).join("") + "</div>";
+        return optList(ORIGINS, "origin", A.origin) +
+          (A.origin === "noneu" ? ctx("Good. The next two questions are about registration and permission to work. They are the two things that most often stall a move to Ireland, so MedNav tracks them as part of your roadmap rather than assuming they are sorted.") : "");
       },
-      cta:"Continue",
-      valid:function(){ return !!A.stage; }
+      cta:"Continue", valid:function(){ return !!A.origin; }
+    },
+    {
+      /* --- the three IMG-only steps --- */
+      id:"route", label:"Your position",
+      when:function(){ return A.origin === "noneu"; },
+      brandH:"Coming to Ireland is a route of its own.",
+      brandP:"Registration, permission to work and a first post are three separate hurdles, each with their own timeline. We map them the same way we map exams.",
+      title:"Where are you right now?",
+      sub:"An application from abroad and an application from an Irish hospital are not the same application.",
+      body:function(){
+        return optList([
+          {id:"here",   label:"Already working in Ireland", sub:"You hold a post here now or have recently held one"},
+          {id:"coming", label:"Outside Ireland, planning to move", sub:"You have not worked in the Irish system yet"}
+        ], "route", A.route) +
+        (A.route === "coming" ? ctx("Your roadmap will lead with registration and permission, then the first non-training post, then the training application. Applying straight into a training scheme from abroad is possible but it is the narrower door, and we will show you both.") : "");
+      },
+      cta:"Continue", valid:function(){ return !!A.route; }
+    },
+    {
+      id:"imc", label:"Registration",
+      when:function(){ return A.origin === "noneu"; },
+      brandH:"Registration first, everything else after.",
+      brandP:"Without the right division of the register, a training post is not open to you no matter how strong the rest of the application is. So we ask about it early.",
+      title:"Where are you with the Irish Medical Council?",
+      sub:"If you are not sure which division applies, pick the closest and correct it later.",
+      body:function(){
+        return optList(IMC_STATES, "imc", A.imc) +
+          (A.imc === "none" || A.imc === "applied"
+            ? ctx("Registration is the long pole. Primary source verification of your degree alone commonly runs to months, so your roadmap will put it first and work the rest around it.", true)
+            : "");
+      },
+      cta:"Continue", valid:function(){ return !!A.imc; }
+    },
+    {
+      id:"permit", label:"Permission to work",
+      when:function(){ return A.origin === "noneu"; },
+      brandH:"Permission to work is part of the plan.",
+      brandP:"Which permission you hold decides which posts you can accept and how quickly you can move between them. It belongs on the roadmap, not in a drawer.",
+      title:"What is your permission to work in Ireland?",
+      sub:"This affects which posts you can take and how fast you can change employer.",
+      body:function(){
+        return optList(PERMITS, "permit", A.permit) +
+          (A.permit === "none"
+            ? ctx("With no permission yet you will need an employer to sponsor a permit, which in practice means securing a post first. Your roadmap will sequence it that way.", true)
+            : "");
+      },
+      cta:"Continue", valid:function(){ return !!A.permit; }
+    },
+    {
+      /* --- training branch --- */
+      id:"training", label:"Training",
+      when:function(){ return A.grade === "intern" || A.grade === "sho" || A.grade === "reg" || A.grade === "spr"; },
+      brandH:"Are you on a scheme, or heading for one?",
+      brandP:"A trainee is measured against their scheme's curriculum. Everyone else is measured against the entry criteria for the scheme they want. The two are different documents.",
+      title:"Are you on a training scheme?",
+      sub:"A recognised scheme with a national training number, not a service post that happens to be educational.",
+      body:function(){
+        return optList([
+          {id:"yes", label:"Yes, I am on a scheme", sub:"BST, Core Surgical, GP or a higher specialist scheme"},
+          {id:"no",  label:"No, not on a scheme",   sub:"Service post, standalone post, or between schemes"}
+        ], "intraining", A.inTraining);
+      },
+      cta:"Continue", valid:function(){ return !!A.inTraining; }
+    },
+    {
+      id:"scheme", label:"Your scheme",
+      when:function(){ return A.inTraining === "yes"; },
+      brandH:"Which scheme, precisely.",
+      brandP:"BST General Internal Medicine and HST Cardiology sit on the same route and have nothing else in common. Naming the scheme is what makes the rest of MedNav accurate.",
+      title:"Which scheme are you on?",
+      sub:"Search or scroll. Basic and core schemes first, then higher specialist training.",
+      body:function(){
+        return picker(SCHEMES.map(function(s){
+          return {n:s.n, g:s.g, sub:s.body + ", " + s.yrs + " year" + (s.yrs === 1 ? "" : "s")};
+        }), "scheme", A.scheme, "Search schemes, for example cardiology") +
+        (A.scheme ? ctx("Your exams, portfolio items and deadlines are now set to " + esc(A.scheme) + ", run by " + esc(collegeOf()) + ".") : "");
+      },
+      cta:"Continue", valid:function(){ return !!A.scheme; }, after:bindPicker
+    },
+    {
+      id:"schemeyear", label:"Year of training",
+      /* deliberately not gated on the scheme being picked yet, so the step count
+         does not grow underneath the doctor while they are choosing */
+      when:function(){ return A.inTraining === "yes"; },
+      brandH:"Which year decides what is due.",
+      brandP:"Requirements land in specific years. Telling us where you are in the scheme is what turns a generic checklist into a list of things due this year.",
+      title:"Which year of the scheme are you in?",
+      sub:"",
+      body:function(){
+        var s = schemeObj();
+        if (!s) return "";
+        var yrs = [];
+        for (var y = 1; y <= s.yrs; y++){
+          yrs.push({id:String(y), label:"Year " + y + " of " + s.yrs, sub:(y === s.yrs ? "Final year of the scheme" : "")});
+        }
+        return '<p class="sub">' + esc(s.n) + " runs for " + s.yrs + " year" + (s.yrs === 1 ? "" : "s") + ".</p>" +
+          optList(yrs, "schemeyear", A.schemeYear ? String(A.schemeYear) : "", s.yrs > 3);
+      },
+      cta:"Continue", valid:function(){ return A.schemeYear > 0; }
     },
     {
       id:"target", label:"Your target",
+      when:function(){ return A.inTraining !== "yes"; },
       brandH:"Every specialty, one route to consultant.",
-      brandP:"Pick the one you are aiming for. If you are not sure yet, say so, and MedNav shows you the comparison instead of guessing.",
-      title:"What are you aiming for?", sub:"This decides the criteria you are scored against and the deadlines you are shown.",
+      brandP:"Pick what you are aiming for. If you are not sure yet, say so, and MedNav shows you the comparison instead of guessing on your behalf.",
+      title:"What are you aiming for?",
+      sub:"This decides the exams you are shown, the criteria you are scored against and the deadlines you get alerted to.",
       body:function(){
-        var names = Object.keys(SPEC);
-        return '<div class="opts two">' + names.map(function(n){
-          return '<button class="opt' + (A.specialty === n ? " on" : "") + '" data-spec="' + esc(n) + '" aria-pressed="' + (A.specialty === n) + '">' +
-            '<span class="tick">' + ico(I.tick, 11) + "</span><span><b>" + esc(n) + "</b><small>" + esc(SPEC[n].body) + "</small></span></button>";
-        }).join("") + "</div>" +
-        '<button class="opt' + (A.specialty === "undecided" ? " on" : "") + '" data-spec="undecided" aria-pressed="' + (A.specialty === "undecided") + '">' +
-          '<span class="tick">' + ico(I.tick, 11) + '</span><span><b>Not decided yet</b><small>We will start you on the specialty explorer instead</small></span></button>';
+        var rows = TARGETS.map(function(t){
+          var g = t.spec === "undecided" ? "Still deciding"
+                : (t.spec === "surgery" ? "Surgical specialties"
+                : (t.spec === "medicine" ? "Medical specialties" : "Other specialties"));
+          return {n:t.n, g:g};
+        });
+        rows.sort(function(a, b){
+          var order = {"Medical specialties":0, "Surgical specialties":1, "Other specialties":2, "Still deciding":3};
+          return order[a.g] - order[b.g];
+        });
+        var e = A.target ? EXAMS[(targetObj() || {}).spec] : null;
+        return picker(rows, "target", A.target, "Search specialties, for example orthopaedics") +
+          (e ? ctx("Set. Your exam route is " + esc(e.fam) + ", so that is the only exam family we will show you.") : "");
       },
-      cta:"Continue",
-      valid:function(){ return !!A.specialty; }
+      cta:"Continue", valid:function(){ return !!A.target; }, after:bindPicker
     },
     {
-      id:"evidence", label:"Your record",
-      brandH:"We score what you already have.",
-      brandP:"Colleges score in bands, so a half finished project counts for nothing. Tell us what is actually finished and we will show you the difference.",
-      title:"What have you already got?", sub:"Rough is fine. You can correct any of it from your dashboard in a second.",
+      /* named exams, ticked. Never a number typed into a box. */
+      id:"exams", label:"Your exams",
+      when:function(){ return !!examSet(); },
+      brandH:"We ask which exam, not how many.",
+      brandP:"A count cannot be turned back into advice. A ticked list can, because it tells us exactly which part is outstanding and what to book next.",
+      title:"Which of these have you passed?",
+      sub:"",
       body:function(){
-        var ex = A.specialty && SPEC[A.specialty] ? SPEC[A.specialty].exam : "membership";
-        return counterRow("examStages", ex + " stages passed", "Part 1, Part 2 written, and the clinical exam", 0, 3) +
-          counterRow("auditComplete", "Audit or QI projects finished", "Only count the ones that are actually complete", 0, 4) +
-          counterRow("teachingDone", "Teaching sessions logged", "Formal, timetabled teaching you can evidence", 0, 12) +
-          counterRow("research", "Research outputs", "Papers, posters or accepted abstracts", 0, 8) +
-          '<button class="opt' + (A.leadership ? " on" : "") + '" data-lead="1" aria-pressed="' + A.leadership + '" style="margin-top:9px">' +
-          '<span class="tick">' + ico(I.tick, 11) + '</span><span><b>A recognised leadership or management course</b><small>Optional, and the smallest of the scored domains</small></span></button>';
+        var e = examSet();
+        var out = '<p class="sub">These are the ' + esc(e.fam) + " stages for " + esc(routeLabel()) +
+          ". Mark anything you have booked but not sat, so we can put the sitting date on your roadmap.</p>";
+        out += e.stages.map(function(st){
+          var v = A.exams[st.id] || "";
+          return '<div class="exam-row"><span class="er-l"><b>' + esc(st.n) + "</b><small>" + esc(st.d) + "</small></span>" +
+            '<span class="seg" role="group" aria-label="' + esc(st.n) + '">' +
+            ["passed","booked","no"].map(function(val){
+              var lab = val === "passed" ? "Passed" : (val === "booked" ? "Booked" : "Not yet");
+              return '<button type="button" data-exam="' + st.id + '" data-v="' + val + '" class="' + (v === val ? "on" : "") +
+                '" aria-pressed="' + (v === val) + '">' + lab + "</button>";
+            }).join("") + "</span></div>";
+        }).join("");
+        var c = examCounts();
+        out += '<div class="tally"><div class="tally-in"><b class="num">' + c.passed + " of " + c.total +
+          '</b><span class="bar"><i style="width:' + pct(c.passed, c.total) + '%"></i></span>' +
+          "<span>" + esc(e.fam) + " passed</span></div></div>";
+        return out;
       },
-      cta:"Build my roadmap",
-      valid:function(){ return true; }
+      cta:"Continue", valid:function(){ return true; }
+    },
+    {
+      /* the same idea for everything else: tick the thing, we do the arithmetic */
+      id:"portfolio", label:"Your record",
+      brandH:"We score what you already have.",
+      brandP:"Colleges score in bands, so a half finished project counts for nothing. Tick what is actually finished and the score builds itself in front of you.",
+      title:"What have you already got?",
+      sub:"Tick anything that is finished. Points are what the criteria typically award, and they add up as you go.",
+      body:function(){
+        var out = "";
+        if (specialtyOf() !== "undecided"){
+          out += ctx("This list is tuned to " + esc(routeLabel()) + ". Items that do not score in this specialty are not shown.");
+        }
+        out += portfolioSet().map(function(g){
+          return '<p class="group-h">' + esc(g.g) + "</p>" + g.items.map(function(it){
+            var on = !!A.ticks[it.id];
+            return '<button class="item' + (on ? " on" : "") + '" data-tick="' + it.id + '" aria-pressed="' + on + '">' +
+              '<span class="tk">' + ico(I.tick, 12) + '</span><span class="il"><b>' + esc(it.n) + "</b><small>" + esc(it.d) + "</small></span>" +
+              (it.p > 0 ? '<span class="pts">' + it.p + " pt" + (it.p === 1 ? "" : "s") + "</span>" : '<span class="pts">Tracked</span>') +
+              "</button>";
+          }).join("");
+        }).join("");
+        out += '<div class="tally" id="tally">' + tallyMarkup() + "</div>";
+        return out;
+      },
+      cta:"Continue", valid:function(){ return true; }
+    },
+    {
+      id:"timeline", label:"Your timing",
+      brandH:"When you apply changes what matters now.",
+      brandP:"With one cycle to go, the advice is what you can still finish. With three, it is what to start. Same record, different next step.",
+      title:"When are you applying?",
+      sub:"This sets which deadlines we alert you to and how hard we push on the gaps.",
+      body:function(){
+        return optList([
+          {id:"this",  label:"The next cycle", sub:"Applying at the next opening, so the clock is short"},
+          {id:"next",  label:"The cycle after next", sub:"About a year to build the record"},
+          {id:"later", label:"Two or more cycles away", sub:"Time to fix the structural gaps properly"},
+          {id:"none",  label:"Not applying for a scheme right now", sub:"Keeping the record current anyway"}
+        ], "applywhen", A.applyWhen) +
+        '<p class="group-h">Have you applied before?</p>' +
+        optList([
+          {id:"nofb", label:"Yes, and I got no useful feedback", sub:"Common, and we will work from the scoring criteria instead"},
+          {id:"fb",   label:"Yes, and I have my scores or feedback", sub:"Best case, you can upload it and we score against it"},
+          {id:"no",   label:"No, this is my first application", sub:""}
+        ], "applied", A.applied);
+      },
+      cta:"Build my roadmap", valid:function(){ return !!A.applyWhen; }
     },
     {
       id:"done", label:"Your roadmap",
@@ -405,59 +1018,77 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
       brandP:"Everything from here is derived from what you just told us. Change any of it and the whole dashboard recalculates.",
       title:"Here is where you stand", sub:"",
       body:function(){
-        var spec = A.specialty === "undecided" ? null : SPEC[A.specialty];
-        var ds = domains();
-        return '<p class="sub">Against ' + (spec ? esc(spec.target) + " criteria published by " + esc(spec.body) : "a typical training route") +
-          ", computed from your answers. Nothing here is estimated.</p>" +
-          '<div class="sum-grid">' +
-            '<div class="sum"><p class="k">Readiness</p><p class="v">' + readiness() + '%</p></div>' +
-            '<div class="sum"><p class="k">Shortlisting</p><p class="v">' + pts() + '<small>/' + maxPts() + '</small></p></div>' +
-            '<div class="sum"><p class="k">Open gaps</p><p class="v">' + losing() + '<small>/6</small></p></div>' +
-          "</div>" +
-          '<div class="sum-list">' + ds.map(function(d){
+        var ds = domains(), c = examCounts();
+        var out = '<p class="sub">Against ' + esc(routeLabel()) + " criteria, as published by " + esc(collegeOf()) +
+          ", computed from what you ticked. Nothing here is estimated.</p>";
+        out += '<div class="sum-grid">' +
+            '<div class="sum"><p class="k">Readiness</p><p class="v num">' + readiness() + '%</p></div>' +
+            '<div class="sum"><p class="k">Shortlisting</p><p class="v num">' + pts() + '<small>/' + maxPts() + '</small></p></div>' +
+            '<div class="sum"><p class="k">Open gaps</p><p class="v num">' + losing() + '<small>/6</small></p></div>' +
+          "</div>";
+        out += '<div class="sum-list">' + ds.map(function(d){
             var full = d.maxPts - d.pts === 0;
+            var note = d.id === "exams" && c.total
+              ? c.passed + " of " + c.total + " stages passed"
+              : d.pts + " of " + d.maxPts + " points";
             return '<div class="sum-row ' + (full ? "have" : "miss") + '"><span class="ic">' + ico(full ? I.tick : I.warn, 12) + "</span>" +
-              esc(d.name) + '<span class="r">' + d.pts + " of " + d.maxPts + " points</span></div>";
-          }).join("") + "</div>" +
-          '<p class="fineprint" style="max-width:none">The scoring bands used here are illustrative in this prototype. In the real product every band comes from the criteria the college published for the current cycle, and anything not yet published is marked rather than guessed.</p>';
+              esc(d.name) + '<span class="r">' + esc(note) + "</span></div>";
+          }).join("") + "</div>";
+        if (A.origin === "noneu"){
+          var pending = [];
+          if (A.imc === "none" || A.imc === "applied") pending.push("IMC registration");
+          if (A.permit === "none") pending.push("permission to work");
+          if (!A.ticks.english) pending.push("an in-date English language test");
+          if (!A.ticks.epic) pending.push("EPIC verification");
+          if (pending.length){
+            out += ctx("Before any of the above matters, your roadmap opens with " + esc(pending.join(", ")) +
+              ". Those are sequenced first because nothing else can proceed without them.", true);
+          }
+        }
+        out += '<p class="fineprint" style="max-width:none">The scoring bands used here are illustrative in this prototype. In the real product every band comes from the criteria the college published for the current cycle, and anything not yet published is marked rather than guessed.</p>';
+        return out;
       },
-      cta:"Open my dashboard",
-      valid:function(){ return true; },
-      finish:true
+      cta:"Open my dashboard", valid:function(){ return true; }, finish:true
     }
   ];
 
-  function counterRow(key, label, sub, min, max){
-    return '<div class="count" data-count-row="' + key + '"><span class="cl"><b>' + esc(label) + "</b><small>" + esc(sub) + "</small></span>" +
-      '<span class="ctl"><button type="button" data-step-down="' + key + '" aria-label="Decrease ' + esc(label) + '"' +
-        (A[key] <= min ? " disabled" : "") + ">" + ico(I.minus, 14) + "</button>" +
-      '<b class="num" data-val="' + key + '">' + A[key] + "</b>" +
-      '<button type="button" data-step-up="' + key + '" aria-label="Increase ' + esc(label) + '"' +
-        (A[key] >= max ? " disabled" : "") + ">" + ico(I.plus, 14) + "</button></span></div>";
+  function tallyMarkup(){
+    var n = tallyNow(), m = tallyMax();
+    return '<div class="tally-in"><b class="num">' + n + " of " + m +
+      '</b><span class="bar"><i style="width:' + pct(n, m) + '%"></i></span><span>portfolio points</span></div>';
   }
-  var LIMITS = {examStages:[0,3], auditComplete:[0,4], teachingDone:[0,12], research:[0,8]};
 
-  /* ================= RENDER ================= */
-  var i = 0;
+  /* ================= the adaptive engine ================= */
+  function activeSteps(){
+    return STEPS.filter(function(s){ return !s.when || s.when(); });
+  }
+  var curId = "account";
+  function idx(){
+    var as = activeSteps();
+    for (var k = 0; k < as.length; k++) if (as[k].id === curId) return k;
+    return 0;
+  }
+  function step(){ return activeSteps()[idx()]; }
+
   var stepEl = document.getElementById("step");
 
   function render(){
-    var s = STEPS[i];
+    var as = activeSteps(), n = idx(), s = as[n];
     document.getElementById("brandH").textContent = s.brandH;
     document.getElementById("brandP").textContent = s.brandP;
-    document.getElementById("blad").innerHTML = STEPS.map(function(x, n){
-      var cls = n < i ? "on" : (n === i ? "now" : "");
-      return '<div class="blad-item ' + cls + '"><span class="k">' + (n < i ? ico(I.tick, 11) : (n + 1)) + "</span>" + esc(x.label) + "</div>";
+    document.getElementById("blad").innerHTML = as.map(function(x, k){
+      var cls = k < n ? "on" : (k === n ? "now" : "");
+      return '<div class="blad-item ' + cls + '"><span class="k">' + (k < n ? ico(I.tick, 11) : (k + 1)) + "</span>" + esc(x.label) + "</div>";
     }).join("");
 
     stepEl.innerHTML =
-      '<div class="prog"><span class="prog-track"><i style="width:' + Math.round((i) / (STEPS.length - 1) * 100) + '%"></i></span>' +
-      "<span>Step " + (i + 1) + " of " + STEPS.length + "</span></div>" +
+      '<div class="prog"><span class="prog-track"><i style="width:' + Math.round(n / (as.length - 1) * 100) + '%"></i></span>' +
+      '<span class="num">Step ' + (n + 1) + " of " + as.length + "</span></div>" +
       "<h1>" + esc(s.title) + "</h1>" +
       (s.sub ? '<p class="sub">' + esc(s.sub) + "</p>" : "") +
       s.body() +
       '<div class="acts">' +
-        (i > 0 ? '<button class="btn btn-ghost" id="backBtn">' + ico(I.back, 15) + "Back</button>" : "") +
+        (n > 0 ? '<button class="btn btn-ghost" id="backBtn">' + ico(I.back, 15) + "Back</button>" : "") +
         '<button class="btn btn-primary" id="nextBtn">' + esc(s.cta) + ico(I.arrow, 15) + "</button>" +
       "</div>";
 
@@ -467,7 +1098,7 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
 
     if (s.after) s.after();
     var back = document.getElementById("backBtn");
-    if (back) back.addEventListener("click", function(){ go(i - 1); });
+    if (back) back.addEventListener("click", function(){ goIdx(idx() - 1); });
     document.getElementById("nextBtn").addEventListener("click", next);
 
     var firstInput = stepEl.querySelector("input");
@@ -475,34 +1106,49 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     document.title = s.title + " · MedNav";
   }
 
-  function go(n){ i = Math.max(0, Math.min(STEPS.length - 1, n)); render(); window.scrollTo({top:0, behavior: reduced ? "auto" : "smooth"}); }
+  function goIdx(k){
+    var as = activeSteps();
+    k = Math.max(0, Math.min(as.length - 1, k));
+    curId = as[k].id;
+    render();
+    window.scrollTo({top:0, behavior: reduced ? "auto" : "smooth"});
+  }
+  function goId(id){ curId = id; render(); window.scrollTo({top:0, behavior: reduced ? "auto" : "smooth"}); }
 
   function next(){
-    var s = STEPS[i];
+    var s = step();
     if (s.valid && !s.valid()) return;
     if (s.finish){ finish(); return; }
-    go(i + 1);
+    goIdx(idx() + 1);
   }
 
+  /* ================= handoff ================= */
   function finish(){
-    var spec = A.specialty === "undecided" ? null : SPEC[A.specialty];
-    var stage = STAGES.filter(function(x){ return x.id === A.stage; })[0] || STAGES[2];
+    var c = examCounts(), s = schemeObj(), e = examSet();
+    var teachTicks = ["teach_stud","teach_nchd","teach_course","teach_qual"].filter(function(k){ return A.ticks[k]; }).length;
+    var resTicks   = ["res_poster","res_oral","res_co","res_first"].filter(function(k){ return A.ticks[k]; }).length;
     var payload = {
       name: A.name || "Doctor",
-      specialty: spec ? A.specialty : "Cardiology",
-      target: spec ? spec.target : "HST Cardiology",
-      body: spec ? spec.body : "RCPI",
-      exam: spec ? spec.exam : "MRCPI",
-      stage: A.stage,
-      stageLabel: stage.label,
-      clinicalMonths: A.clinicalMonths,
-      examStages: A.examStages,
-      auditComplete: A.auditComplete,
+      grade: A.grade,
+      stage: A.grade,
+      stageLabel: GRADE_LABEL[A.grade] || "Doctor",
+      origin: A.origin, route: A.route, imc: A.imc, permit: A.permit,
+      inTraining: A.inTraining, scheme: A.scheme, schemeYear: A.schemeYear,
+      specialty: A.target || (s ? s.n : ""),
+      target: routeLabel(),
+      body: collegeOf(),
+      exam: e ? e.fam : "",
+      examStages: Math.min(3, c.passed),
+      examsDetail: A.exams,
+      examsPassed: c.passed, examsTotal: c.total,
+      clinicalMonths: GRADE_MONTHS[A.grade] || 0,
+      auditComplete: (A.ticks.audit_done ? 1 : 0) + (A.ticks.qi_done ? 1 : 0),
       qiPct: 0,
-      teachingDone: A.teachingDone,
-      teachingTarget: A.teachingTarget,
-      research: A.research,
-      leadership: A.leadership,
+      teachingDone: teachTicks, teachingTarget: 4,
+      research: resTicks,
+      leadership: !!A.ticks.lead_course,
+      ticks: A.ticks,
+      applyWhen: A.applyWhen, applied: A.applied,
       deadlinesDone:{}, customMilestones:[], activity:[]
     };
     var b64 = window.btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
@@ -510,38 +1156,100 @@ h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em}
     location.href = DASH + "?p=" + b64 + "#/today";
   }
 
-  /* choices and counters */
+  /* ================= input ================= */
   stepEl.addEventListener("click", function(ev){
-    var st = ev.target.closest("[data-stage]");
-    if (st){ A.stage = st.getAttribute("data-stage");
-      var found = STAGES.filter(function(x){ return x.id === A.stage; })[0];
-      A.clinicalMonths = found ? found.months : 24;
+    var t = ev.target;
+
+    var g = t.closest("[data-grade]");
+    if (g){ A.grade = g.getAttribute("data-grade");
+      if (A.grade === "student" || A.grade === "consultant") A.inTraining = "";
       render(); return; }
 
-    var sp = ev.target.closest("[data-spec]");
-    if (sp){ A.specialty = sp.getAttribute("data-spec"); render(); return; }
+    var o = t.closest("[data-origin]");
+    if (o){ A.origin = o.getAttribute("data-origin");
+      if (A.origin !== "noneu"){ A.route = ""; A.imc = ""; A.permit = ""; }
+      render(); return; }
 
-    var ld = ev.target.closest("[data-lead]");
-    if (ld){ A.leadership = !A.leadership; render(); return; }
+    var r = t.closest("[data-route]");
+    if (r){ A.route = r.getAttribute("data-route"); render(); return; }
 
-    var up = ev.target.closest("[data-step-up]"), dn = ev.target.closest("[data-step-down]");
-    if (up || dn){
-      var key = (up || dn).getAttribute(up ? "data-step-up" : "data-step-down");
-      var lim = LIMITS[key] || [0, 99];
-      A[key] = Math.max(lim[0], Math.min(lim[1], A[key] + (up ? 1 : -1)));
-      render();
-      var again = document.querySelector('[data-step-' + (up ? "up" : "down") + '="' + key + '"]');
-      if (again && !again.disabled) again.focus();
+    var im = t.closest("[data-imc]");
+    if (im){ A.imc = im.getAttribute("data-imc"); render(); return; }
+
+    var pm = t.closest("[data-permit]");
+    if (pm){ A.permit = pm.getAttribute("data-permit"); render(); return; }
+
+    var tr = t.closest("[data-intraining]");
+    if (tr){
+      A.inTraining = tr.getAttribute("data-intraining");
+      /* clearing the other branch, so a change of mind cannot leave a stale answer behind */
+      if (A.inTraining === "yes") A.target = "";
+      else { A.scheme = ""; A.schemeYear = 0; }
+      A.exams = {};
+      render(); return;
+    }
+
+    var sc = t.closest("[data-scheme]");
+    if (sc){
+      var picked = sc.getAttribute("data-scheme");
+      if (picked !== A.scheme){ A.schemeYear = 0; A.exams = {}; }
+      A.scheme = picked; render(); return;
+    }
+
+    var sy = t.closest("[data-schemeyear]");
+    if (sy){ A.schemeYear = parseInt(sy.getAttribute("data-schemeyear"), 10); render(); return; }
+
+    var tg = t.closest("[data-target]");
+    if (tg){
+      var pt = tg.getAttribute("data-target");
+      if (pt !== A.target) A.exams = {};
+      A.target = pt; render(); return;
+    }
+
+    /* exams and ticks update in place, so a long list does not jump back to the top */
+    var ex = t.closest("[data-exam]");
+    if (ex){
+      var id = ex.getAttribute("data-exam"), val = ex.getAttribute("data-v");
+      A.exams[id] = A.exams[id] === val ? "" : val;
+      var sibs = ex.parentNode.querySelectorAll("button");
+      for (var k = 0; k < sibs.length; k++){
+        var on = sibs[k].getAttribute("data-v") === A.exams[id];
+        sibs[k].classList.toggle("on", on);
+        sibs[k].setAttribute("aria-pressed", on ? "true" : "false");
+      }
+      var cc = examCounts(), bar = stepEl.querySelector(".tally-in");
+      if (bar){
+        bar.querySelector("b").textContent = cc.passed + " of " + cc.total;
+        bar.querySelector(".bar i").style.width = pct(cc.passed, cc.total) + "%";
+      }
       return;
     }
 
-    var goto = ev.target.closest("[data-goto]");
-    if (goto){ go(parseInt(goto.getAttribute("data-goto"), 10)); }
+    var tk = t.closest("[data-tick]");
+    if (tk){
+      var tid = tk.getAttribute("data-tick");
+      A.ticks[tid] = !A.ticks[tid];
+      tk.classList.toggle("on", !!A.ticks[tid]);
+      tk.setAttribute("aria-pressed", A.ticks[tid] ? "true" : "false");
+      var tally = document.getElementById("tally");
+      if (tally) tally.innerHTML = tallyMarkup();
+      return;
+    }
+
+    var aw = t.closest("[data-applywhen]");
+    if (aw){ A.applyWhen = aw.getAttribute("data-applywhen"); render(); return; }
+
+    var ab = t.closest("[data-applied]");
+    if (ab){ A.applied = ab.getAttribute("data-applied"); render(); return; }
+
+    var gt = t.closest("[data-goto]");
+    if (gt){ goId(gt.getAttribute("data-goto")); }
   });
 
   document.addEventListener("keydown", function(ev){
     if (ev.key !== "Enter") return;
     if (ev.target.tagName === "BUTTON") return;
+    if (ev.target.id === "pkSearch") return;
     ev.preventDefault();
     next();
   });
