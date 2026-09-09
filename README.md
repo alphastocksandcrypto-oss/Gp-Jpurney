@@ -312,6 +312,10 @@ inherited it, so the fix is applied in all six files.
   before any of it is shown to a real doctor.
 - Dashboard actions that are honestly stubbed and say so: calendar export,
   reminders and sign out.
+- Dashboard: `CYCLE` gives every college one illustrative application, interview
+  and start date, used for a doctor's "also applying to" specialties. Same
+  status as the primary `deadlines()` dates it sits beside: replace both from
+  each college's actual published cycle before this reaches a real doctor.
 - Preparation pages: every fee, date, weight and station count is illustrative.
   Replace from the colleges' published documents, and mark anything not yet
   published rather than carrying last year's number forward.
@@ -320,11 +324,24 @@ inherited it, so the fix is applied in all six files.
 - Milestones and the roadmap trail now derive from the record, so a doctor who
   says they hold two exam stages is not shown a third as passed. The historical
   dates that used to be hardcoded are gone.
-- Onboarding captures `dualTrack` and `otherTargets` (hedging across
-  specialties) and `basedIn` / `willing` (location), but the dashboard does not
-  yet act on either: deadlines are not yet shown side by side for a second
-  target, and jobs and locums are not yet filtered to the chosen region. Both
-  are captured now so the data exists when that dashboard work happens.
+- The dashboard now acts on both onboarding fields that used to be dropped at
+  the door. `seedFromUrl()` only ever copied keys already present in
+  `DEFAULTS`, so `basedIn`, `willing`, `dualTrack` and `otherTargets` arrived
+  from onboarding and were silently discarded. Fixed by adding them to
+  `DEFAULTS`, so they now survive the handoff and can be edited afterwards from
+  `#/profile`.
+  - **Hedging.** `SPECIALTY_INFO` and `CYCLE` in `app/index.html` resolve a real
+    exam family and college for each name in `otherTargets`, and My roadmap,
+    Deadlines and Today all render a second, clearly-labelled set of dates for
+    them. The `CYCLE` dates are illustrative, exactly as the primary
+    `deadlines()` dates already are, and every other-target date says so on
+    the card rather than presenting as a published one.
+  - **Location.** Matched to you tags its six demo rows with a region and
+    reorders by `S.willing`, badging matches "Near you". Nothing is ever
+    hidden by the filter, deliberately: six demo rows filtered down to zero
+    would read as "found nothing" rather than "this is a small demo".
+  - Neither field is scored. Readiness and the shortlisting score are
+    unchanged by either.
 
 ## Noted for later, deliberately not built
 

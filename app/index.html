@@ -248,6 +248,9 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 .field input,.field select{border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:10px 13px;font-size:13.5px;color:var(--ink);outline:none;width:100%}
 .field input:focus,.field select:focus{border-color:var(--mint)}
 .field .hint{font-size:11.5px;color:var(--txt-soft)}
+.chk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:2px}
+.chk-grid label{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;color:var(--ink)}
+.chk-grid input{width:auto;flex:none}
 /* ============ RESPONSIVE ============ */
 @media(max-width:1000px){ .g4{grid-template-columns:repeat(2,minmax(0,1fr))} .g3{grid-template-columns:repeat(2,minmax(0,1fr))} }
 @media(max-width:900px){
@@ -356,6 +359,10 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     teachingTarget:4,
     research:1,          /* one case report submitted */
     leadership:false,
+    /* where they are and what they are hedging on, from onboarding. Both are
+       filters and reminders, not scored: neither moves readiness or the
+       shortlisting score. */
+    basedIn:"", willing:[], dualTrack:"single", otherTargets:[],
     deadlinesDone:{},
     customMilestones:[],
     activity:[]
@@ -576,6 +583,76 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     return open.length ? open[0] : null;
   }
 
+  /* ================= HEDGING AND LOCATION =================
+     Onboarding lets a doctor name other specialties they are applying to and
+     a region they would work in. Neither is scored: they filter and remind,
+     they never move readiness or the shortlisting score.
+
+     SPECIALTY_INFO and CYCLE below exist only so "also applying to" can name
+     a real exam family and college for whichever specialty was picked, and
+     show it a plausible next date rather than nothing. The dates in CYCLE are
+     illustrative in exactly the way the primary deadlines() above already are,
+     see the README placeholders list. */
+  var SPECIALTY_INFO = {
+    "General Internal Medicine":   {exam:"MRCPI",             body:"RCPI"},
+    "Cardiology":                  {exam:"MRCPI",             body:"RCPI"},
+    "Respiratory Medicine":        {exam:"MRCPI",             body:"RCPI"},
+    "Gastroenterology":            {exam:"MRCPI",             body:"RCPI"},
+    "Nephrology":                  {exam:"MRCPI",             body:"RCPI"},
+    "Geriatric Medicine":          {exam:"MRCPI",             body:"RCPI"},
+    "Neurology":                   {exam:"MRCPI",             body:"RCPI"},
+    "General Surgery":             {exam:"MRCS",              body:"RCSI"},
+    "Trauma and Orthopaedics":     {exam:"MRCS",              body:"RCSI"},
+    "Urology":                     {exam:"MRCS",              body:"RCSI"},
+    "Otolaryngology, ENT":         {exam:"MRCS",              body:"RCSI"},
+    "Plastic Surgery":             {exam:"MRCS",              body:"RCSI"},
+    "General Practice":            {exam:"MICGP",             body:"ICGP"},
+    "Psychiatry":                  {exam:"MRCPsych",          body:"College of Psychiatrists"},
+    "Emergency Medicine":          {exam:"MRCEM",             body:"RCSI"},
+    "Anaesthesiology":             {exam:"FFARCSI",           body:"College of Anaesthesiologists"},
+    "Paediatrics":                 {exam:"MRCPI Paediatrics", body:"RCPI"},
+    "Obstetrics and Gynaecology":  {exam:"MRCPI O and G",     body:"RCPI"},
+    "Radiology":                   {exam:"FRCR",              body:"Faculty of Radiologists"},
+    "Histopathology":              {exam:"FRCPath",           body:"Faculty of Pathology"},
+    "Ophthalmology":               {exam:"FRCOphth",          body:"RCSI"},
+    "Public Health Medicine":      {exam:"MFPHMI",            body:"Faculty of Public Health Medicine"}
+  };
+  /* one illustrative cycle per college, distinct so several other-target
+     cards never look copy-pasted from each other */
+  var CYCLE = {
+    "RCPI":                                {apply:"2026-11-08", interview:"2027-01-18", start:"2027-07-12"},
+    "RCSI":                                {apply:"2026-10-01", interview:"2026-12-10", start:"2027-07-06"},
+    "College of Psychiatrists":            {apply:"2026-09-19", interview:"2026-11-21", start:"2027-07-05"},
+    "ICGP":                                {apply:"2026-12-05", interview:"2027-02-10", start:"2027-07-01"},
+    "College of Anaesthesiologists":       {apply:"2026-10-24", interview:"2027-01-08", start:"2027-07-13"},
+    "Faculty of Radiologists":             {apply:"2026-11-14", interview:"2027-01-27", start:"2027-07-06"},
+    "Faculty of Pathology":                {apply:"2026-10-17", interview:"2027-01-15", start:"2027-07-06"},
+    "Faculty of Public Health Medicine":   {apply:"2026-09-26", interview:"2026-12-04", start:"2027-07-01"}
+  };
+  /* the resolved list, excluding whatever is already the primary target and
+     anything we have no record for, so a stray or malformed name never renders */
+  function otherTargetsInfo(){
+    return (S.otherTargets || []).filter(function(n){ return n && n !== S.specialty; })
+      .map(function(n){ return {name:n, exam:(SPECIALTY_INFO[n] || {}).exam, body:(SPECIALTY_INFO[n] || {}).body}; })
+      .filter(function(o){ return !!o.body; });
+  }
+  var REGION_LABEL = {
+    east:"Dublin and the east", sw:"Cork and the south west", west:"Galway and the west",
+    mw:"Limerick and the mid west", se:"The south east", mid:"The midlands",
+    ne:"The north east", nw:"The north west", outside:"Outside Ireland", any:"Anywhere in Ireland"
+  };
+  var REGIONS = ["east","sw","west","mw","se","mid","ne","nw"];
+  function regionLabel(id){ return REGION_LABEL[id] || id; }
+  /* an item matches if the doctor said "anywhere", said nothing at all, or
+     named this item's own region. Nothing is ever hidden, only reordered and
+     badged, since a handful of demo rows filtered down to zero would read as
+     "nothing found" rather than "this is a small demo". */
+  function regionMatches(itemRegion){
+    var w = S.willing || [];
+    if (!w.length || w.indexOf("any") > -1) return true;
+    return itemRegion === "any" || w.indexOf(itemRegion) > -1;
+  }
+
   /* ================= LADDER ================= */
   function rungs(){
     return [
@@ -650,9 +727,14 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
       var open = deadlines().filter(function(d){ return !d.done && d.days >= 0; }).slice(0, 3);
       var hr = new Date().getHours();
       var greet = hr < 12 ? "Good morning" : (hr < 18 ? "Good afternoon" : "Good evening");
+      var others = otherTargetsInfo();
       var h = '<p class="hello">' + greet + ", " + esc(S.name.split(/\s+/)[0]) + ".</p>" +
         '<p class="hello-sub">' + (top ? "One thing would move you further than anything else today."
                                       : "Nothing is outstanding. Keep the evidence dated.") + "</p>";
+      if (others.length){
+        h += '<p class="hello-sub" style="margin-top:-10px">Also tracking ' + others.map(function(o){ return esc(o.name); }).join(", ") +
+          '. <a class="btn-link" href="#/roadmap">See both routes</a></p>';
+      }
 
       h += '<div class="move">' +
         '<span class="ic">' + ico(I.bolt, 22) + "</span>" +
@@ -723,6 +805,21 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
         reqs + '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">' +
         '<a class="btn btn-sm btn-ghost" href="#/gaps">Open gap analyser</a>' +
         '<a class="btn btn-sm btn-primary" href="#/score">See how it scores</a></div></div>';
+
+      var others = otherTargetsInfo();
+      if (others.length){
+        h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Also applying to</h2>' +
+          '<span class="aside">' + others.length + (others.length === 1 ? " other route" : " other routes") + "</span></div>" +
+          others.map(function(o){
+            var c = CYCLE[o.body] || CYCLE.RCPI, d = until(c.apply);
+            var k = d < 0 ? "mute" : (d <= 21 ? "crit" : (d <= 60 ? "warn" : "good"));
+            return '<div class="row"><span class="t">' + esc(o.name) + "<small>" + esc(o.exam) + " via " + esc(o.body) + "</small></span>" +
+              '<span class="r"><span class="chip mute">' + esc(o.body) + '</span><span class="chip ' + k + '">' +
+              (d < 0 ? "Closed" : awayText(d) + " to apply") + "</span></span></div>";
+          }).join("") +
+          '<p class="lede" style="margin-top:10px">Illustrative application windows for these, not the published dates each college sets. ' +
+          "This route stays your main one everywhere else on the dashboard. " + '<a href="#/deadlines">See the full dates</a>.</p></div>';
+      }
 
       var onLadder = S.clinicalMonths > 0;
       var trail = [
@@ -881,6 +978,24 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
           "<span>" + esc(d.note) + "</span>" +
           '<button class="btn-link" data-toggle="' + d.id + '">' + (d.done ? "Mark not done" : "Mark done") + "</button></div></div>";
       });
+      var others = otherTargetsInfo();
+      if (others.length){
+        h += '<div class="card" style="margin-top:16px"><div class="card-head"><h2>Also on your radar</h2>' +
+          '<span class="aside">Not part of your main route</span></div>';
+        others.forEach(function(o){
+          var c = CYCLE[o.body] || CYCLE.RCPI;
+          h += '<p class="month">' + esc(o.name) + "</p>";
+          [["Applications close", c.apply], ["Interviews", c.interview], ["Post starts", c.start]].forEach(function(row){
+            var iso = row[1], dd = until(iso), k = dd < 0 ? "warn" : (dd <= 21 ? "crit" : (dd <= 60 ? "warn" : "good"));
+            h += '<div class="dl ' + k + '"><div class="dl-top"><b>' + esc(row[0]) + "</b>" +
+              '<span class="away" style="color:var(--' + k + '-text)">' + awayText(dd) + "</span></div>" +
+              '<div class="dl-sub"><span>' + fmtLong(iso) + "</span><span class=\"chip mute\">" + esc(o.body) + "</span>" +
+              "<span>Illustrative date, not published by the college</span></div></div>";
+          });
+        });
+        h += "</div>";
+      }
+
       var pastCount = all.filter(function(d){ return d.days < 0 && !d.done; }).length;
       h += '<div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">' +
         '<button class="btn btn-sm btn-ghost" data-act="togglePast">' + (S.showPast ? "Hide past dates" : "Show past dates" + (pastCount ? " (" + pastCount + ")" : "")) + "</button>" +
@@ -932,24 +1047,39 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     render:function(){
       var items = [
         {kind:"Course", t:"Quality Improvement in Clinical Practice", meta:"RCPI · online · 6 CPD points · €140",
-         why:"Closes your largest gap. A completed QI project is worth 5 points.", href:"../opportunities/conferences.html", tag:"crit"},
+         why:"Closes your largest gap. A completed QI project is worth 5 points.", href:"../opportunities/conferences.html", tag:"crit", region:"any"},
         {kind:"Course", t:"Teaching the Teacher, one day", meta:"RCSI · Dublin · 5 CPD points · €130",
-         why:"Two logged sessions from this would take teaching to its full 5 points.", href:"../opportunities/conferences.html", tag:"crit"},
+         why:"Two logged sessions from this would take teaching to its full 5 points.", href:"../opportunities/conferences.html", tag:"crit", region:"east"},
         {kind:"Job", t:"NCHD Registrar, Cardiology", meta:"St. James's Hospital · Dublin · Training post",
-         why:"Matches your specialty and grade. Closes 20 Sep.", href:"../opportunities/jobs.html", tag:"warn"},
+         why:"Matches your specialty and grade. Closes 20 Sep.", href:"../opportunities/jobs.html", tag:"warn", region:"east"},
         {kind:"Job", t:"Specialist Registrar, Cardiology", meta:"Mater Misericordiae · Dublin · Training post",
-         why:"Same grade, second site, same application cycle.", href:"../opportunities/jobs.html", tag:"warn"},
+         why:"Same grade, second site, same application cycle.", href:"../opportunities/jobs.html", tag:"warn", region:"east"},
         {kind:"Locum", t:"Weekend cover, General Medicine", meta:"Beaumont Hospital · Dublin · €90/hr published",
-         why:"Weekend only, so it does not collide with your QI deadline.", href:"../opportunities/locums.html", tag:"mute"},
+         why:"Weekend only, so it does not collide with your QI deadline.", href:"../opportunities/locums.html", tag:"mute", region:"east"},
         {kind:"Event", t:"Irish Cardiac Society Annual Meeting", meta:"Dublin · 14 Oct · 8 CPD points · €180",
-         why:"An accepted abstract here would count as your second research output.", href:"../opportunities/conferences.html", tag:"warn"}
+         why:"An accepted abstract here would count as your second research output.", href:"../opportunities/conferences.html", tag:"warn", region:"east"}
       ];
+      /* location only reorders and badges, it never hides. Six demo rows
+         filtered down to nothing would read as "found nothing" rather than
+         "this is a small demo", so every row still shows either way. */
+      var willing = S.willing || [];
+      var filtering = willing.length && willing.indexOf("any") === -1;
+      items.forEach(function(o){ o.near = filtering && regionMatches(o.region); });
+      if (filtering) items.sort(function(a, b){ return (b.near ? 1 : 0) - (a.near ? 1 : 0); });
+      var nearCount = items.filter(function(o){ return o.near; }).length;
+
       var h = '<div class="card"><div class="card-head"><h2>Why these</h2></div>' +
         '<p class="lede">Matched on your specialty, your grade and the two domains you are short in. The two courses at the top are here ' +
-        "because they close scored gaps, not because they are popular.</p></div>";
+        "because they close scored gaps, not because they are popular.</p>";
+      h += filtering
+        ? '<p class="lede" style="margin-top:8px">' + nearCount + " of " + items.length + " also match where you said you would work" +
+          (willing.length === 1 ? ", " + esc(regionLabel(willing[0])) : "") + ". This is a six-row demo, so a low count here is the sample, not a real shortage."
+        : '<p class="lede" style="margin-top:8px">Set where you would work on <a href="#/profile">your profile</a> to bring local posts to the top.';
+      h += "</p></div>";
       h += '<div class="grid g2" style="margin-top:14px">' + items.map(function(o){
         return '<a class="card" href="' + o.href + '"><div class="card-head" style="margin-bottom:8px">' +
-          '<span class="chip ' + o.tag + '">' + esc(o.kind) + "</span></div>" +
+          '<span class="chip ' + o.tag + '">' + esc(o.kind) + "</span>" +
+          (o.near ? '<span class="chip good">Near you</span>' : "") + "</div>" +
           '<h3 style="font-size:15px;color:var(--deep);font-weight:700">' + esc(o.t) + "</h3>" +
           '<p class="lede" style="margin-top:5px">' + esc(o.meta) + "</p>" +
           '<p class="lede" style="margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);color:var(--deep);font-weight:600">' + esc(o.why) + "</p></a>";
@@ -986,9 +1116,42 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
         "</div>" +
         '<div style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)">' +
         '<p class="lede" style="margin-bottom:10px">This is a demo record held in your browser only. Nothing is sent anywhere.</p>' +
-        '<button class="btn btn-sm btn-ghost" data-act="reset">Reset to the demo record</button></div></div></div>';
+        '<button class="btn btn-sm btn-ghost" data-act="reset">Reset to the demo record</button></div></div></div>' +
+        locationCard();
     }
   };
+
+  /* split out of VIEWS.profile.render for its own size, and because
+     saveProfile reads exactly the ids this writes */
+  function locationCard(){
+    var DUAL = [["single","No, just this one"],["narrow","One or two similar specialties"],["wide","Several different specialties"]];
+    var otherNames = Object.keys(SPECIALTY_INFO).filter(function(n){ return n !== S.specialty; });
+    return '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Location and other applications</h2>' +
+      '<span class="aside">Neither of these is scored</span></div>' +
+      '<div class="grid g2">' +
+      '<div><div class="field"><label for="pBased">Based now</label><select id="pBased">' +
+        '<option value="">Not set</option>' +
+        REGIONS.map(function(r){ return '<option value="' + r + '"' + (r === S.basedIn ? " selected" : "") + ">" + esc(REGION_LABEL[r]) + "</option>"; }).join("") +
+        '<option value="outside"' + (S.basedIn === "outside" ? " selected" : "") + ">" + esc(REGION_LABEL.outside) + "</option>" +
+      "</select></div>" +
+      '<div class="field"><label>Willing to work</label><div class="chk-grid">' +
+        '<label><input type="checkbox" data-willing-box value="any"' + ((S.willing || []).indexOf("any") > -1 ? " checked" : "") + ">" + esc(REGION_LABEL.any) + "</label>" +
+        REGIONS.map(function(r){
+          return '<label><input type="checkbox" data-willing-box value="' + r + '"' + ((S.willing || []).indexOf(r) > -1 ? " checked" : "") + ">" + esc(REGION_LABEL[r]) + "</label>";
+        }).join("") +
+      "</div><span class=\"hint\">Filters and reorders posts on Matched to you. Checking Anywhere ignores the rest.</span></div></div>" +
+
+      '<div><div class="field"><label for="pDual">Applying to more than one specialty</label><select id="pDual">' +
+        DUAL.map(function(d){ return '<option value="' + d[0] + '"' + (d[0] === S.dualTrack ? " selected" : "") + ">" + esc(d[1]) + "</option>"; }).join("") +
+      "</select></div>" +
+      '<div class="field"><label>Also applying to</label><div class="chk-grid">' +
+        otherNames.map(function(n){
+          return '<label><input type="checkbox" data-other-box value="' + esc(n) + '"' + ((S.otherTargets || []).indexOf(n) > -1 ? " checked" : "") + ">" + esc(n) + "</label>";
+        }).join("") +
+      "</div><span class=\"hint\">Ignored unless you picked more than one above. Named here so your roadmap and deadlines can show them too.</span></div></div>" +
+      "</div>" +
+      '<button class="btn btn-primary" style="margin-top:8px" data-act="saveLocation">Save location and applications</button></div>';
+  }
 
   /* ================= NAV ================= */
   var NAV = [
@@ -1113,6 +1276,15 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
         S.teachingDone = Math.min(S.teachingDone, teach);
       }
       return "Profile saved";
+    },
+    saveLocation: function(){
+      S.basedIn = document.getElementById("pBased").value;
+      var willing = Array.prototype.slice.call(document.querySelectorAll("[data-willing-box]:checked")).map(function(el){ return el.value; });
+      S.willing = willing.indexOf("any") > -1 ? ["any"] : willing;
+      S.dualTrack = document.getElementById("pDual").value;
+      S.otherTargets = S.dualTrack === "single" ? [] :
+        Array.prototype.slice.call(document.querySelectorAll("[data-other-box]:checked")).map(function(el){ return el.value; });
+      return "Location and other applications saved";
     }
   };
 
