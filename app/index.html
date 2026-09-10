@@ -865,6 +865,112 @@ a.nudge:hover{text-decoration:underline}
      README placeholders list. */
   var ENTRY = { monthsByStart: 24, examStagesByApply: 1 };
 
+  /* ================= ROUTE TIMING =================
+     The ladder used to assume a doctor moves up one rung at a time and never
+     stalls, which is not how Irish training actually runs. HST places are
+     limited, so people do standalone registrar years, apply more than once,
+     and arrive at the same rung years apart. An IMG can spend three years
+     reaching where an Irish graduate got in one. A model that cannot show
+     that will tell most of its users they are behind.
+
+     So position is three numbers, not one: which stage, which year inside it,
+     and how long has been spent NOT progressing. Holding time is reported as
+     its own fact rather than folded into the stage, because "BST year 4" is
+     not a thing and saying it would be wrong.
+
+     STAGE_YEARS is ILLUSTRATIVE. Intern and BST are stable across routes;
+     HST length genuinely varies by specialty and only the ones named below
+     came from the product owner. Everything else falls back to the default
+     and needs the real published figure. See README placeholders. */
+  var STAGE_YEARS = { intern: 1, bst: 2, hst: 6 };
+  var HST_YEARS = { "Cardiology": 6, "General Practice": 4 };
+
+  function hstYears(){ return HST_YEARS[S.specialty] || STAGE_YEARS.hst; }
+
+  function routeTiming(){
+    var sit = situation();
+    var m = S.clinicalMonths;
+    var bstMonths = STAGE_YEARS.bst * 12;
+
+    /* how much of the elapsed time is accounted for by the stage they are in,
+       and how much is time spent waiting for a place */
+    var stageYear, holdingMonths = 0;
+    if (sit.tier === "bst"){
+      stageYear = Math.min(STAGE_YEARS.bst, Math.floor(m / 12) + 1);
+      holdingMonths = Math.max(0, m - bstMonths);
+    } else if (sit.tier === "hst"){
+      stageYear = Math.max(1, Math.floor((m - bstMonths) / 12) + 1);
+    } else {
+      stageYear = 1;
+    }
+
+    /* remaining is a range, never a date. Places are limited and a doctor who
+       does not get in this cycle has not failed a schedule we invented. */
+    var remainLow, remainHigh;
+    if (sit.tier === "consultant"){ remainLow = remainHigh = 0; }
+    else if (sit.tier === "hst"){
+      var doneHst = Math.max(0, (m - bstMonths) / 12);
+      remainLow = Math.max(0, hstYears() - doneHst);
+      remainHigh = remainLow + 1;
+    } else {
+      var bstLeft = Math.max(0, STAGE_YEARS.bst - m / 12);
+      var internLeft = sit.tier === "intern" || sit.isStudent ? STAGE_YEARS.intern : 0;
+      var studentLeft = sit.isStudent ? 1 : 0;
+      remainLow = studentLeft + internLeft + bstLeft + hstYears();
+      /* the high end carries one more application cycle, because not getting
+         a place first time is common rather than exceptional */
+      remainHigh = remainLow + 1;
+    }
+    return {
+      stageYear: stageYear,
+      stageYears: sit.tier === "hst" ? hstYears() : (sit.tier === "bst" ? STAGE_YEARS.bst : 1),
+      holdingMonths: holdingMonths,
+      holding: holdingMonths >= 6,
+      yearsIn: +(m / 12).toFixed(1),
+      remainLow: Math.round(remainLow),
+      remainHigh: Math.round(remainHigh),
+      totalTypical: STAGE_YEARS.intern + STAGE_YEARS.bst + hstYears()
+    };
+  }
+
+  /* What to do next depends on where they are standing, not on which domain
+     scores lowest. An intern's next move is an application; a first-year BST
+     trainee's is an exam; a standalone registrar's is getting a place at all.
+     Each returns the module that actually helps with that. */
+  function nextStep(){
+    var sit = situation(), t = routeTiming();
+    if (sit.isConsultant) return null;
+
+    if (t.holding){
+      return {k:"Get a training place", t:"Getting into a scheme is the step",
+        why:"You are " + t.yearsIn + " years post-internship and not in a training post. That is common when " +
+             "places are limited, and the portfolio is what moves it.",
+        links:[["#/gaps","Close the gaps"],["#/readiness","Check your readiness"]]};
+    }
+    if (sit.isStudent || sit.isIntern){
+      /* deliberately no date: the cycle we hold is the HST one, and showing an
+         HST closing date to someone applying to BST would be worse than
+         showing none */
+      return {k:"Your next application", t:"Apply to basic specialist training",
+        why:"Intern year leads into BST, and that application is scored on the portfolio you build during it. " +
+             "BST dates are set separately from the " + sit.target + " cycle shown elsewhere.",
+        links:[["#/readiness","Check your readiness"],["#/interviews","Interview prep"]]};
+    }
+    if (sit.tier === "bst" && t.stageYear <= 1 && S.examStages < 3){
+      return {k:"Your next milestone", t:"Sit the " + sit.exam + " parts you do not hold",
+        why:"First year of BST is when the membership exam is cheapest to sit. HST applications ask for it.",
+        links:[["#/exams", sit.exam + " prep"],["#/gaps","See what else is missing"]]};
+    }
+    if (sit.tier === "bst"){
+      return {k:"Your next application", t:"Apply to " + sit.target, usesCycle:true,
+        why:"Second year of BST is the application year. The interview follows within months of it closing.",
+        links:[["#/readiness","Check your readiness"],["#/interviews","Interview prep"]]};
+    }
+    return {k:"Your next milestone", t:"Complete " + sit.target + " and reach CSCST",
+      why:"You hold a training place. Progress is logged year by year on the tracker.",
+      links:[["#/progress","Progress tracker"]]};
+  }
+
   function cycleEligibility(){
     var sit = situation();
     if (!sit.stillApplying || !sit.cycle) return null;
@@ -1153,21 +1259,42 @@ a.nudge:hover{text-decoration:underline}
   VIEWS.roadmap = {
     title:"My roadmap", sub:"Your route to consultant, with your position pinned.",
     render:function(){
-      var h = '<div class="card">' + rungsHTML() +
-        '<p class="lede" style="text-align:center">Typical total is 11 years from internship. You are ' +
-        (S.clinicalMonths / 12).toFixed(1) + " years past yours.</p></div>";
+      /* The small five-rung bar that used to open this page said the same
+         thing as the full ladder below it, on a page that only had three
+         cards. The ladder leads now. */
+      var rsit = situation(), t = routeTiming(), step = nextStep();
 
-      var reqs = DOMAINS.map(function(d){
-        var st = domainStatus(d);
-        return '<div class="row"><span class="t">' + ico(st.k === "good" ? I.tick : I.warn, 15) + " " + esc(d.name) +
-          "<small>" + esc(d.note()) + "</small></span><span class=\"r\">" + chip(st) + "</span></div>";
-      }).join("");
-      var nd = nextDeadline();
-      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>' + esc(S.target) + " entry requirements</h2>" +
-        '<span class="aside">' + (nd ? awayText(nd.days) + " to " + esc(nd.t.toLowerCase()) : "No open deadline") + "</span></div>" +
-        reqs + '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">' +
-        '<a class="btn btn-sm btn-ghost" href="#/gaps">Open gap analyser</a>' +
-        '<a class="btn btn-sm btn-primary" href="#/score">See how it scores</a></div></div>';
+      /* Where you are, how long from here, and the holding time said out loud
+         rather than hidden inside a stage number. */
+      var h = '<div class="card"><div class="card-head"><h2>Where you are</h2>' +
+        '<span class="aside">' + esc(scopeBox().stage) + "</span></div>";
+      h += '<div class="row"><span class="t">Time since internship<small>' +
+        (t.holding
+          ? Math.round(t.holdingMonths) + " months of that outside a training post"
+          : rsit.isStudent ? "Not yet qualified"
+          : rsit.isIntern ? "Intern year, before specialist training begins"
+          : rsit.isConsultant ? "Training complete"
+          : "In " + (rsit.tier === "hst" ? "higher" : "basic") + " specialist training") +
+        "</small></span><span class=\"r\"><b class=\"num\">" + t.yearsIn + " years</b></span></div>";
+      if (rsit.stillApplying){
+        h += '<div class="row"><span class="t">Typical time from here<small>' +
+          "Intern " + STAGE_YEARS.intern + ", BST " + STAGE_YEARS.bst + ", " +
+          esc(rsit.target) + " " + hstYears() + ". Places are limited, so this is a range and not a date." +
+          "</small></span><span class=\"r\"><b class=\"num\">" + t.remainLow + " to " + t.remainHigh + " years</b></span></div>";
+      }
+      h += "</div>";
+
+      if (step){
+        h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>' + esc(step.k) + "</h2>" +
+          (step.usesCycle && rsit.cycle
+            ? '<span class="aside">Applications close ' + fmtLong(rsit.cycle.apply) + "</span>" : "") + "</div>" +
+          '<p class="lede" style="max-width:62ch"><b style="color:var(--deep);font-size:14px">' + esc(step.t) +
+          "</b><br>" + esc(step.why) + "</p>" +
+          '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">' +
+          step.links.map(function(l, i){
+            return '<a class="btn btn-sm ' + (i === 0 ? "btn-primary" : "btn-ghost") + '" href="' + l[0] + '">' + esc(l[1]) + "</a>";
+          }).join("") + "</div></div>";
+      }
 
       var others = otherTargetsInfo();
       if (others.length){
@@ -1188,17 +1315,17 @@ a.nudge:hover{text-decoration:underline}
       var trail = [
         {k: onLadder ? "done" : "todo", t:"Internship", when: onLadder ? "Complete" : "Not started"},
         {k:"flag", t: S.examStages >= 1 ? tsit.exam + " Part 1 passed" : tsit.exam + " Part 1 not held",
-         when: S.examStages >= 1 ? "Passed" : "Outstanding"},
+         when: S.examStages >= 1 ? "Passed" : "Outstanding", go:["#/exams","Exam prep"]},
         {k: S.clinicalMonths >= 24 ? "done" : "todo", t:"Basic specialist training",
          when: S.clinicalMonths >= 24 ? "Complete" : S.clinicalMonths + " months in"},
         {k:"flag", t: S.examStages >= 3 ? "Full " + tsit.exam + " membership" : tsit.exam + " not yet complete",
-         when: S.examStages + " of 3 stages"}
+         when: S.examStages + " of 3 stages", go: S.examStages < 3 ? ["#/exams","Exam prep"] : null}
       ];
       if (tsit.stillApplying){
         trail.push(
           {k:"here", t:tsit.target + ", not yet applied",
            when: tc ? "Applications close " + fmt(tc.apply) : "Date not set"},
-          {k:"flag", t:"Interview", when: tc ? fmt(tc.interview) : "Date not set"},
+          {k:"flag", t:"Interview", when: tc ? fmt(tc.interview) : "Date not set", go:["#/interviews","Interview prep"]},
           {k:"todo", t:"CSCST", when:"Future"},
           {k:"todo", t:"Consultant post", when:"Future"}
         );
@@ -1208,8 +1335,11 @@ a.nudge:hover{text-decoration:underline}
       h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Your ladder in full</h2></div><div class="trail">' +
         trail.map(function(s){
           if (s.k === "flag"){
+            /* exam and interview markers used to be inert text. Both modules
+               exist now, so the rung is the way into them. */
             return '<div class="trail-item flag"><span class="knob">' + ico(I.flag, 9) + "</span>" +
-              '<p class="trail-flagline">' + esc(s.t) + '<span class="chip mute">' + esc(s.when) + "</span></p></div>";
+              '<p class="trail-flagline">' + esc(s.t) + '<span class="chip mute">' + esc(s.when) + "</span>" +
+              (s.go ? '<a class="btn-link" href="' + s.go[0] + '">' + esc(s.go[1]) + "</a>" : "") + "</p></div>";
           }
           var mark = s.k === "done" ? ico(I.tick, 11) : (s.k === "here" ? ico(I.target, 11) : "");
           return '<div class="trail-item ' + s.k + '"><span class="knob">' + mark + "</span>" +

@@ -308,6 +308,44 @@ activity feed answered what you did on a page whose job is what to do next. The
 feed now sits on the progress tracker, beside the milestones it is a log of.
 Mobile height went from 2,124px to 1,588px.
 
+### My roadmap, and why the ladder is not a line
+
+The ladder used to assume a doctor moves up one rung at a time and never
+stalls. Irish training does not work like that. HST places are limited, so
+people take standalone registrar years, apply more than once, and reach the
+same rung years apart; an IMG can spend three years getting where an Irish
+graduate got in one. A model that cannot represent that will tell most of its
+users they are behind.
+
+Position is therefore three numbers, not one: which stage, which year inside
+it, and **how long has been spent not progressing**. `routeTiming()` reports
+holding time as its own fact rather than folding it into the stage, because
+"BST year 4" is not a thing and printing it would be wrong. Time remaining is
+a range with an extra application cycle built into the top end, never a date,
+because a doctor who does not get a place this year has not missed a schedule
+MedNav invented.
+
+`nextStep()` answers what to do next from where the doctor is standing rather
+than from which domain scores lowest, and each answer routes to the module
+that actually helps:
+
+| Where they are | Next | Goes to |
+|---|---|---|
+| Intern or student | Apply to BST | Readiness, Interview prep |
+| BST year 1, exams outstanding | Sit the membership parts | Exam prep |
+| BST year 2 | Apply to HST, prep the interview | Readiness, Interview prep |
+| Outside a training post | Get a place | Gap analyser, Readiness |
+| In HST | Reach CSCST | Progress tracker |
+
+The five-rung summary bar that used to open the page said the same thing as
+the full ladder below it, so the ladder leads now. Exam and interview markers
+on it were inert text; both modules exist, so each marker is the way in.
+
+**Known limit.** The ladder infers BST completion from months post-internship,
+so it cannot yet distinguish a doctor who finished BST and then went standalone
+from one who never got a BST place. Fixing that needs scheme history on the
+record, which is what the annual roll-forward prompt is for.
+
 ### The prep block
 
 Exam and interview prep are paid from day one and priced per exam and per
@@ -496,6 +534,11 @@ inherited it, so the fix is applied in all six files.
   `confirmed`. Verify against both bodies before this reaches a real doctor.
 - Dashboard: Garda vetting's 3-year renewal period is asserted from the
   product owner, not yet from the National Vetting Bureau. Same treatment.
+- Dashboard: `STAGE_YEARS` and `HST_YEARS` are illustrative. Intern at 1 year
+  and BST at 2 are stable across routes; HST length genuinely varies and only
+  Cardiology (6) and General Practice (4) came from the product owner. Every
+  other specialty falls back to the default of 6 and needs its real published
+  duration before launch.
 - Dashboard: `SPECIALTY_INFO` now carries the target and college for all 22
   specialties, but the `target` strings are constructed ("HST " + specialty)
   rather than taken from each college's published programme name. Check the
