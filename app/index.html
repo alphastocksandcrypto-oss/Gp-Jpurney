@@ -201,6 +201,8 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 .rung.done b{color:var(--good-text)}
 .rung.here b{color:var(--deep)}
 .rung span{display:block;font-size:10.5px;color:var(--txt-mute);margin-top:2px}
+/* only shown once the phone has hidden the outer rungs */
+.rungs-note{display:none;font-size:11px;color:var(--txt-mute);text-align:center;margin-top:-10px;margin-bottom:4px}
 .trail{position:relative;padding-left:30px}
 .trail::before{content:"";position:absolute;left:9px;top:8px;bottom:8px;width:2px;background:var(--line);border-radius:2px}
 .trail-item{position:relative;padding:0 0 14px}
@@ -251,6 +253,31 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 .move h2{font-size:19px;font-weight:800;margin:5px 0 5px}
 .move p{font-size:13px;color:#a9cdc3;max-width:62ch}
 .move .btn-primary{flex:none}
+/* ============ NUDGE STRIP ============
+   One row of pills instead of stacked prose lines. A doctor with a cycle
+   banner, a dual track and an admin nudge used to get four sentences before
+   anything actionable, which pushed the next move out of the first fold. */
+.nudges{display:flex;gap:7px;flex-wrap:wrap;margin:-8px 0 18px}
+.nudge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;border-radius:999px;
+  padding:5px 11px;min-height:24px;background:var(--amber-soft);color:var(--warn-text);text-decoration:none}
+.nudge svg{flex:none}
+.nudge.crit{background:var(--coral-soft);color:var(--crit-text)}
+.nudge.info{background:var(--mint-soft);color:var(--good-text)}
+a.nudge:hover{text-decoration:underline}
+/* ============ PREP, the conversion slot ============ */
+.prep{border:1.5px solid var(--mint);border-radius:20px;padding:19px 21px;margin-top:14px;
+  background:linear-gradient(150deg,var(--mint-soft),#fff 58%)}
+.prep .k{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--good-text)}
+.prep h2{font-family:var(--fd);font-size:16px;font-weight:800;color:var(--deep);margin:6px 0 7px}
+.prep .lede{max-width:60ch;margin-bottom:14px}
+.prep-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.prep-row{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--ink);background:#fff;
+  border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-height:24px}
+.prep-row b{margin-left:auto;font-family:var(--fd);font-size:12px;color:var(--deep);font-variant-numeric:tabular-nums}
+.prep-row .lock{margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--txt-mute)}
+.prep-row.locked{background:var(--paper)}
+.prep-cta{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
 /* ============ ACTIVITY ============ */
 .feed-item{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed var(--line)}
 .feed-item:last-child{border-bottom:0}
@@ -298,8 +325,11 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 @media(max-width:660px){
   .g2,.g3,.g4{grid-template-columns:minmax(0,1fr)}
   .ring-wrap{flex-direction:column;align-items:flex-start}
-  .rungs{overflow-x:auto;gap:10px}
-  .rung{min-width:88px}
+  /* three rungs, not five: where you were, where you are, where you go next */
+  .rungs{gap:8px}
+  .rung{min-width:0}
+  .rung.d2,.rung.d3,.rung.d4{display:none}
+  .rungs-note{display:block}
   .move{padding:18px}
 }
 @media (prefers-reduced-motion:reduce){
@@ -954,15 +984,99 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
   /* ================= VIEWS ================= */
   var VIEWS = {};
 
+  /* Everything that used to be its own sentence under the greeting, collapsed
+     into one row. Each pill is a link to the page that fixes it. */
+  function nudgeStrip(){
+    var out = [], sit = situation(), gs = gardaStatus();
+    if (gs.k === "crit"){
+      out.push({k:"crit", icon:I.warn, href:"#/admin",
+        t: S.gardaVettingDate ? "Garda vetting " + gs.label.toLowerCase() : "Garda vetting not logged"});
+    }
+    if (!S.occClearance && sit.newToIreland){
+      out.push({k:"warn", icon:I.shield, href:"#/admin", t:"Occupational health not confirmed"});
+    }
+    if (sit.dualTrack){
+      out.push({k:"info", icon:I.map, href:"#/roadmap",
+        t:"Also tracking " + sit.others.map(function(o){ return o.name; }).join(", ")});
+    }
+    if (S.teachingDone < S.teachingTarget && sit.stillApplying){
+      out.push({k:"info", icon:I.clip, href:"#/gaps",
+        t:S.teachingDone + " of " + S.teachingTarget + " teaching sessions"});
+    }
+    if (!out.length) return "";
+    return '<div class="nudges">' + out.map(function(n){
+      return '<a class="nudge ' + n.k + '" href="' + n.href + '">' + ico(n.icon, 12) + esc(n.t) + "</a>";
+    }).join("") + "</div>";
+  }
+
+  /* ================= PREP =================
+     The one block on Today with a route to revenue, and the reason exam and
+     interview prep get visited at all. Three registers, because the same card
+     has to work for someone with an interview in a fortnight, someone two
+     years out, and someone who has not picked a specialty.
+
+     Weights come from DOMAINS, which the readiness page already tells doctors
+     their interview is scored against. They are illustrative like everything
+     else in the rubric. Nothing here claims to be published criteria. */
+  function prepBlock(){
+    var sit = situation();
+    /* a consultant is not buying membership exam prep */
+    if (!sit.stillApplying) return "";
+
+    if (!sit.hasTarget){
+      var common = ["Cardiology", "General Surgery", "General Practice"].map(function(n){
+        return {n:n, exam:(SPECIALTY_INFO[n] || {}).exam, body:(SPECIALTY_INFO[n] || {}).body};
+      });
+      return '<div class="prep"><p class="k">Not sure yet</p>' +
+        "<h2>Where most doctors start</h2>" +
+        '<p class="lede">You do not have to decide today. These are the entry points doctors at your stage are ' +
+        "usually choosing between, and each one leads to a different exam and a different college.</p>" +
+        '<div class="prep-list">' + common.map(function(c){
+          return '<div class="prep-row">' + esc(c.exam) + "<b>" + esc(c.body) + "</b></div>";
+        }).join("") + "</div>" +
+        '<div class="prep-cta"><a class="btn btn-sm btn-primary" href="#/profile">Pick a target specialty</a>' +
+        '<a class="btn-link" href="#/roadmap">See how a route works</a></div></div>';
+    }
+
+    var c = sit.cycle, iv = c ? until(c.interview) : null;
+    var elig = cycleEligibility();
+    var near = iv !== null && iv >= 0 && iv <= 60 && (!elig || elig.eligible);
+    var ranked = DOMAINS.slice().sort(function(a, b){ return b.weight - a.weight; });
+    /* two open and two locked, not two and four: six rows made this block
+       taller than the next move card it sits under */
+    var open = ranked.slice(0, 2), locked = ranked.slice(2, 4), rest = ranked.length - 4;
+
+    /* phrased without an article so it reads for every college: "an RCPI" and
+       "a College of Psychiatrists" need different ones */
+    return '<div class="prep"><p class="k">' + (near ? "Coming up" : "Worth knowing early") + "</p>" +
+      "<h2>" + (near
+        ? "Your interview is " + esc(awayText(iv))
+        : "How " + esc(sit.college) + " scores your interview") + "</h2>" +
+      '<p class="lede">' + (near
+        ? "There are " + ranked.length + " scored domains and they are weighted. These two carry the most."
+        : "Most doctors meet the scoring domains a fortnight before the interview. This far out is when they are " +
+          "still cheap to fix.") + "</p>" +
+      '<div class="prep-list">' +
+      open.map(function(d){
+        return '<div class="prep-row">' + esc(d.name) + "<b>" + d.weight + "%</b></div>";
+      }).join("") +
+      locked.map(function(d){
+        return '<div class="prep-row locked">' + esc(d.name) + '<span class="lock">In interview prep</span></div>';
+      }).join("") +
+      (rest > 0 ? '<p class="lede" style="margin:2px 0 0">And ' + rest + " more, with what a strong answer covers.</p>" : "") +
+      "</div>" +
+      '<div class="prep-cta"><a class="btn btn-sm btn-primary" href="#/interviews">Open interview prep</a>' +
+      (S.examStages < 3 ? '<a class="btn-link" href="#/exams">' + esc(sit.exam) + " prep</a>" : "") +
+      "</div></div>";
+  }
+
   VIEWS.today = {
     title:"Today", sub:"Your record, and the one thing worth doing next.",
     render:function(){
-      var lv = levers(), top = lv[0], nd = nextDeadline(), ms = milestones();
-      var done = ms.filter(function(m){ return m.state === "done"; }).length;
+      var top = levers()[0], nd = nextDeadline();
       var open = deadlines().filter(function(d){ return !d.done && d.days >= 0; }).slice(0, 3);
       var hr = new Date().getHours();
       var greet = hr < 12 ? "Good morning" : (hr < 18 ? "Good afternoon" : "Good evening");
-      var others = otherTargetsInfo();
       var elig = cycleEligibility();
       var buildingForNext = elig && !elig.eligible;
       var h = '<p class="hello">' + greet + ", " + esc(S.name.split(/\s+/)[0]) + ".</p>" +
@@ -977,30 +1091,31 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
           elig.gaps.join("; ") + ". The first intake you can actually make is " + elig.targetCycle +
           ", starting " + fmtLong(elig.targetStart) + ". Everything below is measured against that.");
       }
-      if (others.length){
-        h += '<p class="hello-sub" style="margin-top:-10px">Also tracking ' + others.map(function(o){ return esc(o.name); }).join(", ") +
-          '. <a class="btn-link" href="#/roadmap">See both routes</a></p>';
-      }
-      var gs = gardaStatus();
-      if (gs.k === "crit"){
-        h += '<p class="hello-sub" style="margin-top:-10px">' + (S.gardaVettingDate ? "Garda vetting " + gs.label.toLowerCase() : "Garda vetting is not logged yet") +
-          '. <a class="btn-link" href="#/admin">Sort it</a></p>';
-      }
+      /* 1. every outstanding thing as one row of pills, not four sentences */
+      h += nudgeStrip();
 
-      h += '<div class="move">' +
+      /* 2. orientation before action. Greeting, ladder and next move together
+         come to 513px and the phone's first fold holds 665px, so putting the
+         ladder here costs nothing and answers "where am I" before "what now". */
+      h += '<div class="card"><div class="card-head"><h2>Your ladder</h2><a class="btn-link aside" href="#/roadmap">Open roadmap</a></div>' +
+        rungsHTML() + '<p class="rungs-note">Three of five stages. Full ladder on My roadmap.</p></div>';
+
+      h += '<div class="move" style="margin-top:14px">' +
         '<span class="ic">' + ico(I.bolt, 22) + "</span>" +
         '<div class="body"><p class="k">Your next move</p><h2>' + (top ? esc(top.t) : "Nothing outstanding") + "</h2>" +
         "<p>" + (top ? esc(top.why) + ". Worth " + top.pts + " points on your shortlisting score, the largest single gain available to you right now."
                      : "Every scored domain is at its maximum. Keep the evidence dated and current.") + "</p></div>" +
         (top ? actBtn(top.act, top.cta, true) : "") + "</div>";
 
-      h += '<div class="grid g4" style="margin-top:16px">' +
-        stat("Application readiness", counter(readiness(), "%"), "Weighted across 6 domains", I.clip) +
-        stat("Shortlisting score", counter(scorePts()) + "<small>/" + scoreMax() + "</small>", "Against published " + esc(S.body) + " criteria", I.target) +
-        stat("Milestones", counter(done) + "<small>/" + ms.length + "</small>", Math.round(done / ms.length * 100) + "% of your route", I.chart) +
-        stat("Next deadline", nd ? counter(nd.days) + "<small> days</small>" : "None", nd ? esc(nd.t) : "Nothing open", I.cal) + "</div>";
+      /* 4. two figures, not four. Shortlisting score and milestones are each a
+         whole page in the nav and neither is actionable from here. */
+      h += '<div class="grid g2" style="margin-top:16px">' +
+        stat("Application readiness", counter(readiness(), "%"),
+          elig && !elig.eligible ? "Measured against " + esc(elig.targetCycle) : "Weighted across 6 domains", I.clip) +
+        stat("Next deadline", nd ? counter(nd.days) + "<small> days</small>" : "None",
+          nd ? esc(nd.t) : "Nothing open", I.cal) + "</div>";
 
-      h += '<div class="grid g2" style="margin-top:14px">';
+      h += '<div style="margin-top:14px">';
       h += '<div class="card"><div class="card-head"><h2>What is closing</h2><a class="btn-link aside" href="#/deadlines">All deadlines</a></div>';
       h += open.length ? open.map(function(d){
         var k = d.days <= 14 ? "crit" : (d.days <= 60 ? "warn" : "mute");
@@ -1009,32 +1124,29 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
       }).join("") : '<p class="empty">Nothing open. Everything ahead of you is marked done.</p>';
       h += "</div>";
 
-      h += '<div class="card"><div class="card-head"><h2>Where you would gain most</h2><a class="btn-link aside" href="#/score">See the scoring</a></div>';
-      h += lv.length ? lv.slice(0, 4).map(function(l){
-        return '<div class="row"><span class="t">' + esc(l.t) + "<small>" + esc(l.why) + "</small></span>" +
-          '<span class="r"><span class="chip good">+' + l.pts + ' pts</span>' + actBtn(l.act, l.cta) + "</span></div>";
-      }).join("") : '<p class="empty"><b>Nothing left to gain.</b>Every domain is at its ceiling.</p>';
-      h += "</div></div>";
-
-      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Your ladder</h2><a class="btn-link aside" href="#/roadmap">Open roadmap</a></div>' +
-        rungsHTML() + "</div>";
-
-      var acts = (S.activity || []).slice(0, 6);
-      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Recent activity</h2>' +
-        '<span class="aside">' + (acts.length ? "Only what you actually did" : "") + "</span></div>";
-      h += acts.length ? acts.map(function(a){
-        return '<div class="feed-item"><span class="fi">' + ico(I.tick, 13) + "</span>" +
-          '<span class="ft">' + esc(a.t) + (a.d ? "<small>" + esc(a.d) + "</small>" : "") + "</span>" +
-          '<span class="fw">' + esc(ago(a.at)) + "</span></div>";
-      }).join("") : '<p class="empty">Nothing logged yet. Anything you mark complete shows up here with what it changed.</p>';
       h += "</div>";
+
+      /* 6. the prep slot. "Where you would gain most" used to sit here and
+         repeated the same ranked list the next move card already leads with,
+         and the activity feed answered what you did rather than what to do.
+         Activity moved to the progress tracker, which is where a log belongs. */
+      h += prepBlock();
       return h;
     }
   };
 
+  /* Each rung carries its distance from the doctor's current stage, so the
+     phone can drop everything two steps away and show three rungs instead of
+     five. Five rungs need 480px of rail and a 390px phone gives 314px, which
+     used to clip the last one mid-word. Distance is computed rather than
+     positional, so it works wherever "here" falls on the ladder. */
   function rungsHTML(){
-    return '<div class="rungs">' + rungs().map(function(r){
-      return '<div class="rung ' + r.state + '"><div class="dot"></div><b>' + esc(r.t) + "</b><span>" + esc(r.sub) + "</span></div>";
+    var rs = rungs();
+    var here = 0;
+    rs.forEach(function(r, i){ if (r.state === "here") here = i; });
+    return '<div class="rungs">' + rs.map(function(r, i){
+      return '<div class="rung ' + r.state + ' d' + Math.abs(i - here) + '">' +
+        '<div class="dot"></div><b>' + esc(r.t) + "</b><span>" + esc(r.sub) + "</span></div>";
     }).join("") + "</div>";
   }
 
@@ -1323,6 +1435,18 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
           return '<div class="row"><span class="t" style="color:var(--txt-soft)">' + esc(m.t) + '</span><span class="r"><span class="lede">' + esc(m.when) + "</span>" +
             (m.act ? actBtn(m.act, m.cta) : "") + "</span></div>";
         }).join("") + "</div>";
+
+      /* moved off Today, where it answered "what did you do" on a page whose
+         job is "what do you do next". A log belongs beside the milestones it
+         is a log of. */
+      var acts = (S.activity || []).slice(0, 8);
+      h += '<p class="sec-label">Recent activity</p><div class="card">';
+      h += acts.length ? acts.map(function(a){
+        return '<div class="feed-item"><span class="fi">' + ico(I.tick, 13) + "</span>" +
+          '<span class="ft">' + esc(a.t) + (a.d ? "<small>" + esc(a.d) + "</small>" : "") + "</span>" +
+          '<span class="fw">' + esc(ago(a.at)) + "</span></div>";
+      }).join("") : '<p class="empty">Nothing logged yet. Anything you mark complete shows up here with what it changed.</p>';
+      h += "</div>";
 
       h += '<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">' +
         '<button class="btn btn-sm btn-ghost" data-act="addMilestone">Add custom milestone</button>' +

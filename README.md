@@ -282,6 +282,50 @@ That is why finishing one half-done project is worth more than starting three
 new things, and the "what would move you most" list ranks by points actually
 gained.
 
+### Today, in six blocks
+
+Today answers one question: what should I do next, and am I on track. Anything
+that is not that answer belongs on a module page. The order is deliberate:
+
+1. **Greeting and nudges.** Every outstanding thing is one row of pills, each
+   linking to the page that fixes it. It used to be up to four stacked
+   sentences, which pushed the next move out of the first fold.
+2. **Your ladder.** Orientation before action, which is Shneiderman's overview
+   first applied literally. Greeting, ladder and next move come to 488px and
+   the phone's first fold holds 665px, so this costs nothing. Three rungs on a
+   phone, five on desktop: each rung carries its distance from the doctor's
+   current stage, so the outer ones drop out by CSS wherever "here" falls.
+3. **Your next move.** The single highest-value action, with the delta it
+   causes.
+4. **Two tiles.** Readiness and next deadline. Shortlisting score and
+   milestones are each a whole page in the nav and neither is actionable here.
+5. **What is closing.** Dates the doctor can act on.
+6. **Prep.** The adaptive block, below.
+
+Two things were removed rather than moved: "where you would gain most"
+repeated the same ranked list the next move card already leads with, and the
+activity feed answered what you did on a page whose job is what to do next. The
+feed now sits on the progress tracker, beside the milestones it is a log of.
+Mobile height went from 2,124px to 1,588px.
+
+### The prep block
+
+Exam and interview prep are paid from day one and priced per exam and per
+programme, so the surface that sells them cannot be a generic upgrade prompt.
+It has to name the doctor's own college and exam. `prepBlock()` has three
+registers:
+
+- **Near.** An interview inside 60 days leads with the countdown.
+- **Far.** Otherwise it leads with what the panel scores, on the argument that
+  domains are cheap to fix two years out and expensive a fortnight before.
+- **No pathway.** Someone who has not picked a specialty is shown several entry
+  points side by side rather than being defaulted into medicine, because
+  guessing the exam family is the same failure as guessing the college.
+
+A consultant sees no prep block at all. Weights come from `DOMAINS`, which the
+readiness page already tells doctors their interview is scored against, and
+carry the same illustrative status as the rest of the rubric.
+
 ### How it adapts
 
 The dashboard used to look adaptive and mostly wasn't. Grade was read in one
