@@ -430,6 +430,13 @@ a.nudge:hover{text-decoration:underline}
     /* CPD runs on its own annual clock, independent of training milestones */
     cpdPoints:0, cpdTarget:50, cpdTargetSet:false, cpdCycleEnd:new Date().getFullYear() + "-12-31", cpdLog:[],
     cvUpdatedAt:"", rotations:[],
+    /* the training year rolls in July. Whether a doctor is in a scheme, which
+       one, and which year of it are the facts that go stale fastest, and none
+       of them can be inferred from months post-internship: someone who
+       finished BST and went standalone looks identical to someone who never
+       got a place. rollHistory is what makes the ladder honest over time. */
+    inScheme:null, schemeName:"", schemeYear:0, roleTitle:"",
+    lastRolledAt:"", rollStep:"", rollHistory:[],
     deadlinesDone:{},
     customMilestones:[],
     activity:[]
@@ -895,9 +902,15 @@ a.nudge:hover{text-decoration:underline}
     /* how much of the elapsed time is accounted for by the stage they are in,
        and how much is time spent waiting for a place */
     var stageYear, holdingMonths = 0;
-    if (sit.tier === "bst"){
-      stageYear = Math.min(STAGE_YEARS.bst, Math.floor(m / 12) + 1);
+    /* once the doctor has told us they are outside a scheme, believe them
+       rather than inferring from months: someone who finished BST and went
+       standalone looks identical to someone who never got a place */
+    if (S.inScheme === false){
+      stageYear = 1;
       holdingMonths = Math.max(0, m - bstMonths);
+    } else if (sit.tier === "bst"){
+      stageYear = S.schemeYear || Math.min(STAGE_YEARS.bst, Math.floor(m / 12) + 1);
+      holdingMonths = S.inScheme === true ? 0 : Math.max(0, m - bstMonths);
     } else if (sit.tier === "hst"){
       stageYear = Math.max(1, Math.floor((m - bstMonths) / 12) + 1);
     } else {
@@ -1101,6 +1114,9 @@ a.nudge:hover{text-decoration:underline}
     if (!S.occClearance && sit.newToIreland){
       out.push({k:"warn", icon:I.shield, href:"#/admin", t:"Occupational health not confirmed"});
     }
+    if (rollDue()){
+      out.push({k:"warn", icon:I.cal, href:"#/roadmap", t:"Confirm where you are this year"});
+    }
     if (sit.dualTrack){
       out.push({k:"info", icon:I.map, href:"#/roadmap",
         t:"Also tracking " + sit.others.map(function(o){ return o.name; }).join(", ")});
@@ -1256,19 +1272,176 @@ a.nudge:hover{text-decoration:underline}
     }).join("") + "</div>";
   }
 
+  /* ================= ROLL FORWARD =================
+     The Irish training year turns over in July. A record that is never asked
+     about drifts quietly: months keep accruing, so a doctor who did not get a
+     place looks to the dashboard exactly like one who moved up a year. Rather
+     than guess, ask once a year and branch on the answer.
+
+     Deliberately not a modal. A doctor reading this on a shift break should be
+     able to ignore it, and it will still be there next time. */
+  /* shared by runAction and the roll-forward, which both need to append to the
+     same feed the progress tracker reads */
+  function logActivity(t, d){
+    if (!t) return;
+    S.activity = S.activity || [];
+    S.activity.unshift({t:t, d:d || "", at:Date.now()});
+    S.activity = S.activity.slice(0, 20);
+    save();
+  }
+
+  function rollDue(){
+    if (situation().isConsultant) return false;
+    var now = new Date();
+    /* the year turns in July, so a prompt for the 2026 turnover is only due
+       from July 2026 onward */
+    var turnover = now.getFullYear() + (now.getMonth() >= 6 ? 0 : -1);
+    if (!S.lastRolledAt) return now.getMonth() >= 6;
+    return day(S.lastRolledAt).getFullYear() < turnover;
+  }
+
+  /* Each step names its question and its answers. An answer either sets fields
+     and finishes, or hands off to another step. */
+  function rollFlow(){
+    var sit = situation(), t = routeTiming();
+    var scheme = S.schemeName || (sit.tier === "hst" ? sit.target : "basic specialist training");
+    var F = {};
+
+    F.start = {
+      q: "The training year has turned over. Is your record still right?",
+      sub: scopeBox().stage + ", " + t.yearsIn + " years post-internship" +
+           (S.inScheme === false ? ", not in a training post" : S.schemeName ? ", on " + S.schemeName : ""),
+      a: [
+        {t:"Yes, nothing has changed", act:"rollDone"},
+        {t:"No, something changed", go: S.inScheme === false ? "gotPlace" : "stillOn"}
+      ]
+    };
+    /* on a scheme: did they move up, finish, or leave */
+    /* only offer "moved up a year" when the scheme actually has another year
+       in it. BST runs two years, so year 2 plus one is not year 3, it is
+       finished, and offering the wrong answer invites a wrong record. */
+    var yearNow = S.schemeYear || t.stageYear;
+    var hasNextYear = yearNow < t.stageYears;
+    F.stillOn = {
+      q: "Are you still on " + scheme + "?",
+      sub: "Year " + yearNow + " of " + t.stageYears + " on your record.",
+      a: (hasNextYear ? [{t:"Yes, now in year " + (yearNow + 1), act:"rollAdvance"}] : [])
+        .concat([
+          {t:"Yes, same year again", act:"rollDone"},
+          {t:"I have finished it", go:"gotPlace"},
+          {t:"I left it", act:"rollLeft"}
+        ])
+    };
+    /* standalone, or just finished: the question that decides everything else */
+    F.gotPlace = {
+      q: "Did you get a training place for this year?",
+      sub:"Places are limited, so both answers are common.",
+      a: [
+        {t:"Yes", go:"whichScheme"},
+        {t:"No", go:"whatRole"}
+      ]
+    };
+    F.whichScheme = {
+      q: "Which one?",
+      a: [{t:sit.target, act:"rollJoinTarget"}]
+        .concat(otherTargetsInfo().map(function(o){ return {t:o.name, act:"rollJoinOther", val:o.name}; }))
+        .concat([{t:"Something else", act:"rollJoinOther", val:""}])
+    };
+    F.whatRole = {
+      q: "What are you working as this year?",
+      sub:"This is recorded as time in post. It is not scored against you.",
+      a: [
+        {t:"SHO", act:"rollRole", val:"SHO"},
+        {t:"Registrar", act:"rollRole", val:"Registrar"},
+        {t:"Something else", act:"rollRole", val:"Other"}
+      ]
+    };
+    return F[S.rollStep || "start"] || F.start;
+  }
+
+  function rollCard(){
+    if (!rollDue() && !S.rollStep) return "";
+    var f = rollFlow();
+    var h = '<div class="prep" style="margin-top:0;margin-bottom:14px"><p class="k">Once a year</p>' +
+      "<h2>" + esc(f.q) + "</h2>" +
+      (f.sub ? '<p class="lede">' + esc(f.sub) + "</p>" : "");
+    h += '<div class="prep-cta">' + f.a.map(function(a, i){
+      return '<button class="btn btn-sm ' + (i === 0 ? "btn-primary" : "btn-ghost") + '" data-roll="' +
+        esc(a.go ? "go:" + a.go : a.act) + '" data-rollval="' + esc(a.val || "") + '">' + esc(a.t) + "</button>";
+    }).join("") + "</div>";
+    if (S.rollStep) h += '<p class="lede" style="margin-top:10px"><button class="btn-link" data-roll="rollCancel">Ask me later</button></p>';
+    return h + "</div>";
+  }
+
+  /* One ladder builder, called once for the main route and again for each
+     hedged route when the dual-track view is on. It takes a specialty rather
+     than reading the record's own, which is what makes side by side possible. */
+  function trailFor(specName){
+    var info = SPECIALTY_INFO[specName] || {};
+    var exam = info.exam || S.exam, target = info.target || S.target;
+    var c = CYCLE[info.body] || null;
+    var onLadder = S.clinicalMonths > 0;
+    var trail = [
+      {k: onLadder ? "done" : "todo", t:"Internship", when: onLadder ? "Complete" : "Not started"},
+      {k:"flag", t: S.examStages >= 1 ? exam + " Part 1 passed" : exam + " Part 1 not held",
+       when: S.examStages >= 1 ? "Passed" : "Outstanding", go:["#/exams","Exam prep"]},
+      /* "complete" is only claimed when it was actually confirmed. Months
+         post-internship alone cannot tell a finished scheme from a standalone
+         run, and asserting the wrong one is worse than admitting we do not
+         know. */
+      (S.inScheme === false && !S.schemeName
+        ? {k:"todo", t:"Basic specialist training",
+           when: S.roleTitle ? "Not on a scheme, working as " + S.roleTitle : "No training place yet"}
+        : {k: S.clinicalMonths >= 24 ? "done" : "todo", t:"Basic specialist training",
+           when: S.clinicalMonths >= 24 ? "Complete" : S.clinicalMonths + " months in"}),
+      {k:"flag", t: S.examStages >= 3 ? "Full " + exam + " membership" : exam + " not yet complete",
+       when: S.examStages + " of 3 stages", go: S.examStages < 3 ? ["#/exams","Exam prep"] : null}
+    ];
+    if (situation().stillApplying){
+      trail.push(
+        {k:"here", t:target + ", not yet applied",
+         when: c ? "Applications close " + fmt(c.apply) : "Date not set"},
+        {k:"flag", t:"Interview", when: c ? fmt(c.interview) : "Date not set", go:["#/interviews","Interview prep"]},
+        {k:"todo", t:"CSCST", when:"Future"},
+        {k:"todo", t:"Consultant post", when:"Future"}
+      );
+    } else {
+      trail.push({k:"here", t:"Consultant post", when:"Reached"});
+    }
+    return trail;
+  }
+
+  function trailHTML(trail){
+    return '<div class="trail">' + trail.map(function(s){
+      if (s.k === "flag"){
+        /* exam and interview markers used to be inert text. Both modules exist
+           now, so the rung is the way into them. */
+        return '<div class="trail-item flag"><span class="knob">' + ico(I.flag, 9) + "</span>" +
+          '<p class="trail-flagline">' + esc(s.t) + '<span class="chip mute">' + esc(s.when) + "</span>" +
+          (s.go ? '<a class="btn-link" href="' + s.go[0] + '">' + esc(s.go[1]) + "</a>" : "") + "</p></div>";
+      }
+      var mark = s.k === "done" ? ico(I.tick, 11) : (s.k === "here" ? ico(I.target, 11) : "");
+      return '<div class="trail-item ' + s.k + '"><span class="knob">' + mark + "</span>" +
+        '<div class="trail-card"><b>' + esc(s.t) + '</b><span class="when">' + esc(s.when) + "</span></div></div>";
+    }).join("") + "</div>";
+  }
+
   VIEWS.roadmap = {
     title:"My roadmap", sub:"Your route to consultant, with your position pinned.",
     render:function(){
-      /* The small five-rung bar that used to open this page said the same
-         thing as the full ladder below it, on a page that only had three
-         cards. The ladder leads now. */
       var rsit = situation(), t = routeTiming(), step = nextStep();
+      var others = otherTargetsInfo();
+      var h = rollCard();
 
-      /* Where you are, how long from here, and the holding time said out loud
-         rather than hidden inside a stage number. */
-      var h = '<div class="card"><div class="card-head"><h2>Where you are</h2>' +
-        '<span class="aside">' + esc(scopeBox().stage) + "</span></div>";
-      h += '<div class="row"><span class="t">Time since internship<small>' +
+      /* The ladder leads. It already shows position, so the separate "where you
+         are" card was saying twice what the here-marker says once. What it did
+         carry that the ladder cannot is the timing, so that folds in below. */
+      h += '<div class="card"><div class="card-head"><h2>Your ladder in full</h2>' +
+        '<span class="aside">' + esc(scopeBox().stage) + "</span></div>" +
+        trailHTML(trailFor(S.specialty));
+
+      h += '<div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">' +
+        '<span class="t">Time since internship<small>' +
         (t.holding
           ? Math.round(t.holdingMonths) + " months of that outside a training post"
           : rsit.isStudent ? "Not yet qualified"
@@ -1282,7 +1455,29 @@ a.nudge:hover{text-decoration:underline}
           esc(rsit.target) + " " + hstYears() + ". Places are limited, so this is a range and not a date." +
           "</small></span><span class=\"r\"><b class=\"num\">" + t.remainLow + " to " + t.remainHigh + " years</b></span></div>";
       }
+      /* the toggle only exists for someone actually hedging */
+      if (others.length){
+        h += '<button class="btn btn-sm btn-ghost" style="margin-top:12px" data-act="toggleDual">' +
+          (S.showDual ? "Hide the other route" + (others.length > 1 ? "s" : "")
+                      : "Compare with " + esc(others.map(function(o){ return o.name; }).join(" and "))) + "</button>";
+      }
       h += "</div>";
+
+      /* side by side rather than stacked, because the whole question a hedging
+         doctor has is where the two routes differ */
+      if (S.showDual && others.length){
+        h += '<div class="grid ' + (others.length > 1 ? "g3" : "g2") + '" style="margin-top:14px">';
+        h += '<div class="card"><div class="card-head"><h3>' + esc(S.specialty) + "</h3>" +
+          '<span class="chip good">Main route</span></div>' + trailHTML(trailFor(S.specialty)) + "</div>";
+        others.forEach(function(o){
+          h += '<div class="card"><div class="card-head"><h3>' + esc(o.name) + "</h3>" +
+            '<span class="chip mute">' + esc(o.body) + "</span></div>" + trailHTML(trailFor(o.name)) + "</div>";
+        });
+        h += "</div>";
+        h += ctx("Both ladders read off the same record, so your months and exam stages are shared. " +
+          "Where they differ is the exam family, the college and the cycle. Entry rules that let one route " +
+          "credit time served on another are not modelled here.", true);
+      }
 
       if (step){
         h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>' + esc(step.k) + "</h2>" +
@@ -1296,8 +1491,7 @@ a.nudge:hover{text-decoration:underline}
           }).join("") + "</div></div>";
       }
 
-      var others = otherTargetsInfo();
-      if (others.length){
+      if (others.length && !S.showDual){
         h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Also applying to</h2>' +
           '<span class="aside">' + others.length + (others.length === 1 ? " other route" : " other routes") + "</span></div>" +
           others.map(function(o){
@@ -1310,41 +1504,6 @@ a.nudge:hover{text-decoration:underline}
           '<p class="lede" style="margin-top:10px">Illustrative application windows for these, not the published dates each college sets. ' +
           "This route stays your main one everywhere else on the dashboard. " + '<a href="#/deadlines">See the full dates</a>.</p></div>';
       }
-
-      var onLadder = S.clinicalMonths > 0, tsit = situation(), tc = tsit.cycle;
-      var trail = [
-        {k: onLadder ? "done" : "todo", t:"Internship", when: onLadder ? "Complete" : "Not started"},
-        {k:"flag", t: S.examStages >= 1 ? tsit.exam + " Part 1 passed" : tsit.exam + " Part 1 not held",
-         when: S.examStages >= 1 ? "Passed" : "Outstanding", go:["#/exams","Exam prep"]},
-        {k: S.clinicalMonths >= 24 ? "done" : "todo", t:"Basic specialist training",
-         when: S.clinicalMonths >= 24 ? "Complete" : S.clinicalMonths + " months in"},
-        {k:"flag", t: S.examStages >= 3 ? "Full " + tsit.exam + " membership" : tsit.exam + " not yet complete",
-         when: S.examStages + " of 3 stages", go: S.examStages < 3 ? ["#/exams","Exam prep"] : null}
-      ];
-      if (tsit.stillApplying){
-        trail.push(
-          {k:"here", t:tsit.target + ", not yet applied",
-           when: tc ? "Applications close " + fmt(tc.apply) : "Date not set"},
-          {k:"flag", t:"Interview", when: tc ? fmt(tc.interview) : "Date not set", go:["#/interviews","Interview prep"]},
-          {k:"todo", t:"CSCST", when:"Future"},
-          {k:"todo", t:"Consultant post", when:"Future"}
-        );
-      } else {
-        trail.push({k:"here", t:"Consultant post", when:"Reached"});
-      }
-      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Your ladder in full</h2></div><div class="trail">' +
-        trail.map(function(s){
-          if (s.k === "flag"){
-            /* exam and interview markers used to be inert text. Both modules
-               exist now, so the rung is the way into them. */
-            return '<div class="trail-item flag"><span class="knob">' + ico(I.flag, 9) + "</span>" +
-              '<p class="trail-flagline">' + esc(s.t) + '<span class="chip mute">' + esc(s.when) + "</span>" +
-              (s.go ? '<a class="btn-link" href="' + s.go[0] + '">' + esc(s.go[1]) + "</a>" : "") + "</p></div>";
-          }
-          var mark = s.k === "done" ? ico(I.tick, 11) : (s.k === "here" ? ico(I.target, 11) : "");
-          return '<div class="trail-item ' + s.k + '"><span class="knob">' + mark + "</span>" +
-            '<div class="trail-card"><b>' + esc(s.t) + '</b><span class="when">' + esc(s.when) + "</span></div></div>";
-        }).join("") + "</div></div>";
       return h;
     }
   };
@@ -2063,6 +2222,7 @@ a.nudge:hover{text-decoration:underline}
       return "Teaching session logged, " + S.teachingDone + " of " + S.teachingTarget;
     },
     addResearch: function(){ S.research = Math.min(2, S.research + 1); return "Research output recorded"; },
+    toggleDual: function(){ S.showDual = !S.showDual; return null; },
     useRegimeTarget: function(){
       S.cpdTargetSet = false;
       return "Tracking against the " + cpdRegime().target + "-point target for your regime";
@@ -2166,16 +2326,10 @@ a.nudge:hover{text-decoration:underline}
     if (dReady) bits.push("readiness <em>" + (dReady > 0 ? "+" : "") + dReady + "%</em>");
 
     if (name !== "reset"){
-      S.activity = S.activity || [];
-      S.activity.unshift({
-        t: msg,
-        d: (dScore ? "Shortlisting score " + (dScore > 0 ? "+" : "") + dScore : "") +
-           (dScore && dReady ? ", " : "") +
-           (dReady ? "readiness " + (dReady > 0 ? "+" : "") + dReady + "%" : ""),
-        at: Date.now()
-      });
-      S.activity = S.activity.slice(0, 20);
-      save();
+      logActivity(msg,
+        (dScore ? "Shortlisting score " + (dScore > 0 ? "+" : "") + dScore : "") +
+        (dScore && dReady ? ", " : "") +
+        (dReady ? "readiness " + (dReady > 0 ? "+" : "") + dReady + "%" : ""));
       render();
     }
     toast(esc(msg) + (bits.length ? ". " + bits.join(", ") : "."));
@@ -2192,6 +2346,54 @@ a.nudge:hover{text-decoration:underline}
       S.deadlinesDone[id] = !S.deadlinesDone[id];
       save(); render();
       toast(S.deadlinesDone[id] ? "Marked done." : "Marked not done.");
+      return;
+    }
+
+    /* the annual roll-forward. Its buttons carry the branch or the commit
+       directly, because each answer decides which question comes next and
+       ACTIONS has no way to take an argument. */
+    var roll = ev.target.closest("[data-roll]");
+    if (roll){
+      ev.preventDefault();
+      var cmd = roll.getAttribute("data-roll"), val = roll.getAttribute("data-rollval") || "";
+      var yr = new Date().getFullYear(), note = "";
+
+      if (cmd.indexOf("go:") === 0){ S.rollStep = cmd.slice(3); save(); render(); return; }
+
+      if (cmd === "rollCancel"){ S.rollStep = ""; save(); render(); toast("Asked again next time."); return; }
+      if (cmd === "rollDone"){ note = "Confirmed record unchanged"; }
+      if (cmd === "rollAdvance"){
+        var rt = routeTiming();
+        S.schemeYear = Math.min(rt.stageYears, (S.schemeYear || rt.stageYear) + 1);
+        S.inScheme = true;
+        note = "Moved up to year " + S.schemeYear + (S.schemeName ? " of " + S.schemeName : "");
+      }
+      if (cmd === "rollLeft"){
+        S.inScheme = false; S.schemeName = ""; S.schemeYear = 0;
+        note = "Left the training scheme";
+      }
+      if (cmd === "rollJoinTarget"){
+        S.inScheme = true; S.schemeName = situation().target; S.schemeYear = 1; S.roleTitle = "";
+        note = "Started " + S.schemeName;
+      }
+      if (cmd === "rollJoinOther"){
+        S.inScheme = true; S.schemeName = val || "a training scheme"; S.schemeYear = 1; S.roleTitle = "";
+        note = "Started " + S.schemeName;
+      }
+      if (cmd === "rollRole"){
+        S.inScheme = false; S.schemeName = ""; S.schemeYear = 0; S.roleTitle = val;
+        note = "Working as " + (val === "Other" ? "a non-training post" : val) + ", not in a scheme";
+      }
+      /* every turnover is recorded, including the ones where nothing happened,
+         because "no place this year" is the fact the ladder needs most */
+      S.rollHistory = S.rollHistory || [];
+      S.rollHistory.unshift({ year: yr, note: note, at: new Date().toISOString().slice(0, 10) });
+      S.rollHistory = S.rollHistory.slice(0, 12);
+      S.lastRolledAt = new Date().toISOString().slice(0, 10);
+      S.rollStep = "";
+      logActivity(note, "Annual update for " + yr);
+      save(); render();
+      toast(esc(note) + ".");
       return;
     }
 
