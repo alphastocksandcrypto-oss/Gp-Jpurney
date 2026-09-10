@@ -421,17 +421,14 @@ as four more rows in a card that already had ten; a rail with nodes says
 marked as current — the first still ahead. On a narrow screen the rail turns
 vertical rather than disappearing, so the sequence survives.
 
-**Finish before [date]** is a separate card, because a timeline and a checklist
-under one heading is what made that card 928px tall. It back-plans everything
-outstanding to one date. Not to invented per-item lead times: evidence has to be
-dated before the application closes, so that is the deadline for all of it, and
-how long each piece takes is the doctor's own business rather than something for
-the product to guess at. The copy changes with the distance, reading as months
-when there is time and as a day count when there is not. The six domains are
-tiles rather than full-width rows, which stops the roadmap restating the gap
-analyser at full size. When every scored domain is already at maximum the header
-says "Nothing outstanding" and the body explains it, rather than showing an
-empty grid.
+The work that date governs is **not** on the roadmap. Listing the outstanding
+domains here was the roadmap restating the gap analyser at full size. What the
+gap analyser did not have, and now leads with, is the single governing fact:
+everything on it has to be dated before the application closes, because evidence
+dated afterwards will not appear on the application however good it is. Per-
+domain due dates never said that. The copy changes with the distance, reading as
+months when there is time and as a day count when there is not, and it is gated
+on the doctor's own cycle like everything else that reads one.
 
 ### One cycle, and whose it is
 
@@ -450,7 +447,57 @@ contingency, and "When you reach it" on the application rung instead of a date.
 `cycle_leak.mjs` pins the whole class shut: it asserts that a student, an
 intern, a BST year-1 doctor and a consultant never see any of the four
 illustrative RCPI dates anywhere on the page, and that a BST year-2 doctor and
-one holding outside a scheme still see all of it.
+one holding outside a scheme still see all of it. It caught the fifth instance
+too — the Plan B control was being offered to an intern for an application they
+reach in about three years — so the rung carries the answer down rather than
+letting the renderer decide.
+
+### Plan B, and what happens when a cycle does not land
+
+Contingency used to be a card that appeared on the roadmap the moment a doctor
+came within six months of applying. It told someone mid-application that the
+product had already started planning around their failure, and it did it
+unprompted, every visit. It is now asked for: a **Plan B** control sits on the
+application rung itself, the rung it is contingent on, and it is not offered at
+all to a doctor who is not applying into this cycle or who already holds a
+place.
+
+It opens on a question rather than on the routes, because everything below
+depends on the answer and the product had no way of knowing it: *did you get a
+place in this cycle?* Yes stops there — someone with a place is not counselled
+anyway. No or still-waiting opens the routes.
+
+The answer writes to the same `applications[]` record the ladder keeps, so
+answering it in Plan B also updates the rung, and answering it on the rung
+satisfies Plan B. One fact, one place: a doctor must never be able to answer
+this twice and get two answers. Where no application was logged, the record is
+created with an empty `appliedAt`, which is never rendered once an outcome
+exists — so recording "no offer" never claims an application that was not made.
+
+### A different specialty from here
+
+A doctor who has missed a place is often asking a different question, which is
+whether the training already done opens anything else. Plan B answers it in two
+groups, and conflating them would be dishonest:
+
+**Same membership exam** is *derived* from `SPECIALTY_INFO` rather than
+asserted. Every RCPI medicine specialty is entered on MRCPI, so a doctor holding
+it genuinely does carry that exam across all of them. That is a fact about our
+own data, not a claim about entry rules. These render as a pick list rather than
+tiles: the describing sentence was identical for all six, so it is said once
+above them.
+
+**A different exam** is not derivable, and deliberately not a free-for-all. You
+cannot drift from general medicine into plastic surgery, so listing every
+non-MRCPI specialty as reachable would be false. `PIVOTS` is a narrow, explicit
+map holding only general practice — the move the product owner named as common,
+and one ICGP does enter from hospital training. It is labelled illustrative and
+carries its own footnote: whether specific posts count towards it, and how much,
+is ICGP's rule and is not modelled here.
+
+Adding one is not a detour. **Track this too** writes to `otherTargets`, which is
+the list the dual-track comparison on the same page already reads, so exploring
+a specialty and tracking one are the same act rather than two features.
 
 ### Where two routes diverge
 
@@ -665,6 +712,15 @@ inherited it, so the fix is applied in all six files.
   before any of it is shown to a real doctor.
 - Dashboard actions that are honestly stubbed and say so: calendar export,
   reminders and sign out.
+- Dashboard: `PIVOTS` claims that hospital training is commonly credited
+  towards general practice, and Plan B offers GP as a move off every hospital
+  exam family on that basis. The direction is real and was named by the product
+  owner; the **entry and credit rules behind it are ICGP's and are not
+  modelled** — whether a given doctor's posts count, and how much, is theirs to
+  say. Flagged on the card itself. Before launch, either confirm the ICGP
+  position and cite it, or narrow the claim to what can be cited. The same-exam
+  group needs no such note: it is derived from `SPECIALTY_INFO`, so it is only
+  ever as right as that table.
 - Dashboard: `CYCLE` gives every college one illustrative application,
   interview, offers and start date, used for the four beats on **How this year
   runs**, for the divergence table, and for a doctor's "also applying to"

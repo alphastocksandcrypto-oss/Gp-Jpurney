@@ -294,6 +294,19 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 .opt .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 .opt .acts .btn{background:#fff}
 @media(max-width:760px){ .opts{grid-template-columns:minmax(0,1fr)} }
+/* Plan B sits on the rung it is contingent on, so it must read as a way out
+   rather than as another exam-prep link beside it */
+.btn-link.plan-b{display:inline-flex;align-items:center;gap:5px;color:var(--txt-soft);
+  border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:#fff;min-height:24px}
+.btn-link.plan-b:hover{border-color:var(--deep);color:var(--deep);text-decoration:none}
+.btn-link.plan-b svg{flex:none;opacity:.8}
+/* a list whose only differentiator is the name: a tile each would be six
+   copies of one sentence, so the sentence is said once and these are picks */
+.picks{display:flex;flex-wrap:wrap;gap:8px}
+.pick{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:999px;
+  padding:4px 5px 4px 14px;background:#fff;font-size:12.5px;font-weight:600;color:var(--deep)}
+.pick .btn{padding:4px 11px;font-size:11.5px;border-radius:999px;background:var(--paper)}
+.pick .chip{margin-right:6px}
 /* ============ LISTS ============ */
 .row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
 .row:last-child{border-bottom:0}
@@ -523,6 +536,10 @@ a.nudge:hover{text-decoration:underline}
     /* one row per application actually made, so "did you apply" and "did you
        get in" stop being questions the product cannot answer */
     applications:[],
+    /* the target whose Plan B panel is open, or "". Contingency used to sit on
+       the page permanently, which told a doctor mid-application that we were
+       already planning for their failure. It is now asked for. */
+    planB:"",
     deadlinesDone:{},
     customMilestones:[],
     activity:[]
@@ -1514,45 +1531,6 @@ a.nudge:hover{text-decoration:underline}
     return h + "</div>";
   }
 
-  /* ================= WHAT HAS TO BE DATED FIRST =================
-     Split out of the beats card, which was carrying a timeline and a checklist
-     under one heading and running to 928px because of it.
-
-     Everything outstanding is back-planned to one date rather than to invented
-     per-item lead times. Evidence has to be dated before the application
-     closes, so that is the deadline for all of it, and how long each takes is
-     the doctor's own business rather than something to guess at. */
-  function yearWorkCard(){
-    var sit = situation(), c = sit.cycle;
-    if (!yearBeats()) return "";
-    var short = DOMAINS.filter(function(d){ return d.pts() < d.maxPts; });
-    var left = until(c.apply);
-    if (left < 0) return "";
-
-    var h = '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Finish before ' +
-      fmtLong(c.apply) + "</h2>";
-    if (short.length){
-      var owed = short.reduce(function(n, d){ return n + (d.maxPts - d.pts()); }, 0);
-      h += '<span class="aside">' + owed + " points still on the table</span></div>";
-      h += '<p class="lede" style="max-width:64ch;margin-bottom:14px">Anything dated after that will not appear ' +
-        "on this application, however good it is. " + (left <= 90
-          ? "You have " + left + " days."
-          : "That is " + Math.round(left / 30) + " months away, which is enough for all of it if you start now.") + "</p>";
-      h += '<div class="mini-grid">' + short.map(function(d){
-        return '<div class="mini"><b>' + esc(d.name) + "</b><span>" + esc(d.note()) + "</span>" +
-          '<span class="pts">' + ico(I.bolt, 11) + (d.maxPts - d.pts()) + " points</span></div>";
-      }).join("") + "</div>";
-      h += '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">' +
-        '<a class="btn btn-sm btn-primary" href="#/gaps">Plan the gaps</a>' +
-        '<a class="btn btn-sm btn-ghost" href="#/deadlines">All dates</a></div>';
-    } else {
-      h += '<span class="chip good">' + ico(I.tick, 12) + "Nothing outstanding</span></div>";
-      h += '<p class="lede" style="max-width:64ch">Every scored domain is at its maximum. Keep the evidence dated ' +
-        "and make sure it is uploaded before the window closes.</p>";
-    }
-    return h + "</div>";
-  }
-
   /* ================= WHERE TWO ROUTES DIVERGE =================
      Two ladders side by side were mostly the same ladder twice, because both
      read off one record. The question a hedging doctor actually has is which
@@ -1633,6 +1611,47 @@ a.nudge:hover{text-decoration:underline}
      and several RCPI medicine subspecialties sit under a General Internal
      Medicine trunk. Anything not listed says so rather than inventing an
      alternative route into a named specialty. */
+  /* ================= MOVING SIDEWAYS =================
+     Two different kinds of move, and conflating them would be dishonest.
+
+     Same membership exam: derived from SPECIALTY_INFO rather than asserted.
+     Every RCPI medicine specialty is entered on MRCPI, so a doctor holding it
+     genuinely does carry that exam across all of them. That is a fact about
+     our own data, not a claim about entry rules.
+
+     A different exam: NOT derivable, and not a free-for-all. You cannot drift
+     from general medicine into plastic surgery, so listing every non-MRCPI
+     specialty as reachable would be false. This map is deliberately narrow and
+     holds only the move the product owner named as common, general practice,
+     which ICGP does enter from hospital training. It is illustrative and says
+     so: the entry and credit rules behind it are the college's, not ours. */
+  var PIVOTS = {
+    "MRCPI":    ["General Practice"],
+    "MRCS":     ["General Practice"],
+    "MRCPCH":   ["General Practice"],
+    "MRCPsych": ["General Practice"],
+    "MRCEM":    ["General Practice"],
+    "MRCOG":    ["General Practice"]
+  };
+
+  function relatedSpecialties(){
+    var sit = situation(), mine = S.specialty, myExam = sit.exam;
+    if (!mine || !myExam) return {same:[], other:[]};
+    var already = (S.otherTargets || []);
+    function row(n){
+      var i = SPECIALTY_INFO[n] || {};
+      return {name:n, exam:i.exam || "", body:i.body || "", target:i.target || n,
+              added: already.indexOf(n) > -1};
+    }
+    var same = Object.keys(SPECIALTY_INFO).filter(function(n){
+      return n !== mine && SPECIALTY_INFO[n].exam === myExam;
+    }).map(row);
+    var other = (PIVOTS[myExam] || []).filter(function(n){
+      return n !== mine && SPECIALTY_INFO[n];
+    }).map(row);
+    return {same:same, other:other};
+  }
+
   function altRoutes(){
     var sit = situation();
     /* each route goes somewhere. A card that names an option and leaves the
@@ -1645,34 +1664,69 @@ a.nudge:hover{text-decoration:underline}
         "teaching and research all continue from one.",
        go:[["#/opportunities","Posts matched to you"]]}
     ];
-    if (sit.college === "RCPI" && S.specialty !== "General Internal Medicine"){
-      out.push({t:"General Internal Medicine as a trunk", d:"Several RCPI medicine subspecialties are entered " +
-        "through a GIM trunk rather than directly. Worth checking whether yours is one of them.",
-       go:[["#/profile","Add it as a second target"]]});
-    }
     out.push({t:"ICAT", d:"Irish Clinical Academic Training, a funded PhD integrated with clinical training. " +
       "Entered across specialties rather than through one, so it runs parallel to this route.",
      go:[["#/readiness","Check your research evidence"]]});
     return out;
   }
 
-  function contingencyCard(){
-    var sit = situation(), t = routeTiming(), step = nextStep();
-    if (!sit.stillApplying || !sit.hasTarget) return "";
-    /* premature for someone years out, and pointless once they have a place.
-       It also has to be THEIR cycle: an intern applying to BST was being
-       counselled about missing an HST place and offered a GIM trunk, because
-       this read sit.applyDays straight off the target's cycle. */
-    var applying = step && step.usesCycle;
-    if (!applying && !t.holding) return "";
+  /* ================= PLAN B =================
+     This was a card that sat on the page from the moment a doctor came within
+     six months of applying, telling someone mid-application that we had
+     already started planning around their failure. It is the same content, but
+     asked for: a Plan B control on the application rung opens it.
 
-    var h = '<div class="card" style="margin-top:14px"><div class="card-head">' +
-      "<h2>If this cycle does not land</h2>" +
-      '<span class="aside">' + (t.holding ? "Where you are now" : "Worth reading before you apply") + "</span></div>";
-    h += '<p class="lede" style="max-width:64ch">' + (t.holding
-      ? "You have already been here, so none of this is news: places are limited and missing one is not a verdict on the doctor."
-      : "Places are limited, so a good application can still not get one. That is worth knowing now rather than in February.") +
-      " What stays true either way is that the portfolio carries forward. Months, exams, audit and teaching all keep counting.</p>";
+     It opens on a question, because everything below depends on the answer and
+     the product had no way of knowing it. The answer writes to the same
+     applications[] record the ladder keeps, so answering here also updates the
+     rung: one fact, one place. */
+  function planBCard(){
+    var target = S.planB;
+    if (!target) return "";
+    var sit = situation(), app = applicationFor(target), cy = cycleLabel();
+
+    var h = '<div class="card" id="planb" style="margin-top:14px;border-color:var(--deep);border-width:1.5px">' +
+      '<div class="card-head"><h2>Plan B for ' + esc(target) + "</h2>" +
+      '<button class="btn btn-sm btn-ghost" data-rung="planb-close">Close</button></div>';
+
+    /* the gate */
+    if (!app || !app.outcome){
+      h += '<p class="lede" style="max-width:62ch;margin-bottom:14px">Before anything else: did you get a place ' +
+        "in the " + esc(cy) + " cycle? Nothing below is worth reading if you did, and your answer is recorded on " +
+        "the ladder either way.</p>";
+      h += '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="btn btn-sm btn-primary" data-rung="answer:offer" data-rungval="' + esc(target) +
+          '">Yes, I have a place</button>' +
+        '<button class="btn btn-sm btn-ghost" data-rung="answer:none" data-rungval="' + esc(target) +
+          '">No, not this cycle</button>' +
+        '<button class="btn btn-sm btn-ghost" data-rung="answer:waiting" data-rungval="' + esc(target) +
+          '">Still waiting to hear</button></div>';
+      return h + "</div>";
+    }
+
+    /* they have a place: say so and stop, rather than counselling them anyway */
+    if (app.outcome === "offer"){
+      h += '<p class="lede" style="max-width:62ch;margin-bottom:12px">You recorded an offer for ' + esc(target) +
+        " in the " + esc(cy) + " cycle, so this is not the question any more. If that changes, the routes come back.</p>" +
+        '<button class="btn btn-sm btn-ghost" data-rung="reanswer" data-rungval="' + esc(target) +
+        '">Change the answer</button>';
+      return h + "</div>";
+    }
+
+    var pt = routeTiming();
+    h += '<p class="lede" style="max-width:64ch">' +
+      (app.outcome === "waiting"
+        ? "You are waiting to hear. Places are limited, so it is worth knowing the routes now rather than in the week the answer lands."
+        : pt.holding
+          /* someone years outside a scheme has already lived this, and telling
+             them it happens as though it were news reads badly */
+          ? "No place this cycle. You have already been here, so none of this is news: places are limited and missing one is not a verdict on the doctor."
+          : "No place this cycle. That is common where places are limited and it is not a verdict on the doctor.") +
+      " What stays true either way is that the portfolio carries forward. Months, exams, audit and teaching all " +
+      "keep counting.</p>" +
+      '<button class="btn btn-sm btn-ghost" style="margin-top:10px" data-rung="reanswer" data-rungval="' +
+      esc(target) + '">Change the answer</button>';
+
     h += '<p class="group-h" style="margin-top:16px">What people commonly do</p>';
     h += '<div class="opts">' + altRoutes().map(function(r){
       return '<div class="opt"><b>' + esc(r.t) + "</b><p>" + esc(r.d) + "</p>" +
@@ -1680,9 +1734,57 @@ a.nudge:hover{text-decoration:underline}
           return '<a class="btn btn-sm btn-ghost" href="' + g[0] + '">' + esc(g[1]) + "</a>";
         }).join("") + "</span>" : "") + "</div>";
     }).join("") + "</div>";
+
+    h += relatedBlock();
     h += ctxFoot("Routes are descriptive, not advice, and the alternatives above are illustrative in this " +
       "prototype. Check eligibility with the college before acting on any of them.");
     return h + "</div>";
+  }
+
+  /* ================= A DIFFERENT SPECIALTY FROM HERE =================
+     The routes above all assume the same destination. A doctor who has missed
+     a place twice is often asking a different question, which is whether the
+     training already done opens anything else. Adding one here is not a
+     detour: it writes to otherTargets, which is what the dual-track comparison
+     on this same page already reads. */
+  function relatedBlock(){
+    var rel = relatedSpecialties();
+    if (!rel.same.length && !rel.other.length) return "";
+    var sit = situation();
+    var h = '<p class="group-h" style="margin-top:18px">A different specialty from here</p>';
+
+    function addCtl(r, small){
+      return r.added
+        ? '<span class="chip good">' + ico(I.tick, 12) + "Tracking</span>"
+        : '<button class="btn btn-sm btn-ghost" data-addtarget="' + esc(r.name) + '">' +
+          (small ? "Track" : "Track this too") + "</button>";
+    }
+
+    if (rel.same.length){
+      h += '<p class="lede" style="max-width:64ch;margin-bottom:10px">These are entered on the same membership ' +
+        "exam you are already working towards, so <b>" + esc(sit.exam) + " carries</b>, and so does the portfolio. " +
+        "What differs is competition and the programme itself. Some are entered through a General Internal " +
+        "Medicine trunk rather than directly, which is worth checking for any you are considering.</p>";
+      /* one line each rather than a tile each: the describing sentence was the
+         same for all of them, so it is said once above */
+      h += '<div class="picks">' + rel.same.map(function(r){
+        return '<span class="pick">' + esc(r.name) + addCtl(r, true) + "</span>";
+      }).join("") + "</div>";
+    }
+    if (rel.other.length){
+      h += '<p class="lede" style="max-width:64ch;margin:18px 0 10px">A different membership exam, but hospital ' +
+        "training is commonly credited towards it. Your months and portfolio still count for something; the exam " +
+        "does not carry.</p>";
+      h += '<div class="opts">' + rel.other.map(function(r){
+        return '<div class="opt"><b>' + esc(r.name) + "</b><p>" + esc(r.exam + " via " + r.body +
+          ". A different exam, entered from hospital training.") + '</p><span class="acts">' +
+          addCtl(r) + "</span></div>";
+      }).join("") + "</div>";
+      h += ctxFoot("Whether your specific posts count towards " + rel.other.map(function(r){ return r.name; }).join(" or ") +
+        ", and how much, is set by " + rel.other.map(function(r){ return r.body; }).join(" and ") +
+        " and is not modelled here. Confirm it with them before you plan around it.");
+    }
+    return h;
   }
 
   /* ================= LADDER STATE =================
@@ -1766,7 +1868,7 @@ a.nudge:hover{text-decoration:underline}
          t: target + (!app ? ", not yet applied" : app.outcome === "offer" ? ", offer accepted"
               : app.outcome === "none" ? ", no offer this cycle"
               : app.outcome === "waiting" ? ", waiting to hear" : ", applied"),
-         when: appWhen, app: app || true, appTarget: target},
+         when: appWhen, app: app || true, appTarget: target, planB: !!thisCycle},
         {k:"flag", t:"Interview", when: c && thisCycle ? fmt(c.interview) : "After you apply",
          go:["#/interviews","Interview prep"]},
         {k:"todo", t:"CSCST", when: stageWhen("cscst", "Future"), rung:"cscst"},
@@ -1807,6 +1909,14 @@ a.nudge:hover{text-decoration:underline}
         } else {
           ctrl = '<span class="chip ' + OUTCOMES[a.outcome].k + '">' + esc(OUTCOMES[a.outcome].label) + "</span>" +
             '<button class="btn-link" data-rung="unapply" data-rungval="' + esc(s.appTarget) + '">Undo</button>';
+        }
+        /* the way into the contingency, sitting on the rung it is contingent
+           on. Pointless once they hold a place, and premature for a doctor who
+           reaches this rung in three years: an intern was being offered a
+           Plan B for an application they have not made yet. */
+        if (s.planB && !(a && a.outcome === "offer")){
+          ctrl += '<button class="btn-link plan-b" data-rung="planb" data-rungval="' + esc(s.appTarget) + '">' +
+            ico(I.map, 12) + "Plan B</button>";
         }
       } else if (s.rung){
         ctrl = '<button class="btn-link" data-rung="' + esc(s.k === "done" ? "undo:" + s.rung : "done:" + s.rung) +
@@ -1861,6 +1971,11 @@ a.nudge:hover{text-decoration:underline}
       }
       h += "</div>";
 
+      /* directly under the ladder, because that is where the control that
+         opens it lives. A panel that answered a click three sections away
+         would read as the click having done nothing. */
+      h += planBCard();
+
       /* side by side rather than stacked, because the whole question a hedging
          doctor has is where the two routes differ */
       if (S.showDual && others.length){
@@ -1891,13 +2006,11 @@ a.nudge:hover{text-decoration:underline}
           }).join("") + "</div></div>";
       }
 
-      /* the year's rhythm and the work it governs stay with the next step,
-         because all three are this cycle. The past and the contingency are a
-         different question and get their own heading. */
-      if (yearBeats()){
-        h += yearShapeCard() + yearWorkCard();
-      }
-      h += '<p class="sec-label">The longer view</p>' + historyCard() + contingencyCard();
+      /* the year's rhythm stays with the next step, because both are this
+         cycle. The work that date governs is the gap analyser's, and stating
+         it twice at full size was the roadmap restating another page. */
+      if (yearBeats()) h += yearShapeCard();
+      h += '<p class="sec-label">The longer view</p>' + historyCard();
 
       if (others.length && !S.showDual){
         h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Also applying to</h2>' +
@@ -1926,7 +2039,26 @@ a.nudge:hover{text-decoration:underline}
         {k:"warn", label:"Important before interview", ids:["research","clinical"]},
         {k:"mute", label:"Optional, smallest gain", ids:["leadership"]}
       ];
-      var h = "", any = false;
+      var h = "";
+
+      /* The one thing the roadmap's "Finish before" card carried that this
+         page did not: every gap below is governed by a single date, because
+         evidence has to be dated before the application closes. Per-domain due
+         dates alone never said that. */
+      var gsit = situation(), gstep = nextStep(), gc = gsit.cycle;
+      if (gc && gstep && gstep.usesCycle && until(gc.apply) >= 0){
+        var gleft = until(gc.apply), gowed = scoreMax() - scorePts();
+        h += '<div class="card" style="margin-bottom:18px"><div class="card-head">' +
+          "<h2>Everything here has to be dated before " + fmtLong(gc.apply) + "</h2>" +
+          '<span class="aside">' + gowed + " points still on the table</span></div>" +
+          '<p class="lede" style="max-width:64ch">Anything dated after that will not appear on this ' +
+          "application, however good it is. " + (gleft <= 90
+            ? "You have " + gleft + " days."
+            : "That is " + Math.round(gleft / 30) + " months away, which is enough for all of it if you start now.") +
+          "</p></div>";
+      }
+
+      var any = false;
       tiers.forEach(function(t){
         var items = DOMAINS.filter(function(d){ return t.ids.indexOf(d.id) > -1 && d.maxPts - d.pts() > 0; });
         if (!items.length) return;
@@ -1942,7 +2074,7 @@ a.nudge:hover{text-decoration:underline}
             '<div class="gap-acts" style="margin-top:12px">' + gapActions(d.id) + "</div></div>";
         }).join("");
       });
-      if (!any) h = '<p class="empty"><b>No gaps left.</b>Every domain is complete against the published criteria.</p>';
+      if (!any) h += '<p class="empty"><b>No gaps left.</b>Every domain is complete against the published criteria.</p>';
 
       var missing = losingDomains();
       h += '<div class="card" style="margin-top:20px"><div class="card-head"><h2>Summary</h2></div>' +
@@ -2759,6 +2891,24 @@ a.nudge:hover{text-decoration:underline}
 
     /* ladder rungs. Marking a stage done, or recording an application and what
        came of it. Per-rung identity means these cannot go through ACTIONS. */
+    /* "track this too" writes to otherTargets, which is the same list the
+       dual-track comparison on this page reads. Exploring a specialty and
+       tracking one are then the same act rather than two features. */
+    var addT = ev.target.closest("[data-addtarget]");
+    if (addT){
+      ev.preventDefault();
+      var tn = addT.getAttribute("data-addtarget");
+      S.otherTargets = S.otherTargets || [];
+      if (S.otherTargets.indexOf(tn) === -1 && tn !== S.specialty){
+        S.otherTargets.push(tn);
+        S.dualTrack = "multi";
+        logActivity("Added " + tn + " as a second target", "From Plan B");
+        save(); render();
+        toast("Now tracking <em>" + esc(tn) + "</em> alongside " + esc(S.specialty) + ".");
+      }
+      return;
+    }
+
     var rung = ev.target.closest("[data-rung]");
     if (rung){
       ev.preventDefault();
@@ -2797,6 +2947,35 @@ a.nudge:hover{text-decoration:underline}
           logActivity(rv + ": " + OUTCOMES[m[1]].label, cycleLabel() + " cycle");
         }
         save(); render(); toast(app ? OUTCOMES[m[1]].label + " recorded." : "Nothing to record."); return;
+      }
+      if (rc === "planb"){
+        S.planB = rv; save(); render();
+        /* the panel renders below the ladder, which can be off-screen on a
+           phone, so a control that appeared to do nothing would be the bug */
+        var el = document.getElementById("planb");
+        if (el) el.scrollIntoView({behavior: reduced ? "auto" : "smooth", block:"center"});
+        return;
+      }
+      if (rc === "planb-close"){ S.planB = ""; save(); render(); return; }
+      /* the Plan B gate. Same store as the rung's own outcome buttons: a
+         doctor must never be able to answer this twice and get two answers.
+         appliedAt stays empty when no application was logged, and is never
+         rendered once an outcome exists. */
+      if ((m = /^answer:(.+)$/.exec(rc))){
+        var ans = applicationFor(rv);
+        if (!ans){
+          ans = {target:rv, cycle:cycleLabel(), appliedAt:"", outcome:"", outcomeAt:""};
+          S.applications.unshift(ans);
+        }
+        ans.outcome = m[1];
+        ans.outcomeAt = today;
+        logActivity(rv + ": " + OUTCOMES[m[1]].label, cycleLabel() + " cycle");
+        save(); render(); toast(OUTCOMES[m[1]].label + " recorded."); return;
+      }
+      if (rc === "reanswer"){
+        var re = applicationFor(rv);
+        if (re){ re.outcome = ""; re.outcomeAt = ""; }
+        save(); render(); toast("Answer cleared."); return;
       }
       if (rc === "unapply"){
         var cy = cycleLabel();
