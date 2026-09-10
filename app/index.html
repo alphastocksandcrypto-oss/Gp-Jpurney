@@ -45,7 +45,10 @@
   --paper:#f7faf8; --cream:#fdfbf5;
   --coral:#ff7a59; --coral-soft:#fff1e6;
   --amber:#ffc061; --amber-soft:#fff4e0;
-  --line:rgba(11,46,54,.12); --txt-soft:#41606a; --txt-mute:#7d949b;
+  /* txt-mute was #7d949b, which is 3.04:1 on paper and 3.19:1 on white. It
+     carries small text (11px stat labels, 10.5px ladder captions), so it needs
+     4.5:1, not 3:1. Darkened to clear AA on both grounds. */
+  --line:rgba(11,46,54,.12); --txt-soft:#41606a; --txt-mute:#64767c;
   /* status text, all AA on their soft tints and on paper */
   --good-text:#0b7a63; --warn-text:#8a5a10; --crit-text:#b8482a;
   /* the one sequential hue every magnitude bar uses */
@@ -92,11 +95,17 @@ h1,h2,h3,h4{font-family:var(--fd);letter-spacing:-.01em}
 .nav-item .pill.alert{background:var(--coral);color:#fff}
 /* not-yet and not-your-route: dimmed, never hidden, never unreachable. Hover
    and focus restore full contrast so nothing is stranded below AA when used. */
-.nav-item.rel-ahead,.nav-item.rel-aside{color:#7f9e97}
+.nav-item.rel-ahead,.nav-item.rel-aside{color:#8fb0a8}
+/* the active item sits on a lighter mint wash, so the dimmed colour has to
+   lift with it: #8fb0a8 is 4.37:1 there and #b6d8cf clears it comfortably */
+.nav-item.rel-ahead.on,.nav-item.rel-aside.on{color:#b6d8cf}
 .nav-item.rel-ahead svg,.nav-item.rel-aside svg{opacity:.5}
 .nav-item.rel-ahead:hover,.nav-item.rel-aside:hover,
 .nav-item.rel-ahead:focus-visible,.nav-item.rel-aside:focus-visible{color:#fff}
 .nav-item .pill.quiet{background:rgba(255,255,255,.08);color:#8fb5ac;font-weight:600;letter-spacing:.02em}
+/* same lift as the label: on the active item the pill's own wash lands on
+   #265757, where #8fb5ac is only 3.63:1 */
+.nav-item.on .pill.quiet{color:#c4e0d8}
 .side-foot{border-top:1px solid rgba(255,255,255,.1);padding:12px 14px;display:flex;align-items:center;gap:10px}
 .avatar{width:34px;height:34px;border-radius:50%;background:var(--mint-2);color:#052a22;display:grid;place-items:center;font-family:var(--fd);font-weight:800;font-size:12.5px;flex:none}
 .side-foot .who{min-width:0;flex:1}
@@ -257,7 +266,12 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 /* ============ FORMS ============ */
 .field{display:grid;gap:6px;margin-bottom:14px}
 .field label{font-size:12px;font-weight:700;color:var(--deep)}
-.field input,.field select{border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:10px 13px;font-size:13.5px;color:var(--ink);outline:none;width:100%}
+.field input,.field select{border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:10px 13px;font-size:13.5px;color:var(--ink);width:100%}
+/* this used to be outline:none plus a border-colour change on focus. The
+   border alone is 2.66:1 against white, under the 3:1 that 1.4.11 asks of a
+   focus indicator, and outline:none beat the global :focus-visible rule, so
+   keyboard users had no real focus ring on any form field in the app. */
+.field input:focus-visible,.field select:focus-visible{outline:2px solid var(--deep);outline-offset:2px;border-color:var(--mint)}
 .field input:focus,.field select:focus{border-color:var(--mint)}
 .field .hint{font-size:11.5px;color:var(--txt-soft)}
 .chk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:2px}
@@ -537,9 +551,17 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
   /* the ranked "what would move you most" list, by points actually gained */
   function levers(){
     var out = [];
-    if (S.auditComplete < 1) out.push({t:"Finish the QI project you started",
-      why:"It is " + S.qiPct + "% done and scores nothing until it is complete",
-      pts:5, act:"finishQI", cta:"Mark complete"});
+    /* "finish the project you started" is only true if one is actually part
+       done. Onboarding sends qiPct 0 for anyone who ticked nothing, so this
+       used to tell every new doctor to finish a project at 0% that they had
+       never begun, under a button reading "Mark complete". */
+    if (S.auditComplete < 1) out.push(S.qiPct > 0
+      ? {t:"Finish the QI project you started",
+         why:"It is " + S.qiPct + "% done and scores nothing until it is complete",
+         pts:5, act:"finishQI", cta:"Mark complete"}
+      : {t:"Start an audit or QI project",
+         why:"Nothing logged yet, and a completed project is the single biggest scoring move you have",
+         pts:5, act:"finishQI", cta:"Log one complete"});
     if (S.teachingDone < 4) out.push({t:"Log " + (4 - S.teachingDone) + " more teaching " + (4 - S.teachingDone === 1 ? "session" : "sessions"),
       why:"Four sessions moves this domain from 2 points to 5",
       pts:3, act:"logTeaching", cta:"Log a session"});
@@ -1293,14 +1315,14 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 
       h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Hepatitis B and immunisation</h2>' +
         chip(S.hepBUpToDate ? {k:"good", icon:I.tick, label:"Up to date"} : {k:"warn", icon:I.warn, label:"Not confirmed"}) + "</div>";
-      h += '<label style="display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:10px">' +
+      h += '<label style="display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:10px;min-height:24px;padding:2px 0">' +
         '<input type="checkbox" id="fHepB" style="width:auto"' + (S.hepBUpToDate ? " checked" : "") + '> Immunisation status confirmed up to date</label>';
       h += '<div class="field"><label for="fHepBAt">Last checked</label><input id="fHepBAt" type="date" value="' + esc(S.hepBCheckedAt) + '"></div>' +
         '<button class="btn btn-sm btn-primary" data-act="logHepB">Save</button></div>';
 
       h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Occupational health clearance</h2>' +
         chip(S.occClearance ? {k:"good", icon:I.tick, label:"Cleared"} : {k:"warn", icon:I.warn, label:"Not confirmed"}) + "</div>";
-      h += '<label style="display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:10px">' +
+      h += '<label style="display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:10px;min-height:24px;padding:2px 0">' +
         '<input type="checkbox" id="fOcc" style="width:auto"' + (S.occClearance ? " checked" : "") + '> Cleared to start by occupational health</label>';
       h += '<div class="field"><label for="fOccAt">Date cleared</label><input id="fOccAt" type="date" value="' + esc(S.occClearanceAt) + '"></div>' +
         '<button class="btn btn-sm btn-primary" data-act="logOcc">Save</button></div>';
