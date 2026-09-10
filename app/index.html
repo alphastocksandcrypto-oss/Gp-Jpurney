@@ -145,6 +145,8 @@ a.card:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(11,46,54,.12
 .card-head .aside{margin-left:auto;font-size:12px;color:var(--txt-soft);font-weight:600}
 .lede{font-size:13px;color:var(--txt-soft)}
 .sec-label{font-family:var(--fd);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt-mute);margin:26px 0 11px}
+/* a heading inside a card, one step down from .sec-label which separates cards */
+.group-h{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--txt-mute);margin:18px 0 8px}
 .sec-label:first-child{margin-top:0}
 /* status: icon + word + colour, never colour alone */
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
@@ -1373,6 +1375,83 @@ a.nudge:hover{text-decoration:underline}
     return h + "</div>";
   }
 
+  /* ================= WHERE YOU HAVE BEEN =================
+     The ladder is a projection. This is the record: what actually happened
+     each July, including the years where the answer was "no place". Nothing
+     else in the product stores that, and it is the fact a doctor is most
+     often asked to account for. */
+  function historyCard(){
+    var hist = S.rollHistory || [];
+    var h = '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Where you have been</h2>' +
+      (hist.length ? '<span class="aside">' + hist.length + (hist.length === 1 ? " update" : " updates") + "</span>" : "") + "</div>";
+    if (!hist.length){
+      h += '<p class="lede">Nothing recorded yet. Each July the dashboard asks what changed, and the answers build ' +
+        "up here as a record of the route you actually took rather than the one you planned.</p>";
+      if (S.rotations && S.rotations.length){
+        h += '<p class="lede" style="margin-top:10px">Your logged rotations are on ' +
+          '<a href="#/profile">your profile</a> in the meantime.</p>';
+      }
+      return h + "</div>";
+    }
+    h += hist.map(function(e){
+      return '<div class="row"><span class="t">' + esc(e.note) + "<small>Recorded " + fmtLong(e.at) +
+        "</small></span><span class=\"r\"><span class=\"chip mute\">" + e.year + "</span></span></div>";
+    }).join("");
+    return h + "</div>";
+  }
+
+  /* ================= IF THIS CYCLE DOES NOT LAND =================
+     Places are limited and a large share of applicants do not get one first
+     time. The product knows that and says nothing about it, which leaves the
+     doctor to discover it alone at the worst moment. Descriptive only: what
+     people commonly do, never what this doctor should do.
+
+     ALT_ROUTES content is ILLUSTRATIVE. The two cross-route facts here that
+     trace to research are in the MedPath competitor analysis: ICAT is a
+     funded-PhD pathway entered across specialties rather than through one,
+     and several RCPI medicine subspecialties sit under a General Internal
+     Medicine trunk. Anything not listed says so rather than inventing an
+     alternative route into a named specialty. */
+  function altRoutes(){
+    var sit = situation();
+    var out = [
+      {t:"Apply again next cycle", d:"Nothing in a portfolio expires between cycles, and another year of evidence " +
+        "usually scores higher than the same application resubmitted."},
+      {t:"A standalone post in the meantime", d:"Service posts still count as clinical experience, and audit, " +
+        "teaching and research all continue from one."}
+    ];
+    if (sit.college === "RCPI" && S.specialty !== "General Internal Medicine"){
+      out.push({t:"General Internal Medicine as a trunk", d:"Several RCPI medicine subspecialties are entered " +
+        "through a GIM trunk rather than directly. Worth checking whether yours is one of them."});
+    }
+    out.push({t:"ICAT", d:"Irish Clinical Academic Training, a funded PhD integrated with clinical training. " +
+      "Entered across specialties rather than through one, so it runs parallel to this route."});
+    return out;
+  }
+
+  function contingencyCard(){
+    var sit = situation(), t = routeTiming();
+    if (!sit.stillApplying || !sit.hasTarget) return "";
+    /* premature for someone years out, and pointless once they have a place */
+    var applying = sit.applyDays !== null && sit.applyDays < 180;
+    if (!applying && !t.holding) return "";
+
+    var h = '<div class="card" style="margin-top:14px"><div class="card-head">' +
+      "<h2>If this cycle does not land</h2>" +
+      '<span class="aside">' + (t.holding ? "Where you are now" : "Worth reading before you apply") + "</span></div>";
+    h += '<p class="lede" style="max-width:64ch">' + (t.holding
+      ? "You have already been here, so none of this is news: places are limited and missing one is not a verdict on the doctor."
+      : "Places are limited, so a good application can still not get one. That is worth knowing now rather than in February.") +
+      " What stays true either way is that the portfolio carries forward. Months, exams, audit and teaching all keep counting.</p>";
+    h += '<p class="group-h" style="margin-top:16px">What people commonly do</p>';
+    h += altRoutes().map(function(r){
+      return '<div class="row"><span class="t">' + esc(r.t) + "<small>" + esc(r.d) + "</small></span></div>";
+    }).join("");
+    h += ctx("Routes are descriptive, not advice, and the alternatives above are illustrative in this prototype. " +
+      "Check eligibility with the college before acting on any of them.", true);
+    return h + "</div>";
+  }
+
   /* One ladder builder, called once for the main route and again for each
      hedged route when the dual-track view is on. It takes a specialty rather
      than reading the record's own, which is what makes side by side possible. */
@@ -1490,6 +1569,11 @@ a.nudge:hover{text-decoration:underline}
             return '<a class="btn btn-sm ' + (i === 0 ? "btn-primary" : "btn-ghost") + '" href="' + l[0] + '">' + esc(l[1]) + "</a>";
           }).join("") + "</div></div>";
       }
+
+      /* the past, then the contingency. Both sit under the next step because
+         the immediate action outranks the backstory and the what-if. */
+      h += historyCard();
+      h += contingencyCard();
 
       if (others.length && !S.showDual){
         h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Also applying to</h2>' +

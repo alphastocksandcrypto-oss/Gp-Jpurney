@@ -341,10 +341,50 @@ The five-rung summary bar that used to open the page said the same thing as
 the full ladder below it, so the ladder leads now. Exam and interview markers
 on it were inert text; both modules exist, so each marker is the way in.
 
-**Known limit.** The ladder infers BST completion from months post-internship,
-so it cannot yet distinguish a doctor who finished BST and then went standalone
-from one who never got a BST place. Fixing that needs scheme history on the
-record, which is what the annual roll-forward prompt is for.
+### The annual roll-forward
+
+The training year turns in July, and the facts that go stale fastest are the
+ones nothing else can infer: whether a doctor is in a scheme, which one, and
+which year of it. Months post-internship keep accruing either way, so a doctor
+who did not get a place looks identical to one who moved up a year.
+
+Once a year the roadmap asks, and branches on the answer: still on the scheme
+and whether they moved up, finished it, left it, got a place and which, or no
+place this year and what they are working as. It is not a modal. A doctor
+reading on a shift break can ignore it, and "ask me later" returns it to the
+start rather than dismissing it for the year. The option to move up a year is
+only offered when the scheme has another year in it, since BST year 2 plus one
+is not year 3.
+
+That answer then feeds the model: `S.inScheme` is believed over inference, so
+the ladder stops claiming "Basic specialist training, complete" for someone who
+never got a place, and holding months are counted from a confirmed fact.
+
+Every turnover is written to `rollHistory`, **including the ones where nothing
+happened**, because "no place this year" is the fact the ladder needs most and
+nothing else records it.
+
+### Where you have been, and what if it does not land
+
+Two cards sit under the next step, being backstory and contingency rather than
+action.
+
+**Where you have been** renders `rollHistory` as a record of the route actually
+taken rather than the one planned. Empty until the first annual update, and it
+says so rather than faking a history.
+
+**If this cycle does not land** appears within six months of an application, or
+immediately for someone already outside a scheme. Places are limited and a good
+application can still miss, and the product knew that while saying nothing,
+leaving the doctor to discover it alone at the worst moment. It is descriptive
+only: what people commonly do, never what this doctor should do, with an
+explicit note to check eligibility with the college.
+
+The alternate routes are illustrative. The two that trace to research are in the
+MedPath competitor analysis: ICAT is a funded-PhD pathway entered across
+specialties, and several RCPI medicine subspecialties sit under a General
+Internal Medicine trunk. A surgical trainee is never sent down a medicine trunk,
+and General Internal Medicine is not offered itself as its own alternative.
 
 ### The prep block
 
