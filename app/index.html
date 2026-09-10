@@ -183,6 +183,7 @@ table.data{width:100%;border-collapse:collapse;font-size:13px}
 table.data th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-mute);padding:0 10px 8px 0;border-bottom:1px solid var(--line)}
 table.data td{padding:10px 10px 10px 0;border-bottom:1px dashed var(--line);vertical-align:middle}
 table.data tr:last-child td{border-bottom:0}
+table.data td small{display:block;font-size:11px;color:var(--txt-soft);font-weight:500;margin-top:2px}
 table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:var(--deep);white-space:nowrap}
 /* ============ RING ============ */
 .ring-wrap{display:flex;align-items:center;gap:20px}
@@ -762,14 +763,14 @@ a.nudge:hover{text-decoration:underline}
   /* one illustrative cycle per college, distinct so several other-target
      cards never look copy-pasted from each other */
   var CYCLE = {
-    "RCPI":                                {apply:"2026-11-08", interview:"2027-01-18", start:"2027-07-12"},
-    "RCSI":                                {apply:"2026-10-01", interview:"2026-12-10", start:"2027-07-06"},
-    "College of Psychiatrists":            {apply:"2026-09-19", interview:"2026-11-21", start:"2027-07-05"},
-    "ICGP":                                {apply:"2026-12-05", interview:"2027-02-10", start:"2027-07-01"},
-    "College of Anaesthesiologists":       {apply:"2026-10-24", interview:"2027-01-08", start:"2027-07-13"},
-    "Faculty of Radiologists":             {apply:"2026-11-14", interview:"2027-01-27", start:"2027-07-06"},
-    "Faculty of Pathology":                {apply:"2026-10-17", interview:"2027-01-15", start:"2027-07-06"},
-    "Faculty of Public Health Medicine":   {apply:"2026-09-26", interview:"2026-12-04", start:"2027-07-01"}
+    "RCPI":                                {apply:"2026-11-08", interview:"2027-01-18", start:"2027-07-12", offers:"2027-02-26"},
+    "RCSI":                                {apply:"2026-10-01", interview:"2026-12-10", start:"2027-07-06", offers:"2027-01-22"},
+    "College of Psychiatrists":            {apply:"2026-09-19", interview:"2026-11-21", start:"2027-07-05", offers:"2027-01-09"},
+    "ICGP":                                {apply:"2026-12-05", interview:"2027-02-10", start:"2027-07-01", offers:"2027-03-19"},
+    "College of Anaesthesiologists":       {apply:"2026-10-24", interview:"2027-01-08", start:"2027-07-13", offers:"2027-02-19"},
+    "Faculty of Radiologists":             {apply:"2026-11-14", interview:"2027-01-27", start:"2027-07-06", offers:"2027-03-05"},
+    "Faculty of Pathology":                {apply:"2026-10-17", interview:"2027-01-15", start:"2027-07-06", offers:"2027-02-23"},
+    "Faculty of Public Health Medicine":   {apply:"2026-09-26", interview:"2026-12-04", start:"2027-07-01", offers:"2027-01-15"}
   };
   /* the resolved list, excluding whatever is already the primary target and
      anything we have no record for, so a stray or malformed name never renders */
@@ -1391,6 +1392,106 @@ a.nudge:hover{text-decoration:underline}
     return h + "</div>";
   }
 
+  /* ================= THE SHAPE OF THE YEAR =================
+     The ladder counts years. It never showed what one year looks like, and
+     the year has a fixed rhythm: applications close, interviews run, offers
+     go out, the post starts. A doctor deciding when to run an audit is
+     planning against that rhythm, not against a six-year total.
+
+     Everything outstanding is back-planned to one date rather than to invented
+     per-item lead times. Evidence has to be dated before the application
+     closes, so that is the deadline for all of it, and how long each takes is
+     the doctor's own business rather than something to guess at. */
+  function yearShapeCard(){
+    var sit = situation(), c = sit.cycle;
+    if (!sit.stillApplying || !c) return "";
+
+    var beats = [
+      {t:"Applications close", iso:c.apply, note:sit.college + ", evidence must already be dated"},
+      {t:"Interviews", iso:c.interview, note:sit.college},
+      {t:"Offers issued", iso:c.offers || addDays(c.interview, 39), note:sit.college},
+      {t:sit.target + " starts", iso:c.start, note:"If you are offered a place"}
+    ];
+    var h = '<div class="card" style="margin-top:14px"><div class="card-head"><h2>How this year runs</h2>' +
+      '<span class="aside">' + esc(cycleLabel()) + " cycle</span></div>";
+    h += beats.map(function(bt){
+      var d = until(bt.iso);
+      return '<div class="row"><span class="t">' + esc(bt.t) + "<small>" + fmtLong(bt.iso) + ", " + esc(bt.note) +
+        "</small></span><span class=\"r\">" +
+        chip(d < 0 ? {k:"mute", icon:I.tick, label:"Passed"}
+           : {k: d <= 21 ? "crit" : (d <= 60 ? "warn" : "mute"), icon:I.clock, label:awayText(d)}) + "</span></div>";
+    }).join("");
+
+    /* only what this doctor has not finished, against the one date that
+       actually governs all of it */
+    var short = DOMAINS.filter(function(d){ return d.pts() < d.maxPts; });
+    var left = until(c.apply);
+    if (short.length && left >= 0){
+      h += '<p class="group-h">Finish before ' + fmtLong(c.apply) + "</p>";
+      h += '<p class="lede" style="margin-bottom:10px;max-width:62ch">Anything dated after that will not appear on this ' +
+        "application, however good it is. " + (left <= 90
+          ? "You have " + left + " days."
+          : "That is " + Math.round(left / 30) + " months away, which is enough for all of it if you start now.") + "</p>";
+      h += short.map(function(d){
+        return '<div class="row"><span class="t">' + esc(d.name) + "<small>" + esc(d.note()) + "</small></span>" +
+          '<span class="r"><span class="chip mute">' + (d.maxPts - d.pts()) + " points on the table</span></span></div>";
+      }).join("");
+      h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
+        '<a class="btn btn-sm btn-primary" href="#/gaps">Plan the gaps</a>' +
+        '<a class="btn btn-sm btn-ghost" href="#/deadlines">All dates</a></div>';
+    } else if (!short.length){
+      h += '<p class="lede" style="margin-top:12px">Every scored domain is at its maximum. Keep the evidence dated.</p>';
+    }
+    h += ctx("These four dates are illustrative and follow the same cycle as the rest of the dashboard. " +
+      "Confirm them against " + sit.college + "'s published dates before you plan around them.", true);
+    return h + "</div>";
+  }
+
+  /* ================= WHERE TWO ROUTES DIVERGE =================
+     Two ladders side by side were mostly the same ladder twice, because both
+     read off one record. The question a hedging doctor actually has is which
+     work counts twice and which only counts once, so lead with that. */
+  function divergenceCard(){
+    var others = otherTargetsInfo();
+    if (!others.length) return "";
+    var sit = situation();
+    var routes = [{name:S.specialty, exam:sit.exam, body:sit.college, cycle:sit.cycle}]
+      .concat(others.map(function(o){ return {name:o.name, exam:o.exam, body:o.body, cycle:CYCLE[o.body] || null}; }));
+
+    var h = '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Where these routes differ</h2>' +
+      '<span class="aside">' + routes.length + " routes</span></div>";
+
+    /* the good news first, because it is the larger half and the one nobody
+       tells them: the portfolio is one portfolio */
+    h += '<p class="group-h">Counts for every route</p>';
+    h += '<div class="row"><span class="t" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+      "<b>Everything in your portfolio</b>" + chip({k:"good", icon:I.tick, label:"Shared"}) +
+      "<small style=\"flex-basis:100%\">" + DOMAINS.map(function(d){ return d.name; }).join(", ") +
+      '. Months post-internship count once and apply everywhere.</small></span></div>';
+
+    h += '<p class="group-h">Differs by route</p>';
+    var rows = [
+      {t:"Exam family", get:function(r){ return r.exam || "Not set"; }},
+      {t:"College", get:function(r){ return r.body || "Not set"; }},
+      {t:"Applications close", get:function(r){ return r.cycle ? fmtLong(r.cycle.apply) : "Date not set"; }},
+      {t:"Interview", get:function(r){ return r.cycle ? fmtLong(r.cycle.interview) : "Date not set"; }}
+    ];
+    h += '<div style="overflow-x:auto"><table class="data"><thead><tr><th></th>' +
+      routes.map(function(r){ return "<th>" + esc(r.name) + "</th>"; }).join("") + "</tr></thead><tbody>";
+    h += rows.map(function(row){
+      var vals = routes.map(function(r){ return row.get(r); });
+      /* a row where every route agrees is not a difference, so say so */
+      var same = vals.every(function(v){ return v === vals[0]; });
+      return "<tr><td><b>" + esc(row.t) + "</b>" +
+        (same ? "<small>Same either way</small>" : "") + "</td>" +
+        vals.map(function(v){ return "<td>" + esc(v) + "</td>"; }).join("") + "</tr>";
+    }).join("");
+    h += "</tbody></table></div>";
+    h += ctx("Both ladders read off one record, so your months and exam stages are shared. Entry rules that let " +
+      "one route credit time served on another are not modelled here, so check eligibility with each college.", true);
+    return h + "</div>";
+  }
+
   /* ================= WHERE YOU HAVE BEEN =================
      The ladder is a projection. This is the record: what actually happened
      each July, including the years where the answer was "no place". Nothing
@@ -1644,6 +1745,9 @@ a.nudge:hover{text-decoration:underline}
       /* side by side rather than stacked, because the whole question a hedging
          doctor has is where the two routes differ */
       if (S.showDual && others.length){
+        /* the comparison that answers the question, before the two ladders
+           that mostly show the same thing twice */
+        h += divergenceCard();
         h += '<div class="grid ' + (others.length > 1 ? "g3" : "g2") + '" style="margin-top:14px">';
         h += '<div class="card"><div class="card-head"><h3>' + esc(S.specialty) + "</h3>" +
           '<span class="chip good">Main route</span></div>' + trailHTML(trailFor(S.specialty)) + "</div>";
@@ -1652,9 +1756,6 @@ a.nudge:hover{text-decoration:underline}
             '<span class="chip mute">' + esc(o.body) + "</span></div>" + trailHTML(trailFor(o.name)) + "</div>";
         });
         h += "</div>";
-        h += ctx("Both ladders read off the same record, so your months and exam stages are shared. " +
-          "Where they differ is the exam family, the college and the cycle. Entry rules that let one route " +
-          "credit time served on another are not modelled here.", true);
       }
 
       if (step){
@@ -1669,8 +1770,9 @@ a.nudge:hover{text-decoration:underline}
           }).join("") + "</div></div>";
       }
 
-      /* the past, then the contingency. Both sit under the next step because
-         the immediate action outranks the backstory and the what-if. */
+      /* the year's rhythm, then the past, then the contingency. All three sit
+         under the next step, since the immediate action outranks them. */
+      h += yearShapeCard();
       h += historyCard();
       h += contingencyCard();
 

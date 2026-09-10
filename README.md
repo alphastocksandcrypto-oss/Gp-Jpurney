@@ -385,6 +385,39 @@ doctor keeps, because most of what it shows is something only they know.
 outcome of a competitive round and a product that only has a slot for good news
 is not much use in February.
 
+### The shape of one year
+
+The ladder counts years. It never showed what a single year looks like, and the
+year has a fixed rhythm: applications close, interviews run, offers go out, the
+post starts. A doctor deciding when to run an audit is planning against that
+rhythm, not against a six-year total, so **How this year runs** lays the four
+beats out with a days-away chip on each.
+
+Under them sits everything still outstanding, back-planned to one date. Not to
+invented per-item lead times: evidence has to be dated before the application
+closes, so that is the deadline for all of it, and how long each piece takes is
+the doctor's own business rather than something for the product to guess at. The
+copy changes with the distance, reading as months when there is time and as a
+day count when there is not. When every scored domain is already at maximum it
+says so rather than showing an empty list, and it is absent entirely for a
+consultant or for someone with no target set.
+
+### Where two routes diverge
+
+Two ladders side by side were mostly the same ladder twice, because both read
+off one record. The question a hedging doctor actually has is which work counts
+twice and which only counts once, so **Where these routes differ** leads with
+the larger and less obvious half: the portfolio is one portfolio, and months
+post-internship count once and apply everywhere. Only then does it table what
+genuinely differs, one column per route — exam family, college, closing date,
+interview date. A row where every route agrees is labelled as such rather than
+being dressed up as a difference. Dates carry their year, because two routes can
+close twelve months apart and would otherwise read as the same season.
+
+It appears only inside the dual-track view, and it carries the caveat that
+matters: entry rules that let one route credit time served on another are not
+modelled here, so eligibility has to be checked with each college.
+
 ### Where you have been, and what if it does not land
 
 Two cards sit under the next step, being backstory and contingency rather than
@@ -582,10 +615,15 @@ inherited it, so the fix is applied in all six files.
   before any of it is shown to a real doctor.
 - Dashboard actions that are honestly stubbed and say so: calendar export,
   reminders and sign out.
-- Dashboard: `CYCLE` gives every college one illustrative application, interview
-  and start date, used for a doctor's "also applying to" specialties. Same
-  status as the primary `deadlines()` dates it sits beside: replace both from
-  each college's actual published cycle before this reaches a real doctor.
+- Dashboard: `CYCLE` gives every college one illustrative application,
+  interview, offers and start date, used for the four beats on **How this year
+  runs**, for the divergence table, and for a doctor's "also applying to"
+  specialties. Same status as the primary `deadlines()` dates it sits beside:
+  replace both from each college's actual published cycle before this reaches a
+  real doctor. The `offers` dates are the weakest of the four — no college
+  publishes an offers date the way it publishes a closing date — so they are
+  placed roughly five to six weeks after interview and are flagged on the card
+  itself along with the rest.
 - Dashboard: the CPD tracker's two regime targets (50 points in a training
   post, 20 outside one) and the 31 December cycle-end date are **illustrative
   and unverified**, and flagged as such in the page itself. Both numbers came
