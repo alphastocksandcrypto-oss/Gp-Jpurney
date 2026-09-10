@@ -156,6 +156,11 @@ a.card:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(11,46,54,.12
 .stat .d{font-size:11.5px;color:var(--txt-soft);font-weight:500}
 .empty{padding:34px 20px;text-align:center;color:var(--txt-soft);font-size:13px}
 .empty b{display:block;font-family:var(--fd);color:var(--deep);font-size:15px;margin-bottom:5px}
+/* adaptive intro banner: context or an explicit "this default is invented" flag, never a decision made for the reader */
+.ctx{display:flex;gap:10px;align-items:flex-start;background:var(--mint-soft);border:1px solid rgba(11,46,54,.1);border-radius:14px;padding:12px 15px;font-size:13px;color:var(--ink);margin-bottom:16px}
+.ctx svg{flex:none;margin-top:2px;color:var(--good-text)}
+.ctx.illustrative{background:var(--amber-soft);color:var(--ink)}
+.ctx.illustrative svg{color:var(--warn-text)}
 table.data{width:100%;border-collapse:collapse;font-size:13px}
 table.data th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-mute);padding:0 10px 8px 0;border-bottom:1px solid var(--line)}
 table.data td{padding:10px 10px 10px 0;border-bottom:1px dashed var(--line);vertical-align:middle}
@@ -363,6 +368,17 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
        filters and reminders, not scored: neither moves readiness or the
        shortlisting score. */
     basedIn:"", willing:[], dualTrack:"single", otherTargets:[],
+    /* route and origin, from onboarding, used only to decide how prominently
+       the admin page introduces itself: neither is scored. */
+    route:"", origin:"",
+    /* practical tracking, none of it scored. A person starting an Irish post
+       is the one this page matters most for, per the product owner: Garda
+       vetting specifically renews every 3 years and is modelled as a date
+       with a computed expiry, not a one-off tick. */
+    gardaVettingDate:"", hepBUpToDate:false, hepBCheckedAt:"", occClearance:false, occClearanceAt:"",
+    /* CPD runs on its own annual clock, independent of training milestones */
+    cpdPoints:0, cpdTarget:50, cpdCycleEnd:new Date().getFullYear() + "-12-31", cpdLog:[],
+    cvUpdatedAt:"", rotations:[],
     deadlinesDone:{},
     customMilestones:[],
     activity:[]
@@ -444,7 +460,10 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     plus:'<path d="M12 5v14M5 12h14"/>',
     arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
     out:'<path d="M8 16L18 6M9 6h9v9"/>',
-    bolt:'<path d="M13 2L5 14h6l-1 8 8-12h-6z"/>'
+    bolt:'<path d="M13 2L5 14h6l-1 8 8-12h-6z"/>',
+    shield:'<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/>',
+    grad:'<path d="M2 9l10-4 10 4-10 4z"/><path d="M6 11v5c0 1.5 2.5 3 6 3s6-1.5 6-3v-5"/><path d="M22 9v6"/>',
+    minus:'<path d="M5 12h14"/>'
   };
 
   /* ================= MODEL =================
@@ -653,6 +672,30 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     return itemRegion === "any" || w.indexOf(itemRegion) > -1;
   }
 
+  /* ================= PRACTICAL TRACKING =================
+     Garda vetting, occupational health and CPD. None of this is scored: it
+     never moves readiness or the shortlisting score, it is just administrative
+     state that has its own clock, separate from the training one. */
+  function addDays(iso, n){ var d = day(iso); d.setDate(d.getDate() + n); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  /* Garda vetting is not a one-off tick: it renews every 3 years, so the
+     thing worth showing is not "done" but "days until it needs doing again". */
+  function gardaExpiry(){ return S.gardaVettingDate ? addDays(S.gardaVettingDate, 365 * 3) : null; }
+  function gardaDaysLeft(){ var e = gardaExpiry(); return e ? until(e) : null; }
+  function gardaStatus(){
+    if (!S.gardaVettingDate) return {k:"crit", label:"Not logged"};
+    var d = gardaDaysLeft();
+    if (d < 0) return {k:"crit", label:"Expired"};
+    if (d <= 56) return {k:"crit", label:"Renew soon"};
+    if (d <= 180) return {k:"warn", label:"Renew this year"};
+    return {k:"good", label:"Current"};
+  }
+  function cpdDaysLeft(){ return S.cpdCycleEnd ? until(S.cpdCycleEnd) : null; }
+  function cpdPct(){ return S.cpdTarget > 0 ? Math.min(100, Math.round(S.cpdPoints / S.cpdTarget * 100)) : 0; }
+  /* who the admin page leads with. Nothing is hidden from anyone, this only
+     changes which line opens the page: someone newly in the Irish system is
+     the person this page matters most to, per the product owner. */
+  function newToIrishSystem(){ return S.route === "coming" || (S.origin === "noneu" && S.clinicalMonths < 12); }
+
   /* ================= LADDER ================= */
   function rungs(){
     return [
@@ -680,6 +723,10 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
       '<span class="mid"><span><b class="num" data-count="' + pct + '" data-suffix="%">0%</b><span>' + esc(label) + "</span></span></span></div>";
   }
   function chip(s){ return '<span class="chip ' + s.k + '">' + ico(s.icon, 12) + esc(s.label) + "</span>"; }
+  function ctx(text, illustrative){
+    return '<div class="ctx' + (illustrative ? " illustrative" : "") + '">' +
+      ico(illustrative ? I.warn : I.flag, 15) + "<span>" + esc(text) + "</span></div>";
+  }
   function bar(pct){ return '<div class="bar"><i style="width:0%" data-w="' + pct + '"></i></div>'; }
   function stat(k, v, d, icon){
     return '<div class="stat">' + (icon ? '<span class="ic">' + ico(icon, 15) + "</span>" : "") +
@@ -734,6 +781,11 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
       if (others.length){
         h += '<p class="hello-sub" style="margin-top:-10px">Also tracking ' + others.map(function(o){ return esc(o.name); }).join(", ") +
           '. <a class="btn-link" href="#/roadmap">See both routes</a></p>';
+      }
+      var gs = gardaStatus();
+      if (gs.k === "crit"){
+        h += '<p class="hello-sub" style="margin-top:-10px">' + (S.gardaVettingDate ? "Garda vetting " + gs.label.toLowerCase() : "Garda vetting is not logged yet") +
+          '. <a class="btn-link" href="#/admin">Sort it</a></p>';
       }
 
       h += '<div class="move">' +
@@ -1090,6 +1142,75 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     }
   };
 
+  VIEWS.admin = {
+    title:"Occupational health and admin", sub:"Nothing here is scored. It is administrative, and it has its own clock.",
+    render:function(){
+      var h = "";
+      h += newToIrishSystem()
+        ? ctx("This page usually matters most for someone newly in the Irish system, which is where your answers put you. Everyone sees it either way, since Garda vetting renews for anyone already working here too.")
+        : ctx("Garda vetting renews every 3 years for everyone working here, whatever stage you are at. Log the date once and this page tracks the renewal for you.");
+
+      var gs = gardaStatus(), exp = gardaExpiry();
+      h += '<div class="card"><div class="card-head"><h2>Garda vetting</h2>' + chip(
+        gs.k === "good" ? {k:"good", icon:I.tick, label:gs.label} :
+        gs.k === "warn" ? {k:"warn", icon:I.clock, label:gs.label} : {k:"crit", icon:I.warn, label:gs.label}
+      ) + "</div>";
+      h += '<p class="lede">Renews every 3 years. Not a one-off check: log the date it was last done and MedNav tracks when it is due again.</p>';
+      if (S.gardaVettingDate){
+        h += '<div class="row"><span class="t">Last done<small>' + fmtLong(S.gardaVettingDate) + "</small></span>" +
+          '<span class="r"><span class="lede">Renews ' + fmtLong(exp) + ", " + awayText(until(exp)) + "</span></span></div>";
+      }
+      h += '<div class="field" style="margin-top:12px"><label for="fGarda">Date last vetted</label>' +
+        '<input id="fGarda" type="date" value="' + esc(S.gardaVettingDate) + '"></div>' +
+        '<button class="btn btn-sm btn-primary" data-act="logGarda">Save vetting date</button></div>';
+
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Hepatitis B and immunisation</h2>' +
+        chip(S.hepBUpToDate ? {k:"good", icon:I.tick, label:"Up to date"} : {k:"warn", icon:I.warn, label:"Not confirmed"}) + "</div>";
+      h += '<label style="display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:10px">' +
+        '<input type="checkbox" id="fHepB" style="width:auto"' + (S.hepBUpToDate ? " checked" : "") + '> Immunisation status confirmed up to date</label>';
+      h += '<div class="field"><label for="fHepBAt">Last checked</label><input id="fHepBAt" type="date" value="' + esc(S.hepBCheckedAt) + '"></div>' +
+        '<button class="btn btn-sm btn-primary" data-act="logHepB">Save</button></div>';
+
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Occupational health clearance</h2>' +
+        chip(S.occClearance ? {k:"good", icon:I.tick, label:"Cleared"} : {k:"warn", icon:I.warn, label:"Not confirmed"}) + "</div>";
+      h += '<label style="display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:10px">' +
+        '<input type="checkbox" id="fOcc" style="width:auto"' + (S.occClearance ? " checked" : "") + '> Cleared to start by occupational health</label>';
+      h += '<div class="field"><label for="fOccAt">Date cleared</label><input id="fOccAt" type="date" value="' + esc(S.occClearanceAt) + '"></div>' +
+        '<button class="btn btn-sm btn-primary" data-act="logOcc">Save</button></div>';
+      return h;
+    }
+  };
+
+  VIEWS.cpd = {
+    title:"CPD tracker", sub:"Runs on its own annual clock, separate from your training milestones.",
+    render:function(){
+      var pct = cpdPct(), left = cpdDaysLeft();
+      var h = ctx("The " + S.cpdTarget + "-point target and the cycle date below are illustrative in this prototype. " +
+        "Use whatever your own college actually publishes for its CPD requirement, and change the target below to match.", true);
+      h += '<div class="card"><div class="card-head"><h2>' + pct + '% of this cycle logged</h2>' +
+        '<span class="aside num">' + S.cpdPoints + " of " + S.cpdTarget + " points</span></div>" + bar(pct) +
+        (left !== null ? '<p class="lede" style="margin-top:10px">Cycle ends ' + fmtLong(S.cpdCycleEnd) + ", " + awayText(left) + ".</p>" : "") + "</div>";
+
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Log points</h2></div>' +
+        '<div class="field"><label for="fCpdAdd">Points to add</label><input id="fCpdAdd" type="number" min="1" max="50" value="1"></div>' +
+        '<button class="btn btn-sm btn-primary" data-act="logCpd">Add points</button></div>';
+
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Target and cycle</h2></div>' +
+        '<div class="grid g2"><div class="field"><label for="fCpdTarget">Annual target, points</label>' +
+        '<input id="fCpdTarget" type="number" min="1" max="200" value="' + S.cpdTarget + '"></div>' +
+        '<div class="field"><label for="fCpdEnd">Cycle end date</label><input id="fCpdEnd" type="date" value="' + esc(S.cpdCycleEnd) + '"></div></div>' +
+        '<button class="btn btn-sm btn-ghost" data-act="saveCpdTarget">Save target and cycle</button></div>';
+
+      if ((S.cpdLog || []).length){
+        h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Recent entries</h2></div>';
+        h += S.cpdLog.slice(0, 10).map(function(e){
+          return '<div class="row"><span class="t">+' + e.pts + " points</span><span class=\"r\"><span class=\"lede\">" + fmtLong(e.at) + "</span></span></div>";
+        }).join("") + "</div>";
+      }
+      return h;
+    }
+  };
+
   VIEWS.profile = {
     title:"Your profile", sub:"Change any of this and every view recalculates.",
     render:function(){
@@ -1117,9 +1238,32 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
         '<div style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)">' +
         '<p class="lede" style="margin-bottom:10px">This is a demo record held in your browser only. Nothing is sent anywhere.</p>' +
         '<button class="btn btn-sm btn-ghost" data-act="reset">Reset to the demo record</button></div></div></div>' +
-        locationCard();
+        locationCard() + cvRotationCard();
     }
   };
+
+  /* CV freshness and rotation history: identity and history facts rather than
+     active trackers, so they live here on profile rather than getting their
+     own nav item the way the admin and CPD pages did. */
+  function cvRotationCard(){
+    var stale = S.cvUpdatedAt ? Math.round((Date.now() - day(S.cvUpdatedAt)) / 2592000000) : null;
+    var h = '<div class="card" style="margin-top:14px"><div class="card-head"><h2>CV and rotation history</h2></div>';
+    h += '<div class="field"><label for="pCV">CV last updated</label>' +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+      '<input id="pCV" type="date" value="' + esc(S.cvUpdatedAt) + '" style="flex:1;min-width:160px" disabled>' +
+      '<button class="btn btn-sm btn-primary" data-act="saveCV">Mark updated today</button></div>' +
+      '<span class="hint">' + (stale === null ? "Not recorded yet." : stale >= 6 ? "That is " + stale + " months ago. Worth a look before you next apply." : stale + " months ago.") + "</span></div>";
+
+    h += '<p class="group-h">Rotation history</p>';
+    var rots = S.rotations || [];
+    h += rots.length ? rots.map(function(r, i){
+      var span = (r.from ? fmt(r.from) : "?") + (r.to ? " to " + fmt(r.to) : " to present");
+      return '<div class="row"><span class="t">' + esc(r.hospital) + (r.specialty ? ", " + esc(r.specialty) : "") +
+        "<small>" + esc(span) + '</small></span><span class="r"><button class="btn-link" data-remove-rotation="' + i + '">Remove</button></span></div>';
+    }).join("") : '<p class="empty" style="padding:16px 0">Nothing logged yet.</p>';
+    h += '<button class="btn btn-sm btn-ghost" style="margin-top:10px" data-act="addRotation">Add a rotation</button></div>';
+    return h;
+  }
 
   /* split out of VIEWS.profile.render for its own size, and because
      saveProfile reads exactly the ids this writes */
@@ -1167,6 +1311,9 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     {g:"Planning"},
     {id:"deadlines", t:"Deadlines", ic:I.cal},
     {id:"opportunities", t:"Matched to you", ic:I.brief},
+    {g:"Practical"},
+    {id:"admin", t:"Occupational health and admin", ic:I.shield},
+    {id:"cpd", t:"CPD tracker", ic:I.grad},
     {g:"Account"},
     {id:"profile", t:"Your profile", ic:I.user}
   ];
@@ -1179,6 +1326,10 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     if (id === "deadlines"){
       var u = deadlines().filter(function(d){ return !d.done && d.days >= 0 && d.days <= 21; }).length;
       return u ? {n:u, alert:true} : null;
+    }
+    if (id === "admin"){
+      var gs = gardaStatus();
+      return gs.k === "crit" ? {n:"!", alert:true} : null;
     }
     return null;
   }
@@ -1285,6 +1436,41 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
       S.otherTargets = S.dualTrack === "single" ? [] :
         Array.prototype.slice.call(document.querySelectorAll("[data-other-box]:checked")).map(function(el){ return el.value; });
       return "Location and other applications saved";
+    },
+    logGarda: function(){
+      var v = document.getElementById("fGarda").value;
+      if (!v) { toast("Pick a date first."); return null; }
+      S.gardaVettingDate = v;
+      return "Garda vetting date saved, renews " + fmtLong(gardaExpiry());
+    },
+    logHepB: function(){
+      S.hepBUpToDate = document.getElementById("fHepB").checked;
+      S.hepBCheckedAt = document.getElementById("fHepBAt").value;
+      return "Immunisation status saved";
+    },
+    logOcc: function(){
+      S.occClearance = document.getElementById("fOcc").checked;
+      S.occClearanceAt = document.getElementById("fOccAt").value;
+      return "Occupational health status saved";
+    },
+    logCpd: function(){
+      var n = parseInt(document.getElementById("fCpdAdd").value, 10);
+      if (!n || n <= 0) { toast("Enter a number of points first."); return null; }
+      S.cpdPoints += n;
+      S.cpdLog = S.cpdLog || [];
+      S.cpdLog.unshift({pts:n, at:Date.now() ? new Date().toISOString().slice(0, 10) : ""});
+      return n + " CPD points logged, " + S.cpdPoints + " of " + S.cpdTarget + " so far this cycle";
+    },
+    saveCpdTarget: function(){
+      var t = parseInt(document.getElementById("fCpdTarget").value, 10);
+      if (t > 0) S.cpdTarget = t;
+      var end = document.getElementById("fCpdEnd").value;
+      if (end) S.cpdCycleEnd = end;
+      return "CPD target and cycle saved";
+    },
+    saveCV: function(){
+      S.cvUpdatedAt = new Date().toISOString().slice(0, 10);
+      return "CV marked updated today";
     }
   };
 
@@ -1331,6 +1517,16 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
       return;
     }
 
+    var rmRot = ev.target.closest("[data-remove-rotation]");
+    if (rmRot){
+      ev.preventDefault();
+      var ri = parseInt(rmRot.getAttribute("data-remove-rotation"), 10);
+      (S.rotations || []).splice(ri, 1);
+      save(); render();
+      toast("Rotation removed.");
+      return;
+    }
+
     /* custom milestone: swap the button for an inline field rather than a
        browser prompt, which some embedded contexts block outright */
     var add = ev.target.closest('[data-act="addMilestone"]');
@@ -1360,6 +1556,39 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     document.getElementById("newMsAdd").addEventListener("click", commit);
     document.getElementById("newMsCancel").addEventListener("click", function(){ render(); });
     input.addEventListener("keydown", function(e){ if (e.key === "Enter") commit(); });
+  }, true);
+
+  /* add-rotation wired the same way, four fields instead of one */
+  document.addEventListener("click", function(ev){
+    var btn = ev.target.closest('button[data-act="addRotation"]');
+    if (!btn) return;
+    var wrap = document.createElement("div");
+    wrap.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:8px";
+    var fld = "border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px";
+    wrap.innerHTML =
+      '<input id="rotHosp" placeholder="Hospital" style="' + fld + ';min-width:160px">' +
+      '<input id="rotSpec" placeholder="Specialty" style="' + fld + ';min-width:140px">' +
+      '<input id="rotFrom" type="date" style="' + fld + '">' +
+      '<input id="rotTo" type="date" style="' + fld + '">' +
+      '<button class="btn btn-sm btn-primary" id="rotAdd">Add</button>' +
+      '<button class="btn btn-sm btn-ghost" id="rotCancel">Cancel</button>';
+    btn.replaceWith(wrap);
+    document.getElementById("rotHosp").focus();
+    function commit(){
+      var hosp = document.getElementById("rotHosp").value.trim();
+      if (!hosp){ render(); return; }
+      S.rotations = S.rotations || [];
+      S.rotations.unshift({
+        hospital: hosp.slice(0, 80),
+        specialty: document.getElementById("rotSpec").value.trim().slice(0, 60),
+        from: document.getElementById("rotFrom").value,
+        to: document.getElementById("rotTo").value
+      });
+      save(); render();
+      toast("Rotation added.");
+    }
+    document.getElementById("rotAdd").addEventListener("click", commit);
+    document.getElementById("rotCancel").addEventListener("click", function(){ render(); });
   }, true);
 
   document.getElementById("resetBtn").addEventListener("click", function(){ runAction("reset"); });

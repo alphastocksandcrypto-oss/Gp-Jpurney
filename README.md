@@ -282,6 +282,33 @@ That is why finishing one half-done project is worth more than starting three
 new things, and the "what would move you most" list ranks by points actually
 gained.
 
+### Practical tracking
+
+A **Practical** nav group sits between Planning and Account, for the things
+that have their own clock and are never scored: **Occupational health and
+admin** (Garda vetting, Hepatitis B and immunisation status, occupational
+health clearance) and the **CPD tracker**. Deliberately kept out of onboarding:
+they're dashboard-tracked state, not questions asked up front.
+
+- Garda vetting is modelled as a **renewal, not a one-off tick**: one logged
+  date plus a computed 3-year expiry (`gardaExpiry()`), with a status ladder
+  from current, through "renew this year" at 180 days out, to "renew soon" at
+  56 days, to expired. It nudges on Today and badges the nav item once it's
+  critical, the same pattern as the existing deadlines/gaps badges.
+- The admin page's intro banner adapts for someone newly in the Irish system
+  (`newToIrishSystem()`, from the onboarding route/origin answers) but the
+  page itself is never hidden from anyone, since vetting renews for everyone
+  already working here too.
+- CPD is modelled as an **annual counter independent of training
+  milestones**: points logged additively against a target and a cycle end
+  date, both user-editable. The default 50-point target and its cycle date
+  are explicitly labelled illustrative in the UI, not asserted as a real
+  college requirement.
+- CV freshness (a "mark updated today" stamp with a staleness hint) and
+  rotation history (hospital, specialty, from/to dates, add and remove) live
+  in a new card on the profile page, alongside the existing record and
+  location cards.
+
 ### Chart colour
 
 Following the dataviz method, and computed rather than eyeballed:
@@ -378,6 +405,10 @@ inherited it, so the fix is applied in all six files.
   and start date, used for a doctor's "also applying to" specialties. Same
   status as the primary `deadlines()` dates it sits beside: replace both from
   each college's actual published cycle before this reaches a real doctor.
+- Dashboard: the CPD tracker's default 50-point annual target and its 31
+  December cycle-end date (`cpdTarget`, `cpdCycleEnd`) are invented and flagged
+  as illustrative in the page itself. Replace with each college's actual
+  published CPD requirement, or leave it user-set only.
 - Preparation pages: every fee, date, weight and station count is illustrative.
   Replace from the colleges' published documents, and mark anything not yet
   published rather than carrying last year's number forward.
