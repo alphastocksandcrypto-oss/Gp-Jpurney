@@ -385,22 +385,72 @@ doctor keeps, because most of what it shows is something only they know.
 outcome of a competitive round and a product that only has a slot for good news
 is not much use in February.
 
+### How the roadmap is organised
+
+Five cards of identical weight in one column told the eye nothing about what
+mattered — an empty placeholder read as loudly as the ladder. The page is now
+three labelled phases, using the same `.sec-label` the rest of the app groups
+with:
+
+- **Where you stand** — the ladder, and the two timing figures under it.
+- **This application year** — the next step, the shape of the year, and the
+  work that year's closing date governs. The label reads "What is next" instead
+  for a doctor who is not applying into this cycle.
+- **The longer view** — where they have been, and what happens if it does not
+  land.
+
+Three further changes came out of the same pass. An **empty block is a strip,
+not a card**: "Where you have been" with no history still has to say what it
+will hold, but it should not occupy a full card competing with the ones doing
+work. **Amber is not spent on footnotes**: two full amber panels on one page is
+how a warning colour stops being read, so the illustrative-data caveats became
+`.ctx.foot`, a dashed footnote that sits with its claim without shouting. And
+the alternate routes became **tiles rather than rows** — as rows with
+right-aligned buttons, four options produced four different right edges, which
+was most of what still read as scattered at the foot of the page.
+
 ### The shape of one year
 
 The ladder counts years. It never showed what a single year looks like, and the
 year has a fixed rhythm: applications close, interviews run, offers go out, the
 post starts. A doctor deciding when to run an audit is planning against that
 rhythm, not against a six-year total, so **How this year runs** lays the four
-beats out with a days-away chip on each.
+beats out on a rail with a days-away chip on each. Rendered as `.row` they read
+as four more rows in a card that already had ten; a rail with nodes says
+"sequence" in the shape itself, before any label is read. Exactly one beat is
+marked as current — the first still ahead. On a narrow screen the rail turns
+vertical rather than disappearing, so the sequence survives.
 
-Under them sits everything still outstanding, back-planned to one date. Not to
-invented per-item lead times: evidence has to be dated before the application
-closes, so that is the deadline for all of it, and how long each piece takes is
-the doctor's own business rather than something for the product to guess at. The
-copy changes with the distance, reading as months when there is time and as a
-day count when there is not. When every scored domain is already at maximum it
-says so rather than showing an empty list, and it is absent entirely for a
-consultant or for someone with no target set.
+**Finish before [date]** is a separate card, because a timeline and a checklist
+under one heading is what made that card 928px tall. It back-plans everything
+outstanding to one date. Not to invented per-item lead times: evidence has to be
+dated before the application closes, so that is the deadline for all of it, and
+how long each piece takes is the doctor's own business rather than something for
+the product to guess at. The copy changes with the distance, reading as months
+when there is time and as a day count when there is not. The six domains are
+tiles rather than full-width rows, which stops the roadmap restating the gap
+analyser at full size. When every scored domain is already at maximum the header
+says "Nothing outstanding" and the body explains it, rather than showing an
+empty grid.
+
+### One cycle, and whose it is
+
+The application cycle the record holds is the *target's*, and this has now been
+the same bug four times: the next-step card, the year beats, the contingency
+card, and the ladder's own application rung each read `situation().cycle`
+directly and showed this year's HST closing date to a doctor who would not reach
+that application for years. An intern applying to BST was being told HST
+applications close in 59 days, counselled about missing an HST place, and
+offered a General Internal Medicine trunk.
+
+There is now one answer to "is this doctor applying into this cycle this year",
+`nextStep().usesCycle`, and every one of those four places asks it rather than
+deciding for itself. A doctor who is not applying into it sees no year cards, no
+contingency, and "When you reach it" on the application rung instead of a date.
+`cycle_leak.mjs` pins the whole class shut: it asserts that a student, an
+intern, a BST year-1 doctor and a consultant never see any of the four
+illustrative RCPI dates anywhere on the page, and that a BST year-2 doctor and
+one holding outside a scheme still see all of it.
 
 ### Where two routes diverge
 

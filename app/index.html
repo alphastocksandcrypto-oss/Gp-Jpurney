@@ -227,6 +227,73 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 .rung-acts .btn-link:first-child{color:var(--good-text)}
 .rung-acts .btn-link:last-child{color:var(--warn-text)}
 .trail-flagline{font-size:12px;color:var(--txt-soft);font-weight:600;padding:2px 0 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* ============ BEATS =============
+   The four dates of an application year are a shape, not a list. Rendered as
+   .row they read as six more rows in a card that already had ten, which is
+   what made the roadmap feel like one undifferentiated stack. A rail with
+   nodes says "sequence" in the shape itself, before any label is read. */
+.beats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:2px 0 4px}
+.beat{position:relative;padding:24px 14px 0 0;min-width:0}
+/* the rail segment runs from this node to the next, so the last beat has none */
+.beat:not(:last-child)::before{content:"";position:absolute;left:17px;width:calc(100% - 17px);top:6px;height:2px;background:var(--line)}
+.beat .node{position:absolute;left:0;top:0;width:14px;height:14px;border-radius:50%;background:#fff;
+  border:2px solid var(--line);display:grid;place-items:center;color:#fff}
+.beat.past .node{background:var(--mint);border-color:var(--mint)}
+.beat.now .node{background:var(--deep);border-color:var(--deep);box-shadow:0 0 0 4px rgba(11,46,54,.1)}
+.beat.past:not(:last-child)::before{background:var(--mint)}
+.beat .bk{display:block;font-size:11px;font-weight:700;color:var(--txt-soft);line-height:1.3}
+.beat.now .bk{color:var(--deep)}
+.beat .bd{display:block;font-family:var(--fd);font-size:14.5px;font-weight:700;color:var(--deep);
+  letter-spacing:-.01em;margin:3px 0 5px;font-variant-numeric:tabular-nums}
+.beat .bn{display:block;font-size:11px;color:var(--txt-mute);margin-top:5px;line-height:1.4}
+@media(max-width:820px){
+  .beats{grid-template-columns:minmax(0,1fr);gap:0}
+  .beat{padding:0 0 14px 28px}
+  .beat:last-child{padding-bottom:0}
+  /* the rail turns vertical rather than disappearing, so the sequence survives */
+  .beat:not(:last-child)::before{left:6px;top:16px;width:2px;height:calc(100% - 16px)}
+  .beat .node{top:1px}
+  /* the date and its chip sit on one line; the note gets its own, or it
+     orphans a few words under a chip and reads as belonging to nothing */
+  .beat .bd{display:inline-block;margin:2px 9px 0 0;vertical-align:middle}
+  .beat .chip{vertical-align:middle}
+  .beat .bn{display:block;margin:5px 0 0}
+}
+/* ============ MINI GRID ============
+   Six outstanding domains as six full-width rows repeated the gap analyser at
+   full size. As tiles they read as a set to clear, and the card stops being
+   the tallest thing on the page. */
+.mini-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.mini{border:1px solid var(--line);border-radius:13px;padding:11px 13px;background:var(--paper);min-width:0}
+.mini b{display:block;font-size:12.5px;font-weight:700;color:var(--deep);line-height:1.3}
+.mini span{display:block;font-size:11px;color:var(--txt-soft);margin-top:2px}
+.mini .pts{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;font-weight:700;
+  color:var(--warn-text);background:var(--amber-soft);border-radius:999px;padding:2px 8px}
+.mini.clear .pts{color:var(--good-text);background:var(--mint-soft)}
+@media(max-width:900px){ .mini-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:520px){ .mini-grid{grid-template-columns:minmax(0,1fr)} }
+/* a caveat that is a footnote, not a warning. Two full amber panels on one
+   page taught the eye to ignore amber, which is the one colour that has to
+   keep working. */
+.ctx.foot{background:none;border:0;border-top:1px dashed var(--line);border-radius:0;padding:11px 0 0;
+  margin:14px 0 0;font-size:11.5px;color:var(--txt-soft);align-items:flex-start}
+.ctx.foot svg{color:var(--txt-mute);width:13px;height:13px;margin-top:2px}
+/* a block that has nothing in it yet. It still has to say what it will hold,
+   but it should not occupy a full card competing with the ones doing work. */
+.strip{border:1px dashed var(--line);border-radius:16px;padding:14px 17px;background:rgba(255,255,255,.5)}
+.strip b{display:block;font-family:var(--fd);font-size:13px;font-weight:700;color:var(--deep);margin-bottom:4px}
+.strip p{font-size:12.5px;color:var(--txt-soft);max-width:74ch}
+.strip+.card{margin-top:14px}
+/* a set of parallel options, each carrying its own way through. As rows with
+   right-aligned buttons these produced one ragged right edge per option. */
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.opt{border:1px solid var(--line);border-radius:15px;padding:14px 16px;background:var(--paper);
+  display:flex;flex-direction:column;gap:6px;min-width:0}
+.opt b{font-size:13.5px;font-weight:700;color:var(--deep);line-height:1.35}
+.opt p{font-size:12px;color:var(--txt-soft);flex:1;line-height:1.5}
+.opt .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.opt .acts .btn{background:#fff}
+@media(max-width:760px){ .opts{grid-template-columns:minmax(0,1fr)} }
 /* ============ LISTS ============ */
 .row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
 .row:last-child{border-bottom:0}
@@ -974,7 +1041,7 @@ a.nudge:hover{text-decoration:underline}
     if (sit.isConsultant) return null;
 
     if (t.holding){
-      return {k:"Get a training place", t:"Getting into a scheme is the step",
+      return {k:"Get a training place", t:"Getting into a scheme is the step", usesCycle:true,
         why:"You are " + t.yearsIn + " years post-internship and not in a training post. That is common when " +
              "places are limited, and the portfolio is what moves it.",
         links:[["#/gaps","Close the gaps"],["#/readiness","Check your readiness"]]};
@@ -1079,6 +1146,11 @@ a.nudge:hover{text-decoration:underline}
       '<span class="mid"><span><b class="num" data-count="' + pct + '" data-suffix="%">0%</b><span>' + esc(label) + "</span></span></span></div>";
   }
   function chip(s){ return '<span class="chip ' + s.k + '">' + ico(s.icon, 12) + esc(s.label) + "</span>"; }
+  /* a caveat that has to sit with its claim but must not shout: two full amber
+     panels on one page is how a warning colour stops being read */
+  function ctxFoot(text){
+    return '<div class="ctx foot">' + ico(I.warn, 13) + "<span>" + esc(text) + "</span></div>";
+  }
   function ctx(text, illustrative){
     return '<div class="ctx' + (illustrative ? " illustrative" : "") + '">' +
       ico(illustrative ? I.warn : I.flag, 15) + "<span>" + esc(text) + "</span></div>";
@@ -1402,48 +1474,82 @@ a.nudge:hover{text-decoration:underline}
      per-item lead times. Evidence has to be dated before the application
      closes, so that is the deadline for all of it, and how long each takes is
      the doctor's own business rather than something to guess at. */
-  function yearShapeCard(){
-    var sit = situation(), c = sit.cycle;
-    if (!sit.stillApplying || !c) return "";
-
-    var beats = [
-      {t:"Applications close", iso:c.apply, note:sit.college + ", evidence must already be dated"},
-      {t:"Interviews", iso:c.interview, note:sit.college},
-      {t:"Offers issued", iso:c.offers || addDays(c.interview, 39), note:sit.college},
+  function yearBeats(){
+    var sit = situation(), c = sit.cycle, step = nextStep();
+    /* the cycle we hold is the target's. Someone applying to something else
+       this year, or not applying at all, must not be shown it as their year:
+       the same leak usesCycle was added to close on the next-step card. */
+    if (!sit.stillApplying || !c || !step || !step.usesCycle) return null;
+    return [
+      {t:"Applications close", iso:c.apply, note:"Evidence must already be dated"},
+      {t:"Interviews", iso:c.interview, note:esc(sit.college)},
+      {t:"Offers issued", iso:c.offers || addDays(c.interview, 39), note:esc(sit.college)},
       {t:sit.target + " starts", iso:c.start, note:"If you are offered a place"}
     ];
-    var h = '<div class="card" style="margin-top:14px"><div class="card-head"><h2>How this year runs</h2>' +
-      '<span class="aside">' + esc(cycleLabel()) + " cycle</span></div>";
-    h += beats.map(function(bt){
-      var d = until(bt.iso);
-      return '<div class="row"><span class="t">' + esc(bt.t) + "<small>" + fmtLong(bt.iso) + ", " + esc(bt.note) +
-        "</small></span><span class=\"r\">" +
-        chip(d < 0 ? {k:"mute", icon:I.tick, label:"Passed"}
-           : {k: d <= 21 ? "crit" : (d <= 60 ? "warn" : "mute"), icon:I.clock, label:awayText(d)}) + "</span></div>";
-    }).join("");
+  }
 
-    /* only what this doctor has not finished, against the one date that
-       actually governs all of it */
+  function yearShapeCard(){
+    var sit = situation(), beats = yearBeats();
+    if (!beats) return "";
+
+    /* the first beat still ahead is where the doctor actually stands in the
+       year, and it is the only one that should carry emphasis */
+    var nowIdx = -1;
+    beats.forEach(function(bt, i){ if (nowIdx < 0 && until(bt.iso) >= 0) nowIdx = i; });
+
+    var h = '<div class="card" style="margin-top:14px"><div class="card-head"><h2>How this year runs</h2>' +
+      '<span class="aside">' + esc(cycleLabel()) + " cycle, " + esc(sit.college) + "</span></div>";
+    h += '<div class="beats">' + beats.map(function(bt, i){
+      var d = until(bt.iso), state = d < 0 ? "past" : (i === nowIdx ? "now" : "");
+      return '<div class="beat ' + state + '"><span class="node">' +
+        (d < 0 ? ico(I.tick, 8) : "") + "</span>" +
+        '<span class="bk">' + esc(bt.t) + "</span>" +
+        '<span class="bd">' + fmtLong(bt.iso) + "</span>" +
+        chip(d < 0 ? {k:"mute", icon:I.tick, label:"Passed"}
+           : {k: d <= 21 ? "crit" : (d <= 60 ? "warn" : "mute"), icon:I.clock, label:awayText(d)}) +
+        '<span class="bn">' + bt.note + "</span></div>";
+    }).join("") + "</div>";
+    h += ctxFoot("These dates are illustrative and follow the same cycle as the rest of the dashboard. " +
+      "Confirm them against " + sit.college + "'s published dates before you plan around them.");
+    return h + "</div>";
+  }
+
+  /* ================= WHAT HAS TO BE DATED FIRST =================
+     Split out of the beats card, which was carrying a timeline and a checklist
+     under one heading and running to 928px because of it.
+
+     Everything outstanding is back-planned to one date rather than to invented
+     per-item lead times. Evidence has to be dated before the application
+     closes, so that is the deadline for all of it, and how long each takes is
+     the doctor's own business rather than something to guess at. */
+  function yearWorkCard(){
+    var sit = situation(), c = sit.cycle;
+    if (!yearBeats()) return "";
     var short = DOMAINS.filter(function(d){ return d.pts() < d.maxPts; });
     var left = until(c.apply);
-    if (short.length && left >= 0){
-      h += '<p class="group-h">Finish before ' + fmtLong(c.apply) + "</p>";
-      h += '<p class="lede" style="margin-bottom:10px;max-width:62ch">Anything dated after that will not appear on this ' +
-        "application, however good it is. " + (left <= 90
+    if (left < 0) return "";
+
+    var h = '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Finish before ' +
+      fmtLong(c.apply) + "</h2>";
+    if (short.length){
+      var owed = short.reduce(function(n, d){ return n + (d.maxPts - d.pts()); }, 0);
+      h += '<span class="aside">' + owed + " points still on the table</span></div>";
+      h += '<p class="lede" style="max-width:64ch;margin-bottom:14px">Anything dated after that will not appear ' +
+        "on this application, however good it is. " + (left <= 90
           ? "You have " + left + " days."
           : "That is " + Math.round(left / 30) + " months away, which is enough for all of it if you start now.") + "</p>";
-      h += short.map(function(d){
-        return '<div class="row"><span class="t">' + esc(d.name) + "<small>" + esc(d.note()) + "</small></span>" +
-          '<span class="r"><span class="chip mute">' + (d.maxPts - d.pts()) + " points on the table</span></span></div>";
-      }).join("");
-      h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
+      h += '<div class="mini-grid">' + short.map(function(d){
+        return '<div class="mini"><b>' + esc(d.name) + "</b><span>" + esc(d.note()) + "</span>" +
+          '<span class="pts">' + ico(I.bolt, 11) + (d.maxPts - d.pts()) + " points</span></div>";
+      }).join("") + "</div>";
+      h += '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">' +
         '<a class="btn btn-sm btn-primary" href="#/gaps">Plan the gaps</a>' +
         '<a class="btn btn-sm btn-ghost" href="#/deadlines">All dates</a></div>';
-    } else if (!short.length){
-      h += '<p class="lede" style="margin-top:12px">Every scored domain is at its maximum. Keep the evidence dated.</p>';
+    } else {
+      h += '<span class="chip good">' + ico(I.tick, 12) + "Nothing outstanding</span></div>";
+      h += '<p class="lede" style="max-width:64ch">Every scored domain is at its maximum. Keep the evidence dated ' +
+        "and make sure it is uploaded before the window closes.</p>";
     }
-    h += ctx("These four dates are illustrative and follow the same cycle as the rest of the dashboard. " +
-      "Confirm them against " + sit.college + "'s published dates before you plan around them.", true);
     return h + "</div>";
   }
 
@@ -1487,8 +1593,8 @@ a.nudge:hover{text-decoration:underline}
         vals.map(function(v){ return "<td>" + esc(v) + "</td>"; }).join("") + "</tr>";
     }).join("");
     h += "</tbody></table></div>";
-    h += ctx("Both ladders read off one record, so your months and exam stages are shared. Entry rules that let " +
-      "one route credit time served on another are not modelled here, so check eligibility with each college.", true);
+    h += ctxFoot("Both ladders read off one record, so your months and exam stages are shared. Entry rules that " +
+      "let one route credit time served on another are not modelled here, so check eligibility with each college.");
     return h + "</div>";
   }
 
@@ -1499,17 +1605,15 @@ a.nudge:hover{text-decoration:underline}
      often asked to account for. */
   function historyCard(){
     var hist = S.rollHistory || [];
-    var h = '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Where you have been</h2>' +
-      (hist.length ? '<span class="aside">' + hist.length + (hist.length === 1 ? " update" : " updates") + "</span>" : "") + "</div>";
     if (!hist.length){
-      h += '<p class="lede">Nothing recorded yet. Each July the dashboard asks what changed, and the answers build ' +
-        "up here as a record of the route you actually took rather than the one you planned.</p>";
-      if (S.rotations && S.rotations.length){
-        h += '<p class="lede" style="margin-top:10px">Your logged rotations are on ' +
-          '<a href="#/profile">your profile</a> in the meantime.</p>';
-      }
-      return h + "</div>";
+      return '<div class="strip"><b>Where you have been</b><p>Nothing recorded yet. Each July the dashboard asks ' +
+        "what changed, and the answers build up here as a record of the route you actually took rather than the " +
+        "one you planned." + (S.rotations && S.rotations.length
+          ? ' Your logged rotations are on <a href="#/profile">your profile</a> in the meantime.' : "") +
+        "</p></div>";
     }
+    var h = '<div class="card"><div class="card-head"><h2>Where you have been</h2>' +
+      '<span class="aside">' + hist.length + (hist.length === 1 ? " update" : " updates") + "</span></div>";
     h += hist.map(function(e){
       return '<div class="row"><span class="t">' + esc(e.note) + "<small>Recorded " + fmtLong(e.at) +
         "</small></span><span class=\"r\"><span class=\"chip mute\">" + e.year + "</span></span></div>";
@@ -1553,10 +1657,13 @@ a.nudge:hover{text-decoration:underline}
   }
 
   function contingencyCard(){
-    var sit = situation(), t = routeTiming();
+    var sit = situation(), t = routeTiming(), step = nextStep();
     if (!sit.stillApplying || !sit.hasTarget) return "";
-    /* premature for someone years out, and pointless once they have a place */
-    var applying = sit.applyDays !== null && sit.applyDays < 180;
+    /* premature for someone years out, and pointless once they have a place.
+       It also has to be THEIR cycle: an intern applying to BST was being
+       counselled about missing an HST place and offered a GIM trunk, because
+       this read sit.applyDays straight off the target's cycle. */
+    var applying = step && step.usesCycle;
     if (!applying && !t.holding) return "";
 
     var h = '<div class="card" style="margin-top:14px"><div class="card-head">' +
@@ -1567,14 +1674,14 @@ a.nudge:hover{text-decoration:underline}
       : "Places are limited, so a good application can still not get one. That is worth knowing now rather than in February.") +
       " What stays true either way is that the portfolio carries forward. Months, exams, audit and teaching all keep counting.</p>";
     h += '<p class="group-h" style="margin-top:16px">What people commonly do</p>';
-    h += altRoutes().map(function(r){
-      return '<div class="row"><span class="t">' + esc(r.t) + "<small>" + esc(r.d) + "</small></span>" +
-        '<span class="r">' + (r.go || []).map(function(g){
+    h += '<div class="opts">' + altRoutes().map(function(r){
+      return '<div class="opt"><b>' + esc(r.t) + "</b><p>" + esc(r.d) + "</p>" +
+        ((r.go || []).length ? '<span class="acts">' + r.go.map(function(g){
           return '<a class="btn btn-sm btn-ghost" href="' + g[0] + '">' + esc(g[1]) + "</a>";
-        }).join("") + "</span></div>";
-    }).join("");
-    h += ctx("Routes are descriptive, not advice, and the alternatives above are illustrative in this prototype. " +
-      "Check eligibility with the college before acting on any of them.", true);
+        }).join("") + "</span>" : "") + "</div>";
+    }).join("") + "</div>";
+    h += ctxFoot("Routes are descriptive, not advice, and the alternatives above are illustrative in this " +
+      "prototype. Check eligibility with the college before acting on any of them.");
     return h + "</div>";
   }
 
@@ -1646,7 +1753,12 @@ a.nudge:hover{text-decoration:underline}
       /* the application rung is the application tracker: it records whether
          they applied, and then what came of it */
       var app = applicationFor(target);
-      var appWhen = !app ? (c ? "Applications close " + fmt(c.apply) : "Date not set")
+      /* the cycle we hold is THIS year's. An intern reaches this rung in about
+         three years, so naming this year's closing date on it is a date that
+         is not theirs, the same leak the year cards and the contingency card
+         each had. Only a doctor applying into this cycle gets the date. */
+      var thisCycle = (nextStep() || {}).usesCycle;
+      var appWhen = !app ? (c && thisCycle ? "Applications close " + fmt(c.apply) : "When you reach it")
         : app.outcome ? OUTCOMES[app.outcome].label + ", " + fmtLong(app.outcomeAt)
         : "Applied " + fmtLong(app.appliedAt);
       trail.push(
@@ -1655,7 +1767,8 @@ a.nudge:hover{text-decoration:underline}
               : app.outcome === "none" ? ", no offer this cycle"
               : app.outcome === "waiting" ? ", waiting to hear" : ", applied"),
          when: appWhen, app: app || true, appTarget: target},
-        {k:"flag", t:"Interview", when: c ? fmt(c.interview) : "Date not set", go:["#/interviews","Interview prep"]},
+        {k:"flag", t:"Interview", when: c && thisCycle ? fmt(c.interview) : "After you apply",
+         go:["#/interviews","Interview prep"]},
         {k:"todo", t:"CSCST", when: stageWhen("cscst", "Future"), rung:"cscst"},
         {k:"todo", t:"Consultant post", when:"Future"}
       );
@@ -1712,6 +1825,12 @@ a.nudge:hover{text-decoration:underline}
       var others = otherTargetsInfo();
       var h = rollCard();
 
+      /* Five equal white slabs in a row told the eye nothing about what
+         mattered. Three labelled phases do: where you stand, the year you are
+         in, and the longer view. The labels are the existing .sec-label the
+         rest of the app already groups with. */
+      h += '<p class="sec-label">Where you stand</p>';
+
       /* The ladder leads. It already shows position, so the separate "where you
          are" card was saying twice what the here-marker says once. What it did
          carry that the ladder cannot is the timing, so that folds in below. */
@@ -1759,7 +1878,9 @@ a.nudge:hover{text-decoration:underline}
       }
 
       if (step){
-        h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>' + esc(step.k) + "</h2>" +
+        h += '<p class="sec-label">' + (step.usesCycle && rsit.cycle
+          ? "This application year" : "What is next") + "</p>";
+        h += '<div class="card"><div class="card-head"><h2>' + esc(step.k) + "</h2>" +
           (step.usesCycle && rsit.cycle
             ? '<span class="aside">Applications close ' + fmtLong(rsit.cycle.apply) + "</span>" : "") + "</div>" +
           '<p class="lede" style="max-width:62ch"><b style="color:var(--deep);font-size:14px">' + esc(step.t) +
@@ -1770,11 +1891,13 @@ a.nudge:hover{text-decoration:underline}
           }).join("") + "</div></div>";
       }
 
-      /* the year's rhythm, then the past, then the contingency. All three sit
-         under the next step, since the immediate action outranks them. */
-      h += yearShapeCard();
-      h += historyCard();
-      h += contingencyCard();
+      /* the year's rhythm and the work it governs stay with the next step,
+         because all three are this cycle. The past and the contingency are a
+         different question and get their own heading. */
+      if (yearBeats()){
+        h += yearShapeCard() + yearWorkCard();
+      }
+      h += '<p class="sec-label">The longer view</p>' + historyCard() + contingencyCard();
 
       if (others.length && !S.showDual){
         h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Also applying to</h2>' +
