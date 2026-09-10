@@ -364,6 +364,27 @@ Every turnover is written to `rollHistory`, **including the ones where nothing
 happened**, because "no place this year" is the fact the ladder needs most and
 nothing else records it.
 
+### The ladder is editable
+
+The ladder was a projection you could only read. It is now the record the
+doctor keeps, because most of what it shows is something only they know.
+
+- **Stages** are markable complete and store a date, so "Complete 8 Jul 2024"
+  replaces a bare "Complete". A stated date always beats inference: a doctor
+  with 40 months who told us they never got a place stays not-complete, and can
+  still mark it done themselves if the inference is simply wrong.
+- **Exam rungs** mark a stage passed in place, next to the link into exam prep.
+- **The application rung is the application tracker.** Not applied, then
+  applied with a date, then one of offer, no offer, or still waiting. An offer
+  turns the rung green and reads "offer accepted"; no offer reads "no offer this
+  cycle" without any red. Applications are keyed by target and cycle, so a
+  doctor who applies in successive years accumulates a real history, and both
+  the application and its outcome reach the activity log.
+
+"No offer" is recorded as plainly as an offer. It is the single most common
+outcome of a competitive round and a product that only has a slot for good news
+is not much use in February.
+
 ### Where you have been, and what if it does not land
 
 Two cards sit under the next step, being backstory and contingency rather than

@@ -217,6 +217,14 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 .trail-item.here .trail-card{border-color:var(--mint);border-width:1.5px;background:linear-gradient(110deg,var(--mint-soft),#fff 60%)}
 .trail-card b{font-size:13.5px;font-weight:700;color:var(--deep)}
 .trail-card .when{margin-left:auto;font-size:11.5px;color:var(--txt-soft);font-weight:600;white-space:nowrap}
+/* rung controls: the ladder is a record the doctor keeps, not a read-only
+   projection, so every rung they can speak to carries its own control */
+.rung-ctrl{display:flex;align-items:center;gap:9px;flex-wrap:wrap;flex:none}
+.rung-ctrl .btn-link{min-height:24px;display:inline-flex;align-items:center}
+.rung-acts{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.rung-acts .btn-link{color:var(--txt-soft)}
+.rung-acts .btn-link:first-child{color:var(--good-text)}
+.rung-acts .btn-link:last-child{color:var(--warn-text)}
 .trail-flagline{font-size:12px;color:var(--txt-soft);font-weight:600;padding:2px 0 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 /* ============ LISTS ============ */
 .row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
@@ -439,6 +447,14 @@ a.nudge:hover{text-decoration:underline}
        got a place. rollHistory is what makes the ladder honest over time. */
     inScheme:null, schemeName:"", schemeYear:0, roleTitle:"",
     lastRolledAt:"", rollStep:"", rollHistory:[],
+    /* explicit completion beats inference, the same way inScheme does. A date
+       here is something the doctor stated; without one the ladder falls back
+       to guessing from months, which is right often enough to be useful and
+       wrong often enough that it must be overridable. */
+    stagesDone:{},
+    /* one row per application actually made, so "did you apply" and "did you
+       get in" stop being questions the product cannot answer */
+    applications:[],
     deadlinesDone:{},
     customMilestones:[],
     activity:[]
@@ -1414,18 +1430,24 @@ a.nudge:hover{text-decoration:underline}
      alternative route into a named specialty. */
   function altRoutes(){
     var sit = situation();
+    /* each route goes somewhere. A card that names an option and leaves the
+       doctor to find it is only half the help. */
     var out = [
       {t:"Apply again next cycle", d:"Nothing in a portfolio expires between cycles, and another year of evidence " +
-        "usually scores higher than the same application resubmitted."},
+        "usually scores higher than the same application resubmitted.",
+       go:[["#/deadlines","See the next cycle dates"],["#/gaps","Build the portfolio"]]},
       {t:"A standalone post in the meantime", d:"Service posts still count as clinical experience, and audit, " +
-        "teaching and research all continue from one."}
+        "teaching and research all continue from one.",
+       go:[["#/opportunities","Posts matched to you"]]}
     ];
     if (sit.college === "RCPI" && S.specialty !== "General Internal Medicine"){
       out.push({t:"General Internal Medicine as a trunk", d:"Several RCPI medicine subspecialties are entered " +
-        "through a GIM trunk rather than directly. Worth checking whether yours is one of them."});
+        "through a GIM trunk rather than directly. Worth checking whether yours is one of them.",
+       go:[["#/profile","Add it as a second target"]]});
     }
     out.push({t:"ICAT", d:"Irish Clinical Academic Training, a funded PhD integrated with clinical training. " +
-      "Entered across specialties rather than through one, so it runs parallel to this route."});
+      "Entered across specialties rather than through one, so it runs parallel to this route.",
+     go:[["#/readiness","Check your research evidence"]]});
     return out;
   }
 
@@ -1445,12 +1467,49 @@ a.nudge:hover{text-decoration:underline}
       " What stays true either way is that the portfolio carries forward. Months, exams, audit and teaching all keep counting.</p>";
     h += '<p class="group-h" style="margin-top:16px">What people commonly do</p>';
     h += altRoutes().map(function(r){
-      return '<div class="row"><span class="t">' + esc(r.t) + "<small>" + esc(r.d) + "</small></span></div>";
+      return '<div class="row"><span class="t">' + esc(r.t) + "<small>" + esc(r.d) + "</small></span>" +
+        '<span class="r">' + (r.go || []).map(function(g){
+          return '<a class="btn btn-sm btn-ghost" href="' + g[0] + '">' + esc(g[1]) + "</a>";
+        }).join("") + "</span></div>";
     }).join("");
     h += ctx("Routes are descriptive, not advice, and the alternatives above are illustrative in this prototype. " +
       "Check eligibility with the college before acting on any of them.", true);
     return h + "</div>";
   }
+
+  /* ================= LADDER STATE =================
+     A stage is complete when the doctor says so. Failing that we infer it
+     from months, which is a reasonable default and a bad certainty, so the
+     inference is always overridable and a stated date always wins. */
+  function stageDone(id, inferred){
+    var d = (S.stagesDone || {})[id];
+    if (d) return d;
+    return inferred ? true : false;
+  }
+  function stageWhen(id, inferredLabel){
+    var d = (S.stagesDone || {})[id];
+    return d ? "Complete " + fmtLong(d) : inferredLabel;
+  }
+
+  /* the application for a given target in the cycle currently open */
+  function cycleLabel(){
+    var c = situation().cycle;
+    if (!c) return "";
+    var y = day(c.apply).getFullYear();
+    return y + " to " + (y + 1);
+  }
+  function applicationFor(target){
+    var cy = cycleLabel();
+    return (S.applications || []).filter(function(a){
+      return a.target === target && a.cycle === cy;
+    })[0] || null;
+  }
+
+  var OUTCOMES = {
+    offer:   {k:"good", label:"Offer"},
+    none:    {k:"crit", label:"No offer"},
+    waiting: {k:"warn", label:"Waiting"}
+  };
 
   /* One ladder builder, called once for the main route and again for each
      hedged route when the dual-track view is on. It takes a specialty rather
@@ -1459,29 +1518,44 @@ a.nudge:hover{text-decoration:underline}
     var info = SPECIALTY_INFO[specName] || {};
     var exam = info.exam || S.exam, target = info.target || S.target;
     var c = CYCLE[info.body] || null;
-    var onLadder = S.clinicalMonths > 0;
+    var onLadder = stageDone("internship", S.clinicalMonths > 0);
+    var bstInferred = S.clinicalMonths >= 24;
+    var bstDone = stageDone("bst", bstInferred);
+    /* a doctor who told us they never got a place is not "complete" no matter
+       what the month count says */
+    if (S.inScheme === false && !S.schemeName && !(S.stagesDone || {}).bst) bstDone = false;
+
     var trail = [
-      {k: onLadder ? "done" : "todo", t:"Internship", when: onLadder ? "Complete" : "Not started"},
+      {k: onLadder ? "done" : "todo", t:"Internship",
+       when: stageWhen("internship", onLadder ? "Complete" : "Not started"), rung:"internship"},
       {k:"flag", t: S.examStages >= 1 ? exam + " Part 1 passed" : exam + " Part 1 not held",
-       when: S.examStages >= 1 ? "Passed" : "Outstanding", go:["#/exams","Exam prep"]},
-      /* "complete" is only claimed when it was actually confirmed. Months
-         post-internship alone cannot tell a finished scheme from a standalone
-         run, and asserting the wrong one is worse than admitting we do not
-         know. */
-      (S.inScheme === false && !S.schemeName
-        ? {k:"todo", t:"Basic specialist training",
-           when: S.roleTitle ? "Not on a scheme, working as " + S.roleTitle : "No training place yet"}
-        : {k: S.clinicalMonths >= 24 ? "done" : "todo", t:"Basic specialist training",
-           when: S.clinicalMonths >= 24 ? "Complete" : S.clinicalMonths + " months in"}),
+       when: S.examStages >= 1 ? "Passed" : "Outstanding", go:["#/exams","Exam prep"],
+       rung: S.examStages < 1 ? "exam" : null, rungLabel:"Mark passed"},
+      {k: bstDone ? "done" : "todo", t:"Basic specialist training",
+       when: bstDone ? stageWhen("bst", "Complete")
+         : (S.inScheme === false && !S.schemeName
+             ? (S.roleTitle ? "Not on a scheme, working as " + S.roleTitle : "No training place yet")
+             : S.clinicalMonths + " months in"),
+       rung:"bst"},
       {k:"flag", t: S.examStages >= 3 ? "Full " + exam + " membership" : exam + " not yet complete",
-       when: S.examStages + " of 3 stages", go: S.examStages < 3 ? ["#/exams","Exam prep"] : null}
+       when: S.examStages + " of 3 stages", go: S.examStages < 3 ? ["#/exams","Exam prep"] : null,
+       rung: S.examStages < 3 ? "exam" : null, rungLabel:"Mark a stage passed"}
     ];
     if (situation().stillApplying){
+      /* the application rung is the application tracker: it records whether
+         they applied, and then what came of it */
+      var app = applicationFor(target);
+      var appWhen = !app ? (c ? "Applications close " + fmt(c.apply) : "Date not set")
+        : app.outcome ? OUTCOMES[app.outcome].label + ", " + fmtLong(app.outcomeAt)
+        : "Applied " + fmtLong(app.appliedAt);
       trail.push(
-        {k:"here", t:target + ", not yet applied",
-         when: c ? "Applications close " + fmt(c.apply) : "Date not set"},
+        {k: app && app.outcome === "offer" ? "done" : "here",
+         t: target + (!app ? ", not yet applied" : app.outcome === "offer" ? ", offer accepted"
+              : app.outcome === "none" ? ", no offer this cycle"
+              : app.outcome === "waiting" ? ", waiting to hear" : ", applied"),
+         when: appWhen, app: app || true, appTarget: target},
         {k:"flag", t:"Interview", when: c ? fmt(c.interview) : "Date not set", go:["#/interviews","Interview prep"]},
-        {k:"todo", t:"CSCST", when:"Future"},
+        {k:"todo", t:"CSCST", when: stageWhen("cscst", "Future"), rung:"cscst"},
         {k:"todo", t:"Consultant post", when:"Future"}
       );
     } else {
@@ -1494,14 +1568,39 @@ a.nudge:hover{text-decoration:underline}
     return '<div class="trail">' + trail.map(function(s){
       if (s.k === "flag"){
         /* exam and interview markers used to be inert text. Both modules exist
-           now, so the rung is the way into them. */
+           now, so the rung is the way into them, and an exam stage can be
+           marked passed from here too. */
         return '<div class="trail-item flag"><span class="knob">' + ico(I.flag, 9) + "</span>" +
           '<p class="trail-flagline">' + esc(s.t) + '<span class="chip mute">' + esc(s.when) + "</span>" +
+          (s.rung ? '<button class="btn-link" data-rung="' + esc(s.rung) + '">' +
+            esc(s.rungLabel || "Mark complete") + "</button>" : "") +
           (s.go ? '<a class="btn-link" href="' + s.go[0] + '">' + esc(s.go[1]) + "</a>" : "") + "</p></div>";
       }
       var mark = s.k === "done" ? ico(I.tick, 11) : (s.k === "here" ? ico(I.target, 11) : "");
+      var ctrl = "";
+      /* the application rung carries its own small flow: applied, then what
+         came of it. Both are facts only the doctor has. */
+      if (s.app){
+        var a = s.app === true ? null : s.app;
+        if (!a){
+          ctrl = '<button class="btn-link" data-rung="apply" data-rungval="' + esc(s.appTarget) + '">Mark as applied</button>';
+        } else if (!a.outcome){
+          ctrl = '<span class="rung-acts">' +
+            Object.keys(OUTCOMES).map(function(o){
+              return '<button class="btn-link" data-rung="outcome:' + o + '" data-rungval="' + esc(s.appTarget) + '">' +
+                esc(OUTCOMES[o].label) + "</button>";
+            }).join("") + "</span>";
+        } else {
+          ctrl = '<span class="chip ' + OUTCOMES[a.outcome].k + '">' + esc(OUTCOMES[a.outcome].label) + "</span>" +
+            '<button class="btn-link" data-rung="unapply" data-rungval="' + esc(s.appTarget) + '">Undo</button>';
+        }
+      } else if (s.rung){
+        ctrl = '<button class="btn-link" data-rung="' + esc(s.k === "done" ? "undo:" + s.rung : "done:" + s.rung) +
+          '">' + esc(s.k === "done" ? "Undo" : (s.rungLabel || "Mark complete")) + "</button>";
+      }
       return '<div class="trail-item ' + s.k + '"><span class="knob">' + mark + "</span>" +
-        '<div class="trail-card"><b>' + esc(s.t) + '</b><span class="when">' + esc(s.when) + "</span></div></div>";
+        '<div class="trail-card"><b>' + esc(s.t) + '</b><span class="when">' + esc(s.when) + "</span>" +
+        (ctrl ? '<span class="rung-ctrl">' + ctrl + "</span>" : "") + "</div></div>";
     }).join("") + "</div>";
   }
 
@@ -2430,6 +2529,55 @@ a.nudge:hover{text-decoration:underline}
       S.deadlinesDone[id] = !S.deadlinesDone[id];
       save(); render();
       toast(S.deadlinesDone[id] ? "Marked done." : "Marked not done.");
+      return;
+    }
+
+    /* ladder rungs. Marking a stage done, or recording an application and what
+       came of it. Per-rung identity means these cannot go through ACTIONS. */
+    var rung = ev.target.closest("[data-rung]");
+    if (rung){
+      ev.preventDefault();
+      var rc = rung.getAttribute("data-rung"), rv = rung.getAttribute("data-rungval") || "";
+      var today = new Date().toISOString().slice(0, 10);
+      S.stagesDone = S.stagesDone || {};
+      S.applications = S.applications || [];
+      var m;
+
+      if ((m = /^done:(.+)$/.exec(rc))){
+        S.stagesDone[m[1]] = today;
+        logActivity(({internship:"Internship", bst:"Basic specialist training", cscst:"CSCST"}[m[1]] || m[1]) + " marked complete", "");
+        save(); render(); toast("Marked complete."); return;
+      }
+      if ((m = /^undo:(.+)$/.exec(rc))){
+        delete S.stagesDone[m[1]];
+        save(); render(); toast("Unmarked."); return;
+      }
+      if (rc === "exam"){
+        if (S.examStages < 3) S.examStages += 1;
+        var ex = situation().exam;
+        logActivity(S.examStages >= 3 ? "Full " + ex + " membership recorded"
+                                      : ex + " stage recorded, " + S.examStages + " of 3", "");
+        save(); render(); toast(S.examStages + " of 3 stages held."); return;
+      }
+      if (rc === "apply"){
+        S.applications.unshift({target:rv, cycle:cycleLabel(), appliedAt:today, outcome:"", outcomeAt:""});
+        logActivity("Applied to " + rv, cycleLabel() + " cycle");
+        save(); render(); toast("Recorded as applied."); return;
+      }
+      if ((m = /^outcome:(.+)$/.exec(rc))){
+        var app = applicationFor(rv);
+        if (app){
+          app.outcome = m[1];
+          app.outcomeAt = today;
+          logActivity(rv + ": " + OUTCOMES[m[1]].label, cycleLabel() + " cycle");
+        }
+        save(); render(); toast(app ? OUTCOMES[m[1]].label + " recorded." : "Nothing to record."); return;
+      }
+      if (rc === "unapply"){
+        var cy = cycleLabel();
+        S.applications = S.applications.filter(function(a){ return !(a.target === rv && a.cycle === cy); });
+        save(); render(); toast("Application record removed."); return;
+      }
       return;
     }
 
