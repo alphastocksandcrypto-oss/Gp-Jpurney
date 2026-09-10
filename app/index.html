@@ -90,6 +90,13 @@ h1,h2,h3,h4{font-family:var(--fd);letter-spacing:-.01em}
 .nav-item.on svg{opacity:1;color:var(--mint-2)}
 .nav-item .pill{margin-left:auto;font-family:var(--fd);font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 8px;background:rgba(255,255,255,.12);color:#cfe6e0}
 .nav-item .pill.alert{background:var(--coral);color:#fff}
+/* not-yet and not-your-route: dimmed, never hidden, never unreachable. Hover
+   and focus restore full contrast so nothing is stranded below AA when used. */
+.nav-item.rel-ahead,.nav-item.rel-aside{color:#7f9e97}
+.nav-item.rel-ahead svg,.nav-item.rel-aside svg{opacity:.5}
+.nav-item.rel-ahead:hover,.nav-item.rel-aside:hover,
+.nav-item.rel-ahead:focus-visible,.nav-item.rel-aside:focus-visible{color:#fff}
+.nav-item .pill.quiet{background:rgba(255,255,255,.08);color:#8fb5ac;font-weight:600;letter-spacing:.02em}
 .side-foot{border-top:1px solid rgba(255,255,255,.1);padding:12px 14px;display:flex;align-items:center;gap:10px}
 .avatar{width:34px;height:34px;border-radius:50%;background:var(--mint-2);color:#052a22;display:grid;place-items:center;font-family:var(--fd);font-weight:800;font-size:12.5px;flex:none}
 .side-foot .who{min-width:0;flex:1}
@@ -299,7 +306,7 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     <b>MedNav</b>
   </div>
   <div class="side-scope">
-    <span>Working towards</span>
+    <span id="scopeLabel">Working towards</span>
     <b id="scopeTarget">HST Cardiology</b>
     <em id="scopeStage">SHO, 2 years post-intern</em>
   </div>
@@ -377,7 +384,7 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
        with a computed expiry, not a one-off tick. */
     gardaVettingDate:"", hepBUpToDate:false, hepBCheckedAt:"", occClearance:false, occClearanceAt:"",
     /* CPD runs on its own annual clock, independent of training milestones */
-    cpdPoints:0, cpdTarget:50, cpdCycleEnd:new Date().getFullYear() + "-12-31", cpdLog:[],
+    cpdPoints:0, cpdTarget:50, cpdTargetSet:false, cpdCycleEnd:new Date().getFullYear() + "-12-31", cpdLog:[],
     cvUpdatedAt:"", rotations:[],
     deadlinesDone:{},
     customMilestones:[],
@@ -463,7 +470,9 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     bolt:'<path d="M13 2L5 14h6l-1 8 8-12h-6z"/>',
     shield:'<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/>',
     grad:'<path d="M2 9l10-4 10 4-10 4z"/><path d="M6 11v5c0 1.5 2.5 3 6 3s6-1.5 6-3v-5"/><path d="M22 9v6"/>',
-    minus:'<path d="M5 12h14"/>'
+    minus:'<path d="M5 12h14"/>',
+    book:'<path d="M4 5a2 2 0 012-2h13v18H6a2 2 0 01-2-2z"/><path d="M8 7h7M8 11h7"/>',
+    mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/>'
   };
 
   /* ================= MODEL =================
@@ -482,7 +491,10 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
      ready:function(){ return Math.round(S.examStages / 3 * 100); },
      pts:function(){ return S.examStages >= 3 ? 8 : (S.examStages >= 1 ? 3 : 0); },
      bands:"Part 1 scores 3, full membership scores 8",
-     note:function(){ return S.examStages >= 3 ? "Full MRCPI membership held" : S.examStages + " of 3 stages held"; }},
+     note:function(){
+       var ex = situation().exam || "membership";
+       return S.examStages >= 3 ? "Full " + ex + " membership held" : S.examStages + " of 3 " + ex + " stages held";
+     }},
     {id:"auditqi", name:"Audit and QI", weight:25, maxPts:10,
      ready:function(){ return Math.round(((S.auditComplete + S.qiPct/100) / 2) * 100); },
      pts:function(){ return S.auditComplete >= 2 ? 10 : (S.auditComplete >= 1 ? 5 : 0); },
@@ -576,10 +588,20 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     m.push({t:"Leadership training", state: S.leadership ? "done" : "todo", when:"Optional",
      act:"doLeadership", cta:"Mark complete"});
 
-    m.push({t: S.target + " application", state:"todo", when:"Opens Oct"});
-    m.push({t:"Interview preparation", state:"todo", when:"From Nov"});
-    m.push({t: S.target + " interview", state:"todo", when:"Jan 2027"});
-    m.push({t:"CSCST", state:"todo", when:"Future"});
+    /* the tail of the ladder is the application itself, and a consultant has
+       already walked it: showing them an upcoming application is the loudest
+       possible sign nothing here adapts */
+    var msit = situation();
+    if (msit.stillApplying){
+      var mc = msit.cycle;
+      m.push({t: msit.target + " application", state:"todo",
+        when: mc ? "Closes " + fmt(mc.apply) : "Date not set"});
+      m.push({t:"Interview preparation", state:"todo",
+        when: mc ? "From " + fmt(addDays(mc.apply, 7)) : "After applications close"});
+      m.push({t: msit.target + " interview", state:"todo",
+        when: mc ? fmtLong(mc.interview) : "Date not set"});
+      m.push({t:"CSCST", state:"todo", when:"Future"});
+    }
 
     (S.customMilestones || []).forEach(function(c){ m.push({t:c, state:"todo", when:"Custom", custom:true}); });
     return m;
@@ -587,15 +609,30 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 
   /* ================= DEADLINES ================= */
   function deadlines(){
-    return [
-      {id:"qi",      t:"Audit and QI project complete",   iso:"2026-10-15", kind:"personal", note:"Your own deadline, set to land before applications open"},
-      {id:"teach",   t:"Fourth teaching session logged",  iso:"2026-10-31", kind:"personal", note:"Your own deadline"},
-      {id:"apps",    t:"HST Cardiology applications close",iso:"2026-11-08", kind:"official", note:"RCPI, 5pm"},
-      {id:"upload",  t:"Portfolio evidence upload closes", iso:"2026-12-04", kind:"official", note:"RCPI, evidence must already be dated"},
-      {id:"iview",   t:"HST Cardiology interviews",        iso:"2027-01-18", kind:"official", note:"RCPI, week commencing"},
-      {id:"offers",  t:"Offers issued",                    iso:"2027-02-26", kind:"official", note:"RCPI"},
-      {id:"start",   t:"HST post starts",                  iso:"2027-07-12", kind:"official", note:"RCPI"}
-    ].map(function(d){ d.days = until(d.iso); d.done = !!S.deadlinesDone[d.id]; return d; });
+    /* Every official row is composed from the doctor's own target and college,
+       never written out as a literal. A surgical trainee used to be shown
+       "HST Cardiology applications close" because these strings were hardcoded. */
+    var sit = situation();
+    var out = [
+      {id:"qi",    t:"Audit and QI project complete", iso:"2026-10-15", kind:"personal",
+       note:"Your own deadline, set to land before applications open"},
+      {id:"teach", t:"Teaching sessions logged to target", iso:"2026-10-31", kind:"personal",
+       note:"Your own deadline, " + S.teachingDone + " of " + S.teachingTarget + " so far"}
+    ];
+    /* a consultant has no application cycle ahead of them, and showing one
+       would be the clearest possible tell that nothing here is really adapting */
+    if (sit.stillApplying && sit.cycle){
+      var c = sit.cycle, col = sit.college, tgt = sit.target;
+      out.push(
+        {id:"apps",   t:tgt + " applications close", iso:c.apply, kind:"official", note:col + ", 5pm"},
+        {id:"upload", t:"Portfolio evidence upload closes", iso:addDays(c.apply, 26), kind:"official",
+         note:col + ", evidence must already be dated"},
+        {id:"iview",  t:tgt + " interviews", iso:c.interview, kind:"official", note:col + ", week commencing"},
+        {id:"offers", t:"Offers issued", iso:addDays(c.interview, 39), kind:"official", note:col},
+        {id:"start",  t:tgt + " post starts", iso:c.start, kind:"official", note:col}
+      );
+    }
+    return out.map(function(d){ d.days = until(d.iso); d.done = !!S.deadlinesDone[d.id]; return d; });
   }
   function nextDeadline(){
     var open = deadlines().filter(function(d){ return !d.done && d.days >= 0; });
@@ -613,28 +650,28 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
      illustrative in exactly the way the primary deadlines() above already are,
      see the README placeholders list. */
   var SPECIALTY_INFO = {
-    "General Internal Medicine":   {exam:"MRCPI",             body:"RCPI"},
-    "Cardiology":                  {exam:"MRCPI",             body:"RCPI"},
-    "Respiratory Medicine":        {exam:"MRCPI",             body:"RCPI"},
-    "Gastroenterology":            {exam:"MRCPI",             body:"RCPI"},
-    "Nephrology":                  {exam:"MRCPI",             body:"RCPI"},
-    "Geriatric Medicine":          {exam:"MRCPI",             body:"RCPI"},
-    "Neurology":                   {exam:"MRCPI",             body:"RCPI"},
-    "General Surgery":             {exam:"MRCS",              body:"RCSI"},
-    "Trauma and Orthopaedics":     {exam:"MRCS",              body:"RCSI"},
-    "Urology":                     {exam:"MRCS",              body:"RCSI"},
-    "Otolaryngology, ENT":         {exam:"MRCS",              body:"RCSI"},
-    "Plastic Surgery":             {exam:"MRCS",              body:"RCSI"},
-    "General Practice":            {exam:"MICGP",             body:"ICGP"},
-    "Psychiatry":                  {exam:"MRCPsych",          body:"College of Psychiatrists"},
-    "Emergency Medicine":          {exam:"MRCEM",             body:"RCSI"},
-    "Anaesthesiology":             {exam:"FFARCSI",           body:"College of Anaesthesiologists"},
-    "Paediatrics":                 {exam:"MRCPI Paediatrics", body:"RCPI"},
-    "Obstetrics and Gynaecology":  {exam:"MRCPI O and G",     body:"RCPI"},
-    "Radiology":                   {exam:"FRCR",              body:"Faculty of Radiologists"},
-    "Histopathology":              {exam:"FRCPath",           body:"Faculty of Pathology"},
-    "Ophthalmology":               {exam:"FRCOphth",          body:"RCSI"},
-    "Public Health Medicine":      {exam:"MFPHMI",            body:"Faculty of Public Health Medicine"}
+    "General Internal Medicine":   {exam:"MRCPI",             body:"RCPI",                              target:"HST General Internal Medicine"},
+    "Cardiology":                  {exam:"MRCPI",             body:"RCPI",                              target:"HST Cardiology"},
+    "Respiratory Medicine":        {exam:"MRCPI",             body:"RCPI",                              target:"HST Respiratory Medicine"},
+    "Gastroenterology":            {exam:"MRCPI",             body:"RCPI",                              target:"HST Gastroenterology"},
+    "Nephrology":                  {exam:"MRCPI",             body:"RCPI",                              target:"HST Nephrology"},
+    "Geriatric Medicine":          {exam:"MRCPI",             body:"RCPI",                              target:"HST Geriatric Medicine"},
+    "Neurology":                   {exam:"MRCPI",             body:"RCPI",                              target:"HST Neurology"},
+    "General Surgery":             {exam:"MRCS",              body:"RCSI",                              target:"HST General Surgery"},
+    "Trauma and Orthopaedics":     {exam:"MRCS",              body:"RCSI",                              target:"HST Trauma and Orthopaedics"},
+    "Urology":                     {exam:"MRCS",              body:"RCSI",                              target:"HST Urology"},
+    "Otolaryngology, ENT":         {exam:"MRCS",              body:"RCSI",                              target:"HST Otolaryngology"},
+    "Plastic Surgery":             {exam:"MRCS",              body:"RCSI",                              target:"HST Plastic Surgery"},
+    "General Practice":            {exam:"MICGP",             body:"ICGP",                              target:"GP training scheme"},
+    "Psychiatry":                  {exam:"MRCPsych",          body:"College of Psychiatrists",          target:"HST Psychiatry"},
+    "Emergency Medicine":          {exam:"MRCEM",             body:"RCSI",                              target:"HST Emergency Medicine"},
+    "Anaesthesiology":             {exam:"FFARCSI",           body:"College of Anaesthesiologists",     target:"HST Anaesthesiology"},
+    "Paediatrics":                 {exam:"MRCPI Paediatrics", body:"RCPI",                              target:"HST Paediatrics"},
+    "Obstetrics and Gynaecology":  {exam:"MRCPI O and G",     body:"RCPI",                              target:"HST Obstetrics and Gynaecology"},
+    "Radiology":                   {exam:"FRCR",              body:"Faculty of Radiologists",           target:"Radiology training"},
+    "Histopathology":              {exam:"FRCPath",           body:"Faculty of Pathology",              target:"Histopathology training"},
+    "Ophthalmology":               {exam:"FRCOphth",          body:"RCSI",                              target:"Ophthalmology training"},
+    "Public Health Medicine":      {exam:"MFPHMI",            body:"Faculty of Public Health Medicine", target:"Public Health Medicine training"}
   };
   /* one illustrative cycle per college, distinct so several other-target
      cards never look copy-pasted from each other */
@@ -690,11 +727,82 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     return {k:"good", label:"Current"};
   }
   function cpdDaysLeft(){ return S.cpdCycleEnd ? until(S.cpdCycleEnd) : null; }
-  function cpdPct(){ return S.cpdTarget > 0 ? Math.min(100, Math.round(S.cpdPoints / S.cpdTarget * 100)) : 0; }
+  /* the target follows the doctor's regime until they set one themselves, at
+     which point their own number wins and stops moving under them */
+  function cpdTarget(){ return S.cpdTargetSet ? S.cpdTarget : cpdRegime().target; }
+  function cpdPct(){ var t = cpdTarget(); return t > 0 ? Math.min(100, Math.round(S.cpdPoints / t * 100)) : 0; }
   /* who the admin page leads with. Nothing is hidden from anyone, this only
      changes which line opens the page: someone newly in the Irish system is
      the person this page matters most to, per the product owner. */
   function newToIrishSystem(){ return S.route === "coming" || (S.origin === "noneu" && S.clinicalMonths < 12); }
+
+  /* ================= SITUATION =================
+     One derivation, read by every view. Before this existed, adaptivity was
+     three scattered conditionals and the rest of the app rendered the same
+     thing for an intern, an SHO and a consultant. The rule now: no view reads
+     a raw record field to decide what kind of doctor this is, it asks here.
+     Adding a grade or a specialty updates every view at once. */
+  function situation(){
+    var info = SPECIALTY_INFO[S.specialty] || {};
+    var college = info.body || S.body || "";
+    var cyc = CYCLE[college] || null;
+    var months = S.clinicalMonths;
+
+    /* tier is derived from what the doctor actually told us, not stored, so it
+       cannot drift out of sync with the months and stage behind it */
+    var tier = S.stage === "student" ? "student"
+      : S.stage === "consultant" ? "consultant"
+      : months <= 0 ? "intern"
+      : S.stage === "spr" || S.stage === "hst" ? "hst"
+      : "bst";
+
+    var others = otherTargetsInfo();
+    var applyDays = cyc ? until(cyc.apply) : null;
+
+    return {
+      tier: tier,
+      isStudent: tier === "student",
+      isIntern: tier === "intern",
+      isConsultant: tier === "consultant",
+      /* a consultant is the one group for whom the whole shortlisting apparatus
+         is behind them, and pretending otherwise is the fastest way to look
+         like a toy */
+      stillApplying: tier !== "consultant",
+      college: college,
+      exam: info.exam || S.exam || "",
+      target: info.target || S.target || "",
+      hasTarget: !!S.specialty,
+      /* hedging: a doctor running two applications is a different product to
+         one running a single track, and the dashboard should say so */
+      targetCount: 1 + others.length,
+      dualTrack: others.length > 0,
+      others: others,
+      newToIreland: newToIrishSystem(),
+      isIMG: S.route === "coming" || S.origin === "noneu" || S.origin === "eu",
+      /* whether they hold a training post drives the CPD regime, which is the
+         clearest single case of one number being wrong for half the users */
+      inTrainingPost: tier === "bst" || tier === "hst",
+      cycle: cyc,
+      applyDays: applyDays,
+      /* where in the annual cycle they are sitting right now */
+      phase: applyDays === null ? "unknown"
+        : applyDays > 120 ? "far"
+        : applyDays >= 0 ? "approaching"
+        : "closed"
+    };
+  }
+
+  /* CPD is the worked example of why situation() exists. The Medical Council's
+     professional competence scheme and the HSE CPD support scheme for NCHDs
+     outside training posts are two different regimes with two different
+     numbers, so a single hardcoded target is wrong for one group or the other.
+     Both figures below are ILLUSTRATIVE and unverified, see README. */
+  function cpdRegime(){
+    var sit = situation();
+    return sit.inTrainingPost
+      ? {target:50, label:"Medical Council professional competence scheme", note:"Applies while you hold a training post."}
+      : {target:20, label:"HSE CPD support scheme for NCHDs outside training", note:"Applies to NCHDs not in a training post."};
+  }
 
   /* ================= LADDER ================= */
   function rungs(){
@@ -873,20 +981,27 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
           "This route stays your main one everywhere else on the dashboard. " + '<a href="#/deadlines">See the full dates</a>.</p></div>';
       }
 
-      var onLadder = S.clinicalMonths > 0;
+      var onLadder = S.clinicalMonths > 0, tsit = situation(), tc = tsit.cycle;
       var trail = [
         {k: onLadder ? "done" : "todo", t:"Internship", when: onLadder ? "Complete" : "Not started"},
-        {k:"flag", t: S.examStages >= 1 ? S.exam + " Part 1 passed" : S.exam + " Part 1 not held",
+        {k:"flag", t: S.examStages >= 1 ? tsit.exam + " Part 1 passed" : tsit.exam + " Part 1 not held",
          when: S.examStages >= 1 ? "Passed" : "Outstanding"},
         {k: S.clinicalMonths >= 24 ? "done" : "todo", t:"Basic specialist training",
          when: S.clinicalMonths >= 24 ? "Complete" : S.clinicalMonths + " months in"},
-        {k:"flag", t: S.examStages >= 3 ? "Full " + S.exam + " membership" : S.exam + " not yet complete",
-         when: S.examStages + " of 3 stages"},
-        {k:"here", t:S.target + ", not yet applied", when:"Applications close 8 Nov"},
-        {k:"flag", t:"Interview", when:"Jan 2027"},
-        {k:"todo", t:"CSCST", when:"About 2033"},
-        {k:"todo", t:"Consultant post", when:"Future"}
+        {k:"flag", t: S.examStages >= 3 ? "Full " + tsit.exam + " membership" : tsit.exam + " not yet complete",
+         when: S.examStages + " of 3 stages"}
       ];
+      if (tsit.stillApplying){
+        trail.push(
+          {k:"here", t:tsit.target + ", not yet applied",
+           when: tc ? "Applications close " + fmt(tc.apply) : "Date not set"},
+          {k:"flag", t:"Interview", when: tc ? fmt(tc.interview) : "Date not set"},
+          {k:"todo", t:"CSCST", when:"Future"},
+          {k:"todo", t:"Consultant post", when:"Future"}
+        );
+      } else {
+        trail.push({k:"here", t:"Consultant post", when:"Reached"});
+      }
       h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Your ladder in full</h2></div><div class="trail">' +
         trail.map(function(s){
           if (s.k === "flag"){
@@ -952,11 +1067,15 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
   VIEWS.readiness = {
     title:"Application readiness", sub:"How much of the application is actually assembled.",
     render:function(){
-      var nd = deadlines().filter(function(d){ return d.id === "apps"; })[0];
+      /* no application row exists for someone who is not applying, so the
+         closing-date sentence has to be optional rather than assumed */
+      var nd = deadlines().filter(function(d){ return d.id === "apps"; })[0] || null;
+      var rsit = situation();
       var h = '<div class="card"><div class="ring-wrap">' + ring(readiness(), "assembled") +
-        '<div><h2 style="font-size:17px;color:var(--deep)">' + readiness() + "% ready for " + esc(S.target) + "</h2>" +
-        '<p class="lede" style="margin-top:6px;max-width:56ch">Weighted across six portfolio domains. Applications close ' +
-        fmtLong(nd.iso) + ", <b>" + awayText(nd.days) + "</b>. This is a different measure from your shortlisting score: " +
+        '<div><h2 style="font-size:17px;color:var(--deep)">' + readiness() + "% ready for " + esc(rsit.target) + "</h2>" +
+        '<p class="lede" style="margin-top:6px;max-width:56ch">Weighted across six portfolio domains. ' +
+        (nd ? "Applications close " + fmtLong(nd.iso) + ", <b>" + awayText(nd.days) + "</b>. " : "") +
+        "This is a different measure from your shortlisting score: " +
         "readiness counts part-finished work, scoring does not.</p>" +
         '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-sm btn-ghost" href="#/score">Compare with your score</a>' +
         '<a class="btn btn-sm btn-primary" href="#/gaps">Close the gaps</a></div></div></div></div>';
@@ -971,10 +1090,13 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
           '<div style="margin-top:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' + chip(st) + gapActions(d.id) + "</div></div>";
       }).join("") + "</div>";
 
-      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Interview readiness</h2></div>' +
-        '<p class="lede">Your interview is about ' + Math.round(deadlines().filter(function(d){ return d.id === "iview"; })[0].days / 30) +
-        ' months out, and it scores the same domains as the portfolio. Nothing you fix now is wasted on it.</p>' +
-        '<div style="margin-top:12px"><a class="btn btn-sm btn-ghost" href="/preparation/interviews">Common interview questions</a></div></div>';
+      var ivd = deadlines().filter(function(d){ return d.id === "iview"; })[0] || null;
+      if (ivd){
+        h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Interview readiness</h2></div>' +
+          '<p class="lede">Your interview is about ' + Math.round(ivd.days / 30) +
+          ' months out, and it scores the same domains as the portfolio. Nothing you fix now is wasted on it.</p>' +
+          '<div style="margin-top:12px"><a class="btn btn-sm btn-ghost" href="#/interviews">Open interview prep</a></div></div>';
+      }
       return h;
     }
   };
@@ -1097,18 +1219,23 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
   VIEWS.opportunities = {
     title:"Matched to you", sub:"Posts, shifts and courses that fit your route and close your gaps.",
     render:function(){
+      /* the specialty-shaped rows name the doctor's own specialty rather than
+         Cardiology, which every user used to be shown whatever they trained in.
+         The society row stays descriptive on purpose: inventing a named body
+         per specialty would be fabricating organisations that may not exist. */
+      var osit = situation(), spec = S.specialty || "your specialty";
       var items = [
         {kind:"Course", t:"Quality Improvement in Clinical Practice", meta:"RCPI · online · 6 CPD points · €140",
          why:"Closes your largest gap. A completed QI project is worth 5 points.", href:"../opportunities/conferences.html", tag:"crit", region:"any"},
         {kind:"Course", t:"Teaching the Teacher, one day", meta:"RCSI · Dublin · 5 CPD points · €130",
          why:"Two logged sessions from this would take teaching to its full 5 points.", href:"../opportunities/conferences.html", tag:"crit", region:"east"},
-        {kind:"Job", t:"NCHD Registrar, Cardiology", meta:"St. James's Hospital · Dublin · Training post",
+        {kind:"Job", t:"NCHD Registrar, " + spec, meta:"St. James's Hospital · Dublin · Training post",
          why:"Matches your specialty and grade. Closes 20 Sep.", href:"../opportunities/jobs.html", tag:"warn", region:"east"},
-        {kind:"Job", t:"Specialist Registrar, Cardiology", meta:"Mater Misericordiae · Dublin · Training post",
+        {kind:"Job", t:"Specialist Registrar, " + spec, meta:"Mater Misericordiae · Dublin · Training post",
          why:"Same grade, second site, same application cycle.", href:"../opportunities/jobs.html", tag:"warn", region:"east"},
         {kind:"Locum", t:"Weekend cover, General Medicine", meta:"Beaumont Hospital · Dublin · €90/hr published",
          why:"Weekend only, so it does not collide with your QI deadline.", href:"../opportunities/locums.html", tag:"mute", region:"east"},
-        {kind:"Event", t:"Irish Cardiac Society Annual Meeting", meta:"Dublin · 14 Oct · 8 CPD points · €180",
+        {kind:"Event", t:spec + " annual scientific meeting", meta:"Dublin · 14 Oct · 8 CPD points · €180",
          why:"An accepted abstract here would count as your second research output.", href:"../opportunities/conferences.html", tag:"warn", region:"east"}
       ];
       /* location only reorders and badges, it never hides. Six demo rows
@@ -1184,11 +1311,23 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
   VIEWS.cpd = {
     title:"CPD tracker", sub:"Runs on its own annual clock, separate from your training milestones.",
     render:function(){
-      var pct = cpdPct(), left = cpdDaysLeft();
-      var h = ctx("The " + S.cpdTarget + "-point target and the cycle date below are illustrative in this prototype. " +
-        "Use whatever your own college actually publishes for its CPD requirement, and change the target below to match.", true);
-      h += '<div class="card"><div class="card-head"><h2>' + pct + '% of this cycle logged</h2>' +
-        '<span class="aside num">' + S.cpdPoints + " of " + S.cpdTarget + " points</span></div>" + bar(pct) +
+      var pct = cpdPct(), left = cpdDaysLeft(), reg = cpdRegime(), tgt = cpdTarget();
+      var h = ctx("Both figures below are illustrative in this prototype and unverified. " +
+        "Use whatever your own scheme actually publishes, and change the target below to match.", true);
+      /* which regime applies is derived, not assumed: a doctor in a training
+         post and an NCHD outside one are held to different numbers, and a
+         single hardcoded target is simply wrong for one of them */
+      h += '<div class="card"><div class="card-head"><h2>Your CPD regime</h2>' +
+        (S.cpdTargetSet ? '<span class="aside">Overridden by you</span>' : "") + "</div>" +
+        '<div class="row"><span class="t">' + esc(reg.label) + "<small>" + esc(reg.note) + "</small></span>" +
+        '<span class="r">' + chip({k:"mute", icon:I.grad, label:reg.target + " points a year"}) + "</span></div>" +
+        (S.cpdTargetSet && S.cpdTarget !== reg.target
+          ? '<p class="lede" style="margin-top:10px">You are tracking against ' + S.cpdTarget +
+            ' rather than the ' + reg.target + ' your regime suggests. ' +
+            '<button class="btn-link" data-act="useRegimeTarget">Use ' + reg.target + " instead</button></p>"
+          : "") + "</div>";
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>' + pct + '% of this cycle logged</h2>' +
+        '<span class="aside num">' + S.cpdPoints + " of " + tgt + " points</span></div>" + bar(pct) +
         (left !== null ? '<p class="lede" style="margin-top:10px">Cycle ends ' + fmtLong(S.cpdCycleEnd) + ", " + awayText(left) + ".</p>" : "") + "</div>";
 
       h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Log points</h2></div>' +
@@ -1197,7 +1336,7 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 
       h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Target and cycle</h2></div>' +
         '<div class="grid g2"><div class="field"><label for="fCpdTarget">Annual target, points</label>' +
-        '<input id="fCpdTarget" type="number" min="1" max="200" value="' + S.cpdTarget + '"></div>' +
+        '<input id="fCpdTarget" type="number" min="1" max="200" value="' + tgt + '"></div>' +
         '<div class="field"><label for="fCpdEnd">Cycle end date</label><input id="fCpdEnd" type="date" value="' + esc(S.cpdCycleEnd) + '"></div></div>' +
         '<button class="btn btn-sm btn-ghost" data-act="saveCpdTarget">Save target and cycle</button></div>';
 
@@ -1211,10 +1350,99 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     }
   };
 
+  /* the three membership stages, named for whichever exam family the doctor's
+     specialty actually sits. The names come from SPECIALTY_INFO, so a surgical
+     trainee sees MRCS parts here and never MRCPI ones. */
+  function examParts(){
+    var ex = situation().exam || "Membership";
+    return [
+      {n:0, t:ex + " Part 1",         what:"Written, basic sciences and clinical knowledge"},
+      {n:1, t:ex + " Part 2 written", what:"Written, applied clinical knowledge"},
+      {n:2, t:ex + " clinical exam",  what:"Clinical, examined on real or simulated cases"}
+    ].map(function(p){ p.held = S.examStages > p.n; return p; });
+  }
+
+  VIEWS.exams = {
+    title:"Exam prep", sub:"Where you are in the membership exam your route requires.",
+    render:function(){
+      var sit = situation(), parts = examParts(), held = S.examStages;
+      var pct = Math.round(held / 3 * 100);
+      var next = parts.filter(function(p){ return !p.held; })[0] || null;
+
+      var h = '<div class="card"><div class="card-head"><h2>' + pct + '% of ' + esc(sit.exam) + ' held</h2>' +
+        '<span class="aside num">' + held + " of 3 stages</span></div>" + bar(pct) +
+        '<p class="lede" style="margin-top:10px">' +
+        (next ? "Next up is " + esc(next.t) + "." : "All three stages held. Nothing left to sit.") +
+        " This is the exam family for " + esc(S.specialty) + ", set by " + esc(sit.college) + ".</p></div>";
+
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>The three stages</h2></div>';
+      h += parts.map(function(p){
+        return '<div class="row"><span class="t">' + esc(p.t) + "<small>" + esc(p.what) + "</small></span>" +
+          '<span class="r">' + chip(p.held ? {k:"good", icon:I.tick, label:"Held"} : {k:"mute", icon:I.clock, label:"Not held"}) +
+          (p.held ? "" : '<button class="btn btn-sm btn-ghost" data-act="passExam">Mark passed</button>') + "</span></div>";
+      }).join("") + "</div>";
+
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>What this feeds</h2></div>' +
+        '<p class="lede">Exams are one of six scored domains. Holding all three stages takes that domain from ' +
+        '3 points to 8 on your shortlisting score.</p>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">' +
+        '<a class="btn btn-sm btn-ghost" href="#/score">See the scoring</a>' +
+        '<a class="btn btn-sm btn-ghost" href="../preparation/exams.html">Exam reference pages</a></div></div>';
+      return h;
+    }
+  };
+
+  VIEWS.interviews = {
+    title:"Interview prep", sub:"What you are being scored on, and how long you have.",
+    render:function(){
+      var sit = situation(), c = sit.cycle;
+      if (!c){
+        return '<p class="empty"><b>No cycle dates yet.</b>Pick a target specialty in your profile and the interview timeline fills in.</p>';
+      }
+      var iv = until(c.interview), ap = until(c.apply);
+      var h = ctx("The dates below are illustrative in this prototype. Replace them with " + sit.college +
+        "'s published cycle before anyone relies on them.", true);
+
+      h += '<div class="card"><div class="card-head"><h2>' + esc(sit.target) + " interview</h2>" +
+        '<span class="aside">' + esc(awayText(iv)) + "</span></div>" +
+        '<div class="row"><span class="t">Applications close<small>' + fmtLong(c.apply) + "</small></span>" +
+        '<span class="r">' + chip(ap < 0 ? {k:"mute", icon:I.tick, label:"Closed"}
+          : {k: ap <= 21 ? "crit" : "warn", icon:I.clock, label:awayText(ap)}) + "</span></div>" +
+        '<div class="row"><span class="t">Interview<small>' + fmtLong(c.interview) + "</small></span>" +
+        '<span class="r">' + chip({k: iv <= 28 ? "crit" : "mute", icon:I.cal, label:awayText(iv)}) + "</span></div>" +
+        '<div class="row"><span class="t">Offers issued<small>' + fmtLong(addDays(c.interview, 39)) + "</small></span>" +
+        '<span class="r"><span class="lede">' + esc(awayText(until(addDays(c.interview, 39)))) + "</span></span></div></div>";
+
+      /* the preparation window is computed backwards from the interview date
+         rather than stated as a fixed month, so it stays true for any college */
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Your preparation window</h2></div>' +
+        '<p class="lede">Counting back from ' + fmtLong(c.interview) + ".</p>";
+      [
+        {d:56, t:"Start structured practice", w:"Eight weeks out"},
+        {d:28, t:"Portfolio and evidence assembled", w:"Four weeks out"},
+        {d:14, t:"Mock interview done", w:"Two weeks out"},
+        {d:2,  t:"Documents and travel confirmed", w:"Two days out"}
+      ].forEach(function(s){
+        var iso = addDays(c.interview, -s.d), dl = until(iso);
+        h += '<div class="row"><span class="t">' + esc(s.t) + "<small>" + esc(s.w) + ", " + fmtLong(iso) + "</small></span>" +
+          '<span class="r">' + chip(dl < 0 ? {k:"mute", icon:I.clock, label:"Passed"}
+            : {k: dl <= 14 ? "warn" : "mute", icon:I.clock, label:awayText(dl)}) + "</span></div>";
+      });
+      h += "</div>";
+
+      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Reference</h2></div>' +
+        '<p class="lede">Scoring domains and worked answers per programme are reference content, not part of this record.</p>' +
+        '<a class="btn btn-sm btn-ghost" style="margin-top:12px" href="../preparation/interviews.html">Interview reference pages</a></div>';
+      return h;
+    }
+  };
+
   VIEWS.profile = {
     title:"Your profile", sub:"Change any of this and every view recalculates.",
     render:function(){
-      var opts = ["Cardiology","General Practice","Psychiatry","Emergency Medicine","General Surgery"];
+      /* every specialty the record can actually resolve, rather than the five
+         a hardcoded list used to offer */
+      var opts = Object.keys(SPECIALTY_INFO).sort();
       return '<div class="grid g2"><div class="card"><div class="card-head"><h2>Record</h2></div>' +
         '<div class="field"><label for="pName">Name</label><input id="pName" value="' + esc(S.name) + '"></div>' +
         '<div class="field"><label for="pSpec">Target specialty</label><select id="pSpec">' +
@@ -1298,25 +1526,78 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
   }
 
   /* ================= NAV ================= */
-  var NAV = [
-    {g:"Overview"},
-    {id:"today", t:"Today", ic:I.home},
-    {g:"Your route"},
-    {id:"roadmap", t:"My roadmap", ic:I.map},
-    {id:"progress", t:"Progress tracker", ic:I.chart},
-    {g:"Your readiness"},
-    {id:"gaps", t:"Gap analyser", ic:I.list},
-    {id:"readiness", t:"Application readiness", ic:I.clip},
-    {id:"score", t:"Shortlisting score", ic:I.target},
-    {g:"Planning"},
-    {id:"deadlines", t:"Deadlines", ic:I.cal},
-    {id:"opportunities", t:"Matched to you", ic:I.brief},
-    {g:"Practical"},
-    {id:"admin", t:"Occupational health and admin", ic:I.shield},
-    {id:"cpd", t:"CPD tracker", ic:I.grad},
-    {g:"Account"},
-    {id:"profile", t:"Your profile", ic:I.user}
+  /* ================= MODULE REGISTRY =================
+     Zones are fixed and ordered. The nav a doctor learns in week one is the
+     same nav in month six, which is also what lets a pricing boundary land on
+     a zone later without reshuffling anything.
+
+     What adapts is not the order but the STATE of each module, and there are
+     only three. Nothing is ever hidden: a module that does not apply says so
+     in a sentence, because personalised disclosure without a stated reason
+     reads as the product deciding things behind your back.
+
+       active  the normal case
+       ahead   real, just not yet, with the date it starts mattering
+       aside   not on your route, with the reason in plain words          */
+  var ZONES = ["Overview", "Your pathway", "Your readiness", "Your applications", "Preparation", "Practical", "Account"];
+
+  /* the scored application apparatus, which a consultant has finished with */
+  function applyingOnly(sit){
+    return sit.stillApplying ? null
+      : {k:"aside", why:"You have reached consultant, so nothing here is scoring you any more. It stays visible because your record does."};
+  }
+
+  var MODULES = [
+    {id:"today",         t:"Today",                          ic:I.home,   zone:"Overview"},
+    {id:"roadmap",       t:"My roadmap",                     ic:I.map,    zone:"Your pathway"},
+    {id:"progress",      t:"Progress tracker",               ic:I.chart,  zone:"Your pathway"},
+    {id:"gaps",          t:"Gap analyser",                   ic:I.list,   zone:"Your readiness", rel:applyingOnly},
+    {id:"readiness",     t:"Application readiness",          ic:I.clip,   zone:"Your readiness", rel:applyingOnly},
+    {id:"score",         t:"Shortlisting score",             ic:I.target, zone:"Your readiness", rel:applyingOnly},
+    {id:"deadlines",     t:"Deadlines",                      ic:I.cal,    zone:"Your applications", rel:applyingOnly},
+    {id:"opportunities", t:"Matched to you",                 ic:I.brief,  zone:"Your applications"},
+    {id:"exams",         t:"Exam prep",                      ic:I.book,   zone:"Preparation", rel:function(sit){
+      if (!sit.stillApplying) return {k:"aside", why:"Your membership exams are behind you. Kept here so the record stays complete."};
+      if (S.examStages >= 3) return {k:"aside", why:"You hold full " + sit.exam + " membership, so there is nothing left to sit."};
+      return null;
+    }},
+    {id:"interviews",    t:"Interview prep",                 ic:I.mic,    zone:"Preparation", rel:function(sit){
+      if (!sit.stillApplying) return {k:"aside", why:"You are not interviewing for a training post."};
+      if (sit.phase === "far" && sit.cycle) return {k:"ahead", why:"Interviews are " + fmtLong(sit.cycle.interview) + ". Worth opening once applications close."};
+      return null;
+    }},
+    {id:"admin",         t:"Occupational health and admin",  ic:I.shield, zone:"Practical"},
+    {id:"cpd",           t:"CPD tracker",                    ic:I.grad,   zone:"Practical"},
+    {id:"profile",       t:"Your profile",                   ic:I.user,   zone:"Account"}
   ];
+
+  /* the sidebar scope box, derived rather than stored. It used to render
+     S.stageLabel, a string written once at onboarding, so a consultant was
+     still told they were "working towards HST Cardiology, SHO 2 years
+     post-intern" no matter what the rest of the record said. */
+  function scopeBox(){
+    var sit = situation();
+    var yrs = (S.clinicalMonths / 12).toFixed(1).replace(/\.0$/, "");
+    var stage = sit.isStudent ? "Final year student"
+      : sit.isIntern ? "Intern"
+      : sit.isConsultant ? "Consultant in " + (S.specialty || "practice")
+      : (sit.tier === "hst" ? "SpR" : "SHO") + ", " + yrs + (yrs === "1" ? " year" : " years") + " post-intern";
+    return sit.isConsultant
+      ? {label:"Currently", target:"Consultant", stage:stage}
+      : {label:"Working towards", target:sit.target || "No target set", stage:stage};
+  }
+
+  function moduleById(id){
+    for (var i = 0; i < MODULES.length; i++) if (MODULES[i].id === id) return MODULES[i];
+    return null;
+  }
+  /* the single place a module's state is decided, so the nav and the page it
+     leads to can never disagree about whether something applies to you */
+  function relevance(id){
+    var m = moduleById(id);
+    if (!m || !m.rel) return null;
+    return m.rel(situation());
+  }
 
   function navBadge(id){
     if (id === "gaps"){
@@ -1335,13 +1616,26 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
   }
 
   function renderNav(active){
-    document.getElementById("nav").innerHTML = NAV.map(function(n){
-      if (n.g) return '<p class="nav-group">' + esc(n.g) + "</p>";
-      var b = navBadge(n.id);
-      return '<a class="nav-item' + (n.id === active ? " on" : "") + '" href="#/' + n.id + '"' +
-        (n.id === active ? ' aria-current="page"' : "") + ">" + ico(n.ic, 17) + esc(n.t) +
-        (b ? '<span class="pill' + (b.alert ? " alert" : "") + '">' + b.n + "</span>" : "") + "</a>";
-    }).join("");
+    var sit = situation();
+    var html = "";
+    ZONES.forEach(function(zone){
+      var items = MODULES.filter(function(m){ return m.zone === zone; });
+      if (!items.length) return;
+      html += '<p class="nav-group">' + esc(zone) + "</p>";
+      html += items.map(function(n){
+        var r = n.rel ? n.rel(sit) : null;
+        var b = navBadge(n.id);
+        /* a module that does not apply still renders, still routes, still
+           reachable by keyboard. It just stops competing for attention. */
+        var cls = "nav-item" + (n.id === active ? " on" : "") + (r ? " rel-" + r.k : "");
+        return '<a class="' + cls + '" href="#/' + n.id + '"' +
+          (n.id === active ? ' aria-current="page"' : "") +
+          (r ? ' title="' + esc(r.why) + '"' : "") + ">" + ico(n.ic, 17) + esc(n.t) +
+          (r ? '<span class="pill quiet">' + (r.k === "ahead" ? "later" : "n/a") + "</span>"
+             : b ? '<span class="pill' + (b.alert ? " alert" : "") + '">' + b.n + "</span>" : "") + "</a>";
+      }).join("");
+    });
+    document.getElementById("nav").innerHTML = html;
   }
 
   /* ================= ROUTER ================= */
@@ -1354,14 +1648,19 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     document.getElementById("viewTitle").textContent = v.title;
     document.getElementById("viewSub").textContent = v.sub;
     var host = document.getElementById("view");
-    host.innerHTML = v.render();
+    /* if a module is dimmed in the nav, landing on it must say why in the same
+       words, rather than leaving the doctor to guess why it looked greyed out */
+    var r = relevance(id);
+    host.innerHTML = (r ? ctx(r.why, r.k === "aside") : "") + v.render();
     host.classList.remove("enter");
     void host.offsetWidth;
     if (!reduced) host.classList.add("enter");
     animateAll();
     renderNav(id);
-    document.getElementById("scopeTarget").textContent = S.target;
-    document.getElementById("scopeStage").textContent = S.stageLabel;
+    var sc = scopeBox();
+    document.getElementById("scopeLabel").textContent = sc.label;
+    document.getElementById("scopeTarget").textContent = sc.target;
+    document.getElementById("scopeStage").textContent = sc.stage;
     document.getElementById("whoName").textContent = S.name;
     document.getElementById("avatar").textContent = initials(S.name);
     document.title = v.title + " · MedNav";
@@ -1387,14 +1686,6 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
   /* ================= ACTIONS =================
      Every mutation reports the delta it actually caused, computed rather than
      asserted, because the causal link is the thing worth teaching. */
-  var SPEC = {
-    "Cardiology":         {target:"HST Cardiology",          body:"RCPI"},
-    "General Practice":   {target:"GP training scheme",      body:"ICGP"},
-    "Psychiatry":         {target:"HST Psychiatry",          body:"College of Psychiatrists"},
-    "Emergency Medicine": {target:"HST Emergency Medicine",  body:"RCSI"},
-    "General Surgery":    {target:"HST General Surgery",     body:"RCSI"}
-  };
-
   var ACTIONS = {
     finishQI: function(){ S.auditComplete = 1; S.qiPct = 100; return "QI project marked complete"; },
     secondQI: function(){ S.auditComplete = 2; S.qiPct = 100; return "Second QI project marked complete"; },
@@ -1403,6 +1694,16 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
       return "Teaching session logged, " + S.teachingDone + " of " + S.teachingTarget;
     },
     addResearch: function(){ S.research = Math.min(2, S.research + 1); return "Research output recorded"; },
+    useRegimeTarget: function(){
+      S.cpdTargetSet = false;
+      return "Tracking against the " + cpdRegime().target + "-point target for your regime";
+    },
+    passExam: function(){
+      if (S.examStages >= 3) return null;
+      S.examStages += 1;
+      var ex = situation().exam;
+      return S.examStages >= 3 ? "Full " + ex + " membership recorded" : ex + " stage recorded, " + S.examStages + " of 3";
+    },
     doLeadership: function(){ S.leadership = true; return "Leadership course recorded"; },
     togglePast: function(){ S.showPast = !S.showPast; return null; },
     reset: function(){
@@ -1420,7 +1721,15 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
       var months = parseInt(document.getElementById("pMonths").value, 10);
       var teach = parseInt(document.getElementById("pTeach").value, 10);
       if (name) S.name = name;
-      if (SPEC[spec]){ S.specialty = spec; S.target = SPEC[spec].target; S.body = SPEC[spec].body; }
+      /* every specialty the dropdown offers resolves here, not just the five a
+         second lookup table used to carry: picking Nephrology once left the
+         target reading "HST Cardiology" */
+      if (SPECIALTY_INFO[spec]){
+        S.specialty = spec;
+        S.target = SPECIALTY_INFO[spec].target;
+        S.body = SPECIALTY_INFO[spec].body;
+        S.exam = SPECIALTY_INFO[spec].exam;
+      }
       if (!isNaN(months) && months >= 0) S.clinicalMonths = months;
       if (!isNaN(teach) && teach >= 1){
         S.teachingTarget = teach;
@@ -1459,11 +1768,11 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
       S.cpdPoints += n;
       S.cpdLog = S.cpdLog || [];
       S.cpdLog.unshift({pts:n, at:Date.now() ? new Date().toISOString().slice(0, 10) : ""});
-      return n + " CPD points logged, " + S.cpdPoints + " of " + S.cpdTarget + " so far this cycle";
+      return n + " CPD points logged, " + S.cpdPoints + " of " + cpdTarget() + " so far this cycle";
     },
     saveCpdTarget: function(){
       var t = parseInt(document.getElementById("fCpdTarget").value, 10);
-      if (t > 0) S.cpdTarget = t;
+      if (t > 0){ S.cpdTarget = t; S.cpdTargetSet = true; }
       var end = document.getElementById("fCpdEnd").value;
       if (end) S.cpdCycleEnd = end;
       return "CPD target and cycle saved";

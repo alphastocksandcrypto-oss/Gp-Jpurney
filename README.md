@@ -282,6 +282,44 @@ That is why finishing one half-done project is worth more than starting three
 new things, and the "what would move you most" list ranks by points actually
 gained.
 
+### How it adapts
+
+The dashboard used to look adaptive and mostly wasn't. Grade was read in one
+place, IMG status in one place, and the rest rendered identically for an
+intern, an SHO and a consultant. Several strings were simply hardcoded, so a
+surgical trainee was shown "HST Cardiology applications close" and scored
+against MRCPI stages.
+
+Adaptivity now runs through one function, `situation()`, which derives tier,
+college, exam family, IMG status, target count and position in the application
+cycle from the record. **No view reads a raw record field to decide what kind
+of doctor this is.** Add a grade or a specialty and every view updates at once.
+
+Structure is a fixed list of zones — Overview, Your pathway, Your readiness,
+Your applications, Preparation, Practical, Account. The zones never move,
+which is what lets a pricing boundary land on one later without reshuffling a
+nav people have already learned. What adapts is the **state** of each module,
+and there are only three:
+
+- **active** — the normal case
+- **ahead** — real, just not yet, with the date it starts mattering
+- **aside** — not on your route, with the reason in plain words
+
+Nothing is ever hidden. A module that does not apply still renders, still
+routes, still reachable by keyboard; it just stops competing for attention and
+says why, in the nav and again on the page. Personalised disclosure without a
+stated reason reads as the product making decisions behind your back.
+
+CPD is the clearest worked example. A doctor in a training post and an NCHD
+outside one are held to different published requirements, so a single
+hardcoded target is simply wrong for one of them. `cpdRegime()` derives which
+applies, names it, and steps aside the moment the doctor sets their own.
+
+Adaptivity is verified rather than assumed: `test_personas.mjs` renders every
+view against eight personas (SHO, surgical trainee, GP trainee, Nephrology,
+intern, consultant, newly arrived IMG, dual-track) and asserts each one both
+names what it should and never names another specialty's college or exam.
+
 ### Practical tracking
 
 A **Practical** nav group sits between Planning and Account, for the things
@@ -405,10 +443,20 @@ inherited it, so the fix is applied in all six files.
   and start date, used for a doctor's "also applying to" specialties. Same
   status as the primary `deadlines()` dates it sits beside: replace both from
   each college's actual published cycle before this reaches a real doctor.
-- Dashboard: the CPD tracker's default 50-point annual target and its 31
-  December cycle-end date (`cpdTarget`, `cpdCycleEnd`) are invented and flagged
-  as illustrative in the page itself. Replace with each college's actual
-  published CPD requirement, or leave it user-set only.
+- Dashboard: the CPD tracker's two regime targets (50 points in a training
+  post, 20 outside one) and the 31 December cycle-end date are **illustrative
+  and unverified**, and flagged as such in the page itself. Both numbers came
+  from search summaries of the Medical Council professional competence scheme
+  and the HSE CPD support scheme, but neither primary source could be opened
+  to confirm them, so they carry `source_unreadable` status rather than
+  `confirmed`. Verify against both bodies before this reaches a real doctor.
+- Dashboard: Garda vetting's 3-year renewal period is asserted from the
+  product owner, not yet from the National Vetting Bureau. Same treatment.
+- Dashboard: `SPECIALTY_INFO` now carries the target and college for all 22
+  specialties, but the `target` strings are constructed ("HST " + specialty)
+  rather than taken from each college's published programme name. Check the
+  real programme titles before launch, particularly the non-HST ones
+  (Radiology, Histopathology, Ophthalmology, Public Health Medicine).
 - Preparation pages: every fee, date, weight and station count is illustrative.
   Replace from the colleges' published documents, and mark anything not yet
   published rather than carrying last year's number forward.
