@@ -657,7 +657,16 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     return out.map(function(d){ d.days = until(d.iso); d.done = !!S.deadlinesDone[d.id]; return d; });
   }
   function nextDeadline(){
-    var open = deadlines().filter(function(d){ return !d.done && d.days >= 0; });
+    /* Today answers "what is next for me". A college date belonging to a cycle
+       this doctor cannot meet is real, but it is not theirs, and surfacing it
+       as their next deadline is what made the dashboard read like a verdict.
+       The deadlines page still lists every date, labelled. */
+    var elig = cycleEligibility();
+    var skipOfficial = elig && !elig.eligible;
+    var open = deadlines().filter(function(d){
+      if (d.done || d.days < 0) return false;
+      return !(skipOfficial && d.kind === "official");
+    });
     return open.length ? open[0] : null;
   }
 
@@ -814,6 +823,55 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     };
   }
 
+  /* ================= CYCLE ELIGIBILITY =================
+     A date can be correct and still land wrong. A doctor four months into
+     Irish practice was being shown "applications close in 9 days" in critical
+     red beside a score of 0 out of 35, which reads as "you have already
+     failed" when the truth is that this cycle was never theirs and they are
+     building for the next one.
+
+     ENTRY is ILLUSTRATIVE, like the DOMAINS bands and the CYCLE dates it sits
+     beside. Replace with each college's published eligibility rules. See the
+     README placeholders list. */
+  var ENTRY = { monthsByStart: 24, examStagesByApply: 1 };
+
+  function cycleEligibility(){
+    var sit = situation();
+    if (!sit.stillApplying || !sit.cycle) return null;
+    var c = sit.cycle;
+    /* eligibility is judged at the post start date, not today: months keep
+       accruing between now and July, and not counting them would understate
+       everyone mid-cycle */
+    var monthsAtStart = S.clinicalMonths + Math.max(0, Math.floor(until(c.start) / 30.44));
+    var gaps = [];
+    if (monthsAtStart < ENTRY.monthsByStart)
+      gaps.push("you would have " + monthsAtStart + " months post-internship by " +
+        fmtLong(c.start) + ", and entry is set around " + ENTRY.monthsByStart);
+    if (S.examStages < ENTRY.examStagesByApply)
+      gaps.push("no " + sit.exam + " stage is held yet, and applications close " + fmtLong(c.apply));
+    /* Not simply "next year". Someone four months in does not become eligible
+       by waiting one cycle, and naming the wrong one is the same failure as
+       naming the wrong college: confidently specific, and wrong. Step forward
+       a year at a time until the months bar is actually met. */
+    var yr = day(c.apply).getFullYear(), startIso = c.start, ahead = 0;
+    while (ahead < 8){
+      var m = S.clinicalMonths + Math.max(0, Math.floor(until(startIso) / 30.44));
+      if (m >= ENTRY.monthsByStart) break;
+      ahead++;
+      startIso = addDays(startIso, 365);
+    }
+    var ty = yr + ahead;
+    return {
+      eligible: gaps.length === 0,
+      gaps: gaps,
+      monthsAtStart: monthsAtStart,
+      cyclesAhead: ahead,
+      thisCycle: yr + " to " + (yr + 1),
+      targetCycle: ty + " to " + (ty + 1),
+      targetStart: startIso
+    };
+  }
+
   /* CPD is the worked example of why situation() exists. The Medical Council's
      professional competence scheme and the HSE CPD support scheme for NCHDs
      outside training posts are two different regimes with two different
@@ -905,9 +963,20 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
       var hr = new Date().getHours();
       var greet = hr < 12 ? "Good morning" : (hr < 18 ? "Good afternoon" : "Good evening");
       var others = otherTargetsInfo();
+      var elig = cycleEligibility();
+      var buildingForNext = elig && !elig.eligible;
       var h = '<p class="hello">' + greet + ", " + esc(S.name.split(/\s+/)[0]) + ".</p>" +
-        '<p class="hello-sub">' + (top ? "One thing would move you further than anything else today."
-                                      : "Nothing is outstanding. Keep the evidence dated.") + "</p>";
+        '<p class="hello-sub">' + (buildingForNext
+            ? "You are building towards the " + esc(elig.targetCycle) + " intake, not the one closing now."
+            : top ? "One thing would move you further than anything else today."
+                  : "Nothing is outstanding. Keep the evidence dated.") + "</p>";
+      /* said once, at the top, before any figure that would otherwise read as
+         a verdict on a race this doctor is not yet running */
+      if (buildingForNext){
+        h += ctx("The " + elig.thisCycle + " cycle is closing, but on your record it was never yours: " +
+          elig.gaps.join("; ") + ". The first intake you can actually make is " + elig.targetCycle +
+          ", starting " + fmtLong(elig.targetStart) + ". Everything below is measured against that.");
+      }
       if (others.length){
         h += '<p class="hello-sub" style="margin-top:-10px">Also tracking ' + others.map(function(o){ return esc(o.name); }).join(", ") +
           '. <a class="btn-link" href="#/roadmap">See both routes</a></p>';
@@ -1092,8 +1161,13 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
       /* no application row exists for someone who is not applying, so the
          closing-date sentence has to be optional rather than assumed */
       var nd = deadlines().filter(function(d){ return d.id === "apps"; })[0] || null;
-      var rsit = situation();
-      var h = '<div class="card"><div class="ring-wrap">' + ring(readiness(), "assembled") +
+      var rsit = situation(), relig = cycleEligibility();
+      /* a percentage is a verdict unless you say what it is measured against */
+      var rframe = (relig && !relig.eligible)
+        ? ctx("Measured against the " + relig.targetCycle + " intake, which is the one you are building for. " +
+            "A low figure this far out is what building looks like, not a result.")
+        : "";
+      var h = rframe + '<div class="card"><div class="ring-wrap">' + ring(readiness(), "assembled") +
         '<div><h2 style="font-size:17px;color:var(--deep)">' + readiness() + "% ready for " + esc(rsit.target) + "</h2>" +
         '<p class="lede" style="margin-top:6px;max-width:56ch">Weighted across six portfolio domains. ' +
         (nd ? "Applications close " + fmtLong(nd.iso) + ", <b>" + awayText(nd.days) + "</b>. " : "") +
@@ -1127,7 +1201,12 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     title:"Shortlisting score", sub:"How you would score today against published criteria.",
     render:function(){
       var pts = scorePts(), max = scoreMax(), pct = Math.round(pts / max * 100);
-      var h = '<div class="card"><div class="ring-wrap">' + ring(pct, "scored") +
+      var selig = cycleEligibility();
+      var h = ((selig && !selig.eligible)
+        ? ctx("This is how you would score if you applied today, against the " + selig.targetCycle +
+            " intake you are building for. It is a starting point, not a result.")
+        : "");
+      h += '<div class="card"><div class="ring-wrap">' + ring(pct, "scored") +
         '<div><h2 style="font-size:17px;color:var(--deep)">' + pts + " of " + max + " points</h2>" +
         '<p class="lede" style="margin-top:6px;max-width:58ch">Colleges score in bands, not percentages. A project that is 60% finished scores ' +
         "the same as one never started, which is why your readiness figure of " + readiness() + "% and this score disagree. " +
@@ -1160,17 +1239,31 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
     title:"Deadlines", sub:"Official dates and the ones you set yourself.",
     render:function(){
       var all = deadlines(), show = all.filter(function(d){ return S.showPast || d.days >= 0 || d.done; });
+      var delig = cycleEligibility();
+      var notMine = delig && !delig.eligible;
       var h = "", lastMonth = "";
+      /* every date still listed, but a cycle the doctor cannot meet is said
+         so once at the top rather than left to read as a countdown they are
+         losing */
+      if (notMine){
+        h += ctx("The college dates below belong to the " + delig.thisCycle +
+          " cycle. On your record you are building for " + delig.targetCycle +
+          ", so treat them as the shape of the year rather than your own countdown.");
+      }
       if (!show.length) h = '<p class="empty"><b>Nothing scheduled.</b>Every date on your route has passed.</p>';
       show.forEach(function(d){
         var mk = MON_LONG[day(d.iso).getMonth()] + " " + day(d.iso).getFullYear();
         if (mk !== lastMonth){ h += '<p class="month">' + mk + "</p>"; lastMonth = mk; }
-        var k = d.done ? "good" : (d.days < 0 ? "warn" : (d.days <= 21 ? "crit" : (d.days <= 60 ? "warn" : "good")));
+        /* an official date in a cycle that is not theirs never renders red:
+           urgency belongs to the person who can act on it */
+        var theirs = !(notMine && d.kind === "official");
+        var k = d.done ? "good" : !theirs ? "mute"
+          : (d.days < 0 ? "warn" : (d.days <= 21 ? "crit" : (d.days <= 60 ? "warn" : "good")));
         h += '<div class="dl ' + k + (d.done ? " done" : "") + '"><div class="dl-top"><b>' + esc(d.t) + "</b>" +
-          '<span class="away" style="color:var(--' + (k === "crit" ? "crit" : k === "warn" ? "warn" : "good") + '-text)">' +
+          '<span class="away" style="color:var(--' + (k === "crit" ? "crit" : k === "warn" ? "warn" : k === "mute" ? "txt" : "good") + '-text)">' +
           (d.done ? "Done" : awayText(d.days)) + "</span></div>" +
           '<div class="dl-sub"><span>' + fmtLong(d.iso) + "</span>" +
-          '<span class="chip mute">' + (d.kind === "official" ? "Official" : "Your own") + "</span>" +
+          '<span class="chip mute">' + (!theirs ? "Next cycle for you" : d.kind === "official" ? "Official" : "Your own") + "</span>" +
           "<span>" + esc(d.note) + "</span>" +
           '<button class="btn-link" data-toggle="' + d.id + '">' + (d.done ? "Mark not done" : "Mark done") + "</button></div></div>";
       });
