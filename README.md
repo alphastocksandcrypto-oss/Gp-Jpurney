@@ -934,6 +934,60 @@ inherited it, so the fix is applied in all six files.
   - Neither field is scored. Readiness and the shortlisting score are
     unchanged by either.
 
+## The alternate structure, `app/alt.html`
+
+A parallel take on the information architecture, built to be compared against
+the live dashboard rather than to replace it. It keeps its own storage key
+(`mednav.alt.v1`), so trying it never disturbs the demo record the live app
+holds, and it carries a banner saying what it is.
+
+**Why it exists.** Measuring every page turned up an uncomfortable fact: the two
+surfaces the product owner says are paid from day one were the two thinnest in
+the app.
+
+| page | controls | words |
+|---|---|---|
+| Exam prep | 3 | 92 |
+| Interview prep | 1 | 126 |
+| Gap analysis | 17 | 455 |
+
+A whole session of work had gone into the free navigation layer while the thing
+people are meant to pay for stayed a stub.
+
+**What changes.** Three things, all structural.
+
+*Zones group by cadence, not by artefact.* The live nav groups by what a page
+is — roadmap, tracker, deadlines, gaps. That hides the property that actually
+separates them, which is how often a doctor opens them: **Where you stand**
+monthly, **How ready you are** before applying, **Get exam ready** daily for six
+to eight weeks.
+
+*The pricing line is a property of a zone.* `PAID_ZONES` marks it once on the
+zone heading rather than repeating a badge on every item inside it.
+
+*Exam prep becomes a module you enter rather than a page you visit.* A surface
+opened daily for two months should not sit between Deadlines and Occupational
+health as one more row. It gets its own header, its own six surfaces — study
+planner, knowledge base, question bank, mock exam, analytics, live tutor — and
+its own inside. This is the shape GP Journey already has for GP, generalised:
+MedNav as the map across every specialty, with the gym bought per exam.
+
+**The load-bearing claim is the write-back.** Every surface card carries a line
+saying what it feeds back into the record, and the mock exam demonstrates it
+rather than asserting it: a recorded score moves the predicted result on the
+module header and drives the analytics trend. A standalone question bank cannot
+move a doctor's readiness, close a gap item or tick an application requirement.
+That is the only durable reason to buy this one instead of a cheaper one.
+
+**What it deliberately does not do.** It does not generate exam questions or
+teaching text. The knowledge base and question bank show topic structure and
+coverage, with the content explicitly marked as authored by doctors who have sat
+the exam — the standing ban on AI-generated question banks holds. The mock exam
+records a score the doctor already has rather than inventing one, and that score
+feeds a *predicted* figure only: a mock is not a stage held and must never touch
+the shortlisting rubric. Live tutor is named and left honest rather than mocked
+up.
+
 ## Noted for later, deliberately not built
 
 - **The Application tracker is unfinished and parked.** What is built works —
