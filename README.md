@@ -936,6 +936,28 @@ inherited it, so the fix is applied in all six files.
 
 ## Noted for later, deliberately not built
 
+- **The Application tracker is unfinished and parked.** What is built works —
+  four derived stages, programme switching, inline actions — but it stopped
+  mid-thought rather than at a natural end. Open when we return:
+  - **Print is a stub.** "Print this stage" calls bare `window.print()` and
+    there is no `@media print` block anywhere in the app, so it prints the dark
+    sidebar and the nav. Either build a real print stylesheet, or drop the
+    button until there is one; a control that produces something unusable is
+    worse than no control.
+  - **The requirement lists are ours, not any college's.** The categories are
+    defensible; the specific documents, formats, English tests and verification
+    routes are not. Flagged on the page and in the placeholder list above.
+  - **Stage IV is thin against the reference.** Accommodation lead time, ICGP
+    ePortfolio familiarisation and similar pre-start items exist in the product
+    owner's own GP Journey; ours has three generic requirements.
+  - **No per-stage narrative.** The reference carries a "heads up" line per
+    stage — references falling over Christmas, Garda clearance taking 4-6 weeks.
+    Those are the facts a doctor most needs and we carry none of them, because
+    each one is a claim we cannot yet source.
+  - **Custom requirements always land in Preparation.** `customChecks` has a
+    `p` field but nothing sets it, so a doctor cannot add a requirement to the
+    stage it belongs to.
+
 - **Mentorship matching.** A toggle for "match me with a senior doctor in my
   target specialty" was considered for onboarding and set aside. It is a real
   and valuable feature, but it needs a supply of mentors and a matching
