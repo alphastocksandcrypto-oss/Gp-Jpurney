@@ -862,6 +862,13 @@ inherited it, so the fix is applied in all six files.
   before any of it is shown to a real doctor.
 - Dashboard actions that are honestly stubbed and say so: calendar export,
   reminders and sign out.
+- Dashboard: `EXAMS` is the stage registry — names, formats, structures and
+  whether a stage is sat to enter training or during it. The *shapes* are close
+  to right and the entry/membership distinction is real and important, but every
+  college sets and changes its own, and `IV_DOMAINS` and `INTERVIEWS` are the
+  same: a defensible generic shape, not any college's published assessment.
+  Confirm all of it before launch. `TOPICS` is an eight-item placeholder and is
+  not any stage's syllabus.
 - Dashboard: `CHECKS` and `CHECKS_IMG` are the *shape* an Irish training
   application takes, not any college's published requirement list. The
   categories are safe (registration, CV, references, clearances, evidence, right
@@ -933,6 +940,93 @@ inherited it, so the fix is applied in all six files.
     would read as "found nothing" rather than "this is a small demo".
   - Neither field is scored. Readiness and the shortlisting score are
     unchanged by either.
+
+## Exam prep and interview prep, rebuilt as modules
+
+Measuring every page found the thing worth acting on: the two surfaces that are
+paid from day one were the two thinnest in the app. Exam prep had three controls
+and ninety-two words; interview prep had one. The free Gap analysis had
+seventeen.
+
+### The unit is a stage, not a family
+
+Nobody revises for "MRCPI". They revise for Part 1, sit it, then start on
+something with a different format and a different syllabus. So `EXAMS` lists
+**stages**, and a stage is what gets recommended, what has a hub, and what a
+mock score belongs to.
+
+`examParts()` previously assumed every family was three parts shaped *Part 1 /
+Part 2 written / clinical*. That is not what ICGP runs, and not what MRCS,
+MRCEM or the rest run either. The registry also records **when** a stage is sat,
+because an applicant to GP training sits the SJT and CPST to get *in* while
+MICGP is the membership exam sat years later *inside* training — and
+`SPECIALTY_INFO` said only "MICGP", which is the wrong exam to send an applicant
+to prepare for.
+
+### The bug this fixed
+
+A doctor tracking Cardiology and General Practice, holding two MRCPI stages, was
+shown this on the **GP** application card:
+
+> **Exam stage held** · *From your record*
+> **2 of 3 MRCPI stages held**
+
+That is MRCPI progress offered as evidence that the GP application's exam
+requirement is met, two clicks from a divergence card correctly saying GP needs
+MICGP. `S.examStages` was one scalar read in twenty-two places, and every one of
+them meant "stages in the family of whatever route is being looked at".
+
+It is now derived per family: `stagesHeld(specialty)` counts the stages held in
+the family that specialty needs to enter training. The GP card now reads *0 of 2
+ICGP entry stages held*, the ladders name their own families, and the scalar
+survives only as a seed so a record from onboarding keeps its progress.
+
+A side effect worth noting: MRCS is two parts, so a surgeon holding both now
+correctly holds full membership. The old three-part assumption had been
+inventing a stage they would never sit.
+
+### Two levels: catalogue, then hub
+
+A doctor arrives with one of two questions. *What should I be sitting?* is
+answered by a catalogue — what your route needs next, then every exam grouped by
+college, browsable. Someone who came for exams alone and never finished
+onboarding still gets a usable list, and the recommendation is derived rather
+than chosen by us: the first stage they do not hold in the family their route
+needs, plus the same for a second route, plus the language requirement for an
+IMG.
+
+*Get me ready for MRCPI Part 1* is answered by a hub: study planner, knowledge
+base, question bank, mock exam, analytics, live tutor.
+
+**The hub adapts to the stage.** A clinical or OSCE stage is not offered a
+question bank, because that is not how anyone prepares for one. A stage sat
+during training has no application to pace a plan against and says so rather
+than inventing a countdown.
+
+### Interview prep, same shape
+
+One interview per college, derived from the routes being tracked, so a
+dual-tracking doctor sees the RCPI structured panel and the ICGP scenario
+assessment as the different things they are.
+
+The surface that justifies the module is **Your evidence**. The interview scores
+the same domains the portfolio does, and this product already holds the
+portfolio, so when the panel asks about quality improvement it can name the
+audit the doctor logged. Domains with nothing behind them say so. Nothing else
+can do this, because nothing else holds both halves.
+
+Self-ratings are one to five per domain, they drive the readiness figure, and
+Analytics ranks the weakest first. Clicking a rating you already hold clears it,
+so a doctor can undo without picking a number they do not mean.
+
+### What is deliberately not built
+
+No questions, no teaching text, no model answers. The knowledge base and
+question bank show topic structure and coverage with the content marked as
+authored by doctors who have sat the stage. The mock records a score the doctor
+already has and feeds a **predicted** figure only — a mock is not a stage held
+and must never touch the shortlisting rubric, which a test asserts. Live tutor
+is named and left honest.
 
 ## The alternate structure, `app/alt.html`
 

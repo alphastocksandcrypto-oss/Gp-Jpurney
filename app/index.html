@@ -412,6 +412,42 @@ button.chk-box:hover{border-color:var(--deep)}
   .chk{flex-wrap:wrap}
   .chk-r{width:100%;justify-content:flex-start;padding-left:36px}
 }
+/* ============ THE EXAM HUB ============
+   A stage you enter, not a row you read. It gets its own header because the
+   thing people pay for should not look like one more item in a list. */
+.gym-h{display:flex;gap:18px;align-items:center;flex-wrap:wrap;background:linear-gradient(125deg,#0b2e36,#12404c 62%);
+  color:#fff;border-radius:22px;padding:22px 24px;box-shadow:0 18px 40px rgba(11,46,54,.24);margin-bottom:14px}
+.gym-id{flex:1;min-width:210px}
+.gym-k{display:inline-block;font-family:var(--fd);font-size:10px;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;color:#052a22;background:var(--mint-2);border-radius:999px;padding:3px 10px;margin-bottom:8px}
+.gym-h h2{font-family:var(--fd);font-size:21px;font-weight:800;letter-spacing:-.02em;margin-bottom:5px}
+.gym-h p{font-size:13px;color:#a9cdc3;max-width:56ch}
+.gym-stat{flex:none;text-align:right;min-width:100px}
+.gym-stat .k{display:block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#8fb5ac}
+.gym-stat b{display:block;font-family:var(--fd);font-size:24px;font-weight:800;line-height:1.1;margin:3px 0 2px}
+.gym-stat small{display:block;font-size:10.5px;color:#8fb5ac;line-height:1.35}
+.gym-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.gym-card{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;background:#fff;
+  border:1px solid var(--line);border-radius:16px;padding:14px 16px;box-shadow:var(--card-shadow);
+  transition:transform .2s,border-color .2s;min-width:0}
+.gym-card:hover{transform:translateY(-2px);border-color:var(--deep)}
+.gym-card.on{border-color:var(--deep);border-width:2px;padding:13px 15px}
+.gym-ic{width:30px;height:30px;border-radius:10px;background:var(--mint-soft);color:var(--good-text);
+  display:grid;place-items:center;margin-bottom:5px}
+.gym-card b{font-size:13.5px;font-weight:700;color:var(--deep)}
+.gym-card .gd{font-size:11.5px;color:var(--txt-soft);line-height:1.45}
+/* the line that says why this hub is worth paying for: it feeds the record */
+.gym-card .gf{display:flex;gap:5px;align-items:flex-start;font-size:11px;font-weight:600;color:var(--good-text);
+  margin-top:7px;padding-top:7px;border-top:1px dashed var(--line);width:100%;line-height:1.4}
+.gym-card .gf svg{flex:none;margin-top:2px}
+@media(max-width:900px){ .gym-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:600px){ .gym-grid{grid-template-columns:minmax(0,1fr)} .gym-stat{text-align:left} }
+/* a one-to-five self-rating. Small buttons, but each still clears 24px */
+.rate{display:flex;gap:4px}
+.rt{width:28px;height:28px;border-radius:9px;border:1.5px solid var(--line);background:#fff;
+  font-size:12px;font-weight:700;color:var(--txt-soft);cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.rt:hover{border-color:var(--deep)}
+.rt.on{background:var(--mint);border-color:var(--mint);color:#052a22}
 /* ============ LISTS ============ */
 .row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
 .row:last-child{border-bottom:0}
@@ -665,6 +701,14 @@ a.nudge:hover{text-decoration:underline}
     customChecks:[],
     /* which application and which phase of it the tracker is showing */
     trackTarget:"", trackPhase:"",
+    /* THE GYM. Keyed by exam stage id throughout, because a stage is the unit
+       a doctor prepares for: MRCPI Part 1 and Part 2 Clinical share a family
+       and nothing else. examStageDone supersedes the examStages counter, which
+       stays only so a record seeded at onboarding keeps its progress. */
+    examStageDone:{}, examActive:[], examOpen:"", gymSurface:"",
+    mocks:{}, topicsDone:{},
+    /* interview prep, keyed by college the way the exam hub is keyed by stage */
+    ivOpen:"", ivRatings:{}, ivMocks:{},
     activity:[]
   };
   var KEY = "mednav.demo.v1";
@@ -769,12 +813,14 @@ a.nudge:hover{text-decoration:underline}
      bands:"12 months scores 3, 24 months scores 5",
      note:function(){ return S.clinicalMonths + " months post-internship, target 28 by application"; }},
     {id:"exams", name:"Exams and membership", weight:15, maxPts:8,
-     ready:function(){ return Math.round(S.examStages / 3 * 100); },
-     pts:function(){ return S.examStages >= 3 ? 8 : (S.examStages >= 1 ? 3 : 0); },
+     ready:function(){ return Math.round(stagesHeld() / stagesTotal() * 100); },
+     pts:function(){ var n = stagesHeld(), t = stagesTotal();
+       return n >= t ? 8 : (n >= 1 ? 3 : 0); },
      bands:"Part 1 scores 3, full membership scores 8",
      note:function(){
        var ex = situation().exam || "membership";
-       return S.examStages >= 3 ? "Full " + ex + " membership held" : S.examStages + " of 3 " + ex + " stages held";
+       var n = stagesHeld(), t = stagesTotal();
+       return n >= t ? "Full " + ex + " membership held" : n + " of " + t + " " + ex + " stages held";
      }},
     {id:"auditqi", name:"Audit and QI", weight:25, maxPts:10,
      ready:function(){ return Math.round(((S.auditComplete + S.qiPct/100) / 2) * 100); },
@@ -880,9 +926,10 @@ a.nudge:hover{text-decoration:underline}
      fix:["#/roadmap","Your roadmap"]},
     {id:"exam", p:"prep", g:"Eligibility", t:"Exam stage held",
      d:"At least one membership stage by the closing date",
-     auto:function(){ return S.examStages >= ENTRY.examStagesByApply; },
+     auto:function(){ return stagesHeld(trackTarget()) >= ENTRY.examStagesByApply; },
      autoNote:function(){ var e = situation().exam || "membership";
-       return S.examStages + " of 3 " + e + " stages held"; },
+       var tt = trackTarget(), f = entryFamilyFor(tt) || e;
+       return stagesHeld(tt) + " of " + stagesTotal(tt) + " " + f + " stages held"; },
      act:["passExam","Record a stage passed"], fix:["#/exams","Exam prep"]},
     /* ---- documents ---- */
     {id:"cv", p:"prep", g:"Documents", t:"CV in the required format", shared:true,
@@ -1113,7 +1160,7 @@ a.nudge:hover{text-decoration:underline}
       {t:"IMC registration", when: onLadder ? "Complete" : "Not started", state: onLadder ? "done" : "todo"}
     ];
     [S.exam + " Part 1", S.exam + " Part 2 written", S.exam + " clinical exam"].forEach(function(label, n){
-      m.push({t:label, when: S.examStages > n ? "Passed" : "Not held", state: S.examStages > n ? "done" : "todo"});
+      m.push({t:label, when: stagesHeld() > n ? "Passed" : "Not held", state: stagesHeld() > n ? "done" : "todo"});
     });
     m.push({t:"Advanced Life Support", when: onLadder ? "Held" : "Not held", state: onLadder ? "done" : "todo"});
     m.push({t:"Basic specialist training, year 1", when: S.clinicalMonths >= 12 ? "Complete" : "In progress",
@@ -1455,7 +1502,7 @@ a.nudge:hover{text-decoration:underline}
              "BST dates are set separately from the " + sit.target + " cycle shown elsewhere.",
         links:[["#/readiness","Check your readiness"],["#/interviews","Interview prep"]]};
     }
-    if (sit.tier === "bst" && t.stageYear <= 1 && S.examStages < 3){
+    if (sit.tier === "bst" && t.stageYear <= 1 && stagesHeld() < stagesTotal()){
       return {k:"Your next milestone", t:"Sit the " + sit.exam + " parts you do not hold",
         why:"First year of BST is when the membership exam is cheapest to sit. HST applications ask for it.",
         links:[["#/exams", sit.exam + " prep"],["#/gaps","See what else is missing"]]};
@@ -1482,7 +1529,7 @@ a.nudge:hover{text-decoration:underline}
     if (monthsAtStart < ENTRY.monthsByStart)
       gaps.push("you would have " + monthsAtStart + " months post-internship by " +
         fmtLong(c.start) + ", and entry is set around " + ENTRY.monthsByStart);
-    if (S.examStages < ENTRY.examStagesByApply)
+    if (stagesHeld() < ENTRY.examStagesByApply)
       gaps.push("no " + sit.exam + " stage is held yet, and applications close " + fmtLong(c.apply));
     /* Not simply "next year". Someone four months in does not become eligible
        by waiting one cycle, and naming the wrong one is the same failure as
@@ -1679,7 +1726,7 @@ a.nudge:hover{text-decoration:underline}
       (rest > 0 ? '<p class="lede" style="margin:2px 0 0">And ' + rest + " more, with what a strong answer covers.</p>" : "") +
       "</div>" +
       '<div class="prep-cta"><a class="btn btn-sm btn-primary" href="#/interviews">Open interview prep</a>' +
-      (S.examStages < 3 ? '<a class="btn-link" href="#/exams">' + esc(sit.exam) + " prep</a>" : "") +
+      (stagesHeld() < stagesTotal() ? '<a class="btn-link" href="#/exams">' + esc(sit.exam) + " prep</a>" : "") +
       "</div></div>";
   }
 
@@ -2232,6 +2279,10 @@ a.nudge:hover{text-decoration:underline}
   function trailFor(specName){
     var info = SPECIALTY_INFO[specName] || {};
     var exam = info.exam || S.exam, target = info.target || S.target;
+    /* this ladder's own exam family, and this ladder's own progress in it */
+    var lfam = entryFamilyFor(specName) || exam;
+    var lheld = stagesHeldIn(lfam), ltotal = Math.max(1, examsInFamily(lfam).length);
+    var lfirst = (examsInFamily(lfam)[0] || {}).stage || "Part 1";
     var c = CYCLE[info.body] || null;
     var onLadder = stageDone("internship", S.clinicalMonths > 0);
     var bstInferred = S.clinicalMonths >= 24;
@@ -2243,18 +2294,18 @@ a.nudge:hover{text-decoration:underline}
     var trail = [
       {k: onLadder ? "done" : "todo", t:"Internship",
        when: stageWhen("internship", onLadder ? "Complete" : "Not started"), rung:"internship"},
-      {k:"flag", t: S.examStages >= 1 ? exam + " Part 1 passed" : exam + " Part 1 not held",
-       when: S.examStages >= 1 ? "Passed" : "Outstanding", go:["#/exams","Exam prep"],
-       rung: S.examStages < 1 ? "exam" : null, rungLabel:"Mark passed"},
+      {k:"flag", t: lheld >= 1 ? lfam + " " + lfirst + " passed" : lfam + " " + lfirst + " not held",
+       when: lheld >= 1 ? "Passed" : "Outstanding", go:["#/exams","Exam prep"],
+       rung: lheld < 1 ? "exam" : null, rungLabel:"Mark passed"},
       {k: bstDone ? "done" : "todo", t:"Basic specialist training",
        when: bstDone ? stageWhen("bst", "Complete")
          : (S.inScheme === false && !S.schemeName
              ? (S.roleTitle ? "Not on a scheme, working as " + S.roleTitle : "No training place yet")
              : S.clinicalMonths + " months in"),
        rung:"bst"},
-      {k:"flag", t: S.examStages >= 3 ? "Full " + exam + " membership" : exam + " not yet complete",
-       when: S.examStages + " of 3 stages", go: S.examStages < 3 ? ["#/exams","Exam prep"] : null,
-       rung: S.examStages < 3 ? "exam" : null, rungLabel:"Mark a stage passed"}
+      {k:"flag", t: lheld >= ltotal ? "Full " + lfam : lfam + " not yet complete",
+       when: lheld + " of " + ltotal + " stages", go: lheld < ltotal ? ["#/exams","Exam prep"] : null,
+       rung: lheld < ltotal ? "exam" : null, rungLabel:"Mark a stage passed"}
     ];
     if (situation().stillApplying){
       /* the application rung is the application tracker: it records whether
@@ -3030,89 +3081,643 @@ a.nudge:hover{text-decoration:underline}
   /* the three membership stages, named for whichever exam family the doctor's
      specialty actually sits. The names come from SPECIALTY_INFO, so a surgical
      trainee sees MRCS parts here and never MRCPI ones. */
-  function examParts(){
-    var ex = situation().exam || "Membership";
-    return [
-      {n:0, t:ex + " Part 1",         what:"Written, basic sciences and clinical knowledge"},
-      {n:1, t:ex + " Part 2 written", what:"Written, applied clinical knowledge"},
-      {n:2, t:ex + " clinical exam",  what:"Clinical, examined on real or simulated cases"}
-    ].map(function(p){ p.held = S.examStages > p.n; return p; });
+  /* ================= THE EXAM REGISTRY =================
+     The unit a doctor actually prepares for is a STAGE, not a family. Nobody
+     revises for "MRCPI" — they revise for Part 1, sit it, and then start on
+     something with a different format and a different syllabus. So a stage is
+     what the catalogue lists, what gets recommended, and what has a hub.
+
+     examParts() below assumed every family was three parts shaped Part 1 /
+     Part 2 written / clinical. That is not what ICGP runs, and it is not what
+     several of these run either, which is why a GP applicant was being shown
+     an MRCPI-shaped exam they will never sit.
+
+     WHEN matters as much as the name. An applicant to GP training sits the
+     SJT and CPST to get in; MICGP is the membership exam they sit years later
+     inside training. Listing both without saying which is which is how a
+     doctor ends up preparing for the wrong one.
+
+     ILLUSTRATIVE. Stage names, formats and structures are each college's and
+     they change. Confirmed structures replace these before launch. */
+  var EXAMS = [
+    /* RCPI medicine */
+    {id:"mrcpi-1",   fam:"MRCPI", body:"RCPI", stage:"Part 1", when:"entry",
+     fmt:"Written, single best answer", d:"Basic sciences and clinical knowledge. The stage most applications ask for."},
+    {id:"mrcpi-2w",  fam:"MRCPI", body:"RCPI", stage:"Part 2 Written", when:"membership",
+     fmt:"Written, applied knowledge", d:"Applied clinical knowledge across general medicine."},
+    {id:"mrcpi-2c",  fam:"MRCPI", body:"RCPI", stage:"Part 2 Clinical", when:"membership",
+     fmt:"Clinical, examined cases", d:"Examined on real or simulated patients. Prepared for by practising, not by reading."},
+    /* RCSI surgery */
+    {id:"mrcs-a",    fam:"MRCS", body:"RCSI", stage:"Part A", when:"entry",
+     fmt:"Written, two papers", d:"Applied basic sciences and principles of surgery."},
+    {id:"mrcs-b",    fam:"MRCS", body:"RCSI", stage:"Part B", when:"membership",
+     fmt:"Clinical, OSCE", d:"Structured clinical stations."},
+    /* general practice: the entry assessment and the membership exam are not
+       the same thing, and conflating them is the whole point of this table */
+    {id:"icgp-sjt",  fam:"ICGP entry", body:"ICGP", stage:"SJT", when:"entry",
+     fmt:"Situational judgement", d:"Scenario-based judgement. Carries heavy weight in the entry score."},
+    {id:"icgp-cpst", fam:"ICGP entry", body:"ICGP", stage:"CPST", when:"entry",
+     fmt:"Clinical problem solving", d:"Sat alongside the SJT, scored separately."},
+    {id:"micgp",     fam:"MICGP", body:"ICGP", stage:"MICGP", when:"exit",
+     fmt:"Written and clinical", d:"The membership exam, sat inside GP training rather than to enter it."},
+    /* psychiatry */
+    {id:"mrcpsych-a", fam:"MRCPsych", body:"College of Psychiatrists", stage:"Paper A", when:"entry",
+     fmt:"Written", d:"Scientific and theoretical basis of psychiatry."},
+    {id:"mrcpsych-b", fam:"MRCPsych", body:"College of Psychiatrists", stage:"Paper B", when:"membership",
+     fmt:"Written", d:"Critical review and clinical topics."},
+    {id:"mrcpsych-c", fam:"MRCPsych", body:"College of Psychiatrists", stage:"CASC", when:"membership",
+     fmt:"Clinical, OSCE", d:"Clinical assessment of skills and competencies."},
+    /* emergency medicine */
+    {id:"mrcem-p",   fam:"MRCEM", body:"RCSI", stage:"Primary", when:"entry",
+     fmt:"Written", d:"Basic sciences applied to emergency medicine."},
+    {id:"mrcem-i",   fam:"MRCEM", body:"RCSI", stage:"Intermediate SBA", when:"membership",
+     fmt:"Written", d:"Applied knowledge."},
+    {id:"mrcem-o",   fam:"MRCEM", body:"RCSI", stage:"OSCE", when:"membership",
+     fmt:"Clinical, OSCE", d:"Structured clinical stations."},
+    /* paediatrics and obstetrics, on the RCPI faculties */
+    {id:"mrcpch-1",  fam:"MRCPI Paediatrics", body:"RCPI", stage:"Part 1", when:"entry",
+     fmt:"Written", d:"Basic and applied sciences in paediatrics."},
+    {id:"mrcpch-2",  fam:"MRCPI Paediatrics", body:"RCPI", stage:"Part 2", when:"membership",
+     fmt:"Written and clinical", d:"Applied knowledge and examined cases."},
+    {id:"mrcog-1",   fam:"MRCPI O and G", body:"RCPI", stage:"Part 1", when:"entry",
+     fmt:"Written", d:"Basic sciences for obstetrics and gynaecology."},
+    {id:"mrcog-2",   fam:"MRCPI O and G", body:"RCPI", stage:"Part 2", when:"membership",
+     fmt:"Written and clinical", d:"Applied knowledge and examined cases."},
+    /* the language requirement, which is an exam a great many IMGs sit and
+       which no part of this product acknowledged */
+    {id:"ielts",     fam:"English language", body:"Medical Council", stage:"IELTS or OET", when:"entry",
+     fmt:"Four papers", d:"Where your primary qualification was not taught in English. The accepted tests and scores are the Council's.",
+     imgOnly:true}
+  ];
+
+  function examById(id){ return EXAMS.filter(function(e){ return e.id === id; })[0] || null; }
+  function examsInFamily(fam){ return EXAMS.filter(function(e){ return e.fam === fam; }); }
+
+  /* which family a given route actually needs to ENTER training. General
+     practice is the case that makes this necessary: SPECIALTY_INFO says MICGP,
+     which is the exam sat years into the scheme, not the one that gets you on
+     it. */
+  function entryFamilyFor(specialty){
+    var info = SPECIALTY_INFO[specialty] || {};
+    if (info.body === "ICGP") return "ICGP entry";
+    return info.exam || "";
   }
 
+  /* a stage is held when the doctor says so. The legacy counter seeded from
+     onboarding still counts for the primary route's family, so nobody loses
+     progress they already recorded. */
+  function stageHeld(id){
+    var rec = (S.examStageDone || {})[id];
+    if (rec) return rec;
+    var e = examById(id);
+    if (!e) return null;
+    var primary = entryFamilyFor(S.specialty);
+    if (e.fam !== primary) return null;
+    var fam = examsInFamily(primary), idx = fam.indexOf(e);
+    return (idx > -1 && idx < (S.examStages || 0)) ? "seeded" : null;
+  }
+  function stagesHeldIn(fam){
+    return examsInFamily(fam).filter(function(e){ return stageHeld(e.id); }).length;
+  }
+  /* the count for the route being looked at, which is what every scoring and
+     eligibility check in the app actually meant when it read S.examStages */
+  function stagesHeld(specialty){
+    var fam = entryFamilyFor(specialty || S.specialty);
+    return fam ? stagesHeldIn(fam) : 0;
+  }
+  function stagesTotal(specialty){
+    var fam = entryFamilyFor(specialty || S.specialty);
+    return fam ? Math.max(1, examsInFamily(fam).length) : 3;
+  }
+
+  /* what to recommend, derived from the record rather than chosen by us: the
+     first stage they do not hold in the family their route needs, plus the
+     same for any second route they are tracking. */
+  function recommendedExams(){
+    var out = [], sit = situation();
+    var fams = [entryFamilyFor(S.specialty)].concat((S.otherTargets || []).map(entryFamilyFor));
+    fams.filter(function(f, i, a){ return f && a.indexOf(f) === i; }).forEach(function(f){
+      var next = examsInFamily(f).filter(function(e){ return !stageHeld(e.id); })[0];
+      if (next) out.push({exam:next, why:"Your route needs " + f + ", and this is the next stage you do not hold."});
+    });
+    if (sit.isIMG || sit.newToIreland){
+      var lang = examById("ielts");
+      if (lang && !stageHeld("ielts")){
+        out.push({exam:lang, why:"Commonly required where a primary qualification was not taught in English."});
+      }
+    }
+    return out;
+  }
+
+  /* ================= EXAM PREP =================
+     Two levels, because a doctor arrives with one of two questions.
+
+     "What should I be sitting?" is answered by a catalogue: what your route
+     needs next, then everything else, browsable. Someone who came to MedNav
+     only for exams and never finished onboarding still gets a usable list.
+
+     "Get me ready for MRCPI Part 1" is answered by a hub: a plan, the
+     material, practice, a mock, and what the mock says. The hub belongs to the
+     STAGE, because Part 1 and Part 2 Clinical share a family and nothing else:
+     different format, different syllabus, and one of them cannot be prepared
+     for with a question bank at all. */
+  var GYM = [
+    {id:"plan",  t:"Study planner",  ic:I.cal,   d:"Weeks to the sitting, and what this week is for",
+     feeds:"Sets the pace the rest is measured against"},
+    {id:"kb",    t:"Knowledge base", ic:I.book,  d:"The topics this stage covers, and what you have been through",
+     feeds:"Coverage feeds your predicted result"},
+    {id:"qbank", t:"Question bank",  ic:I.list,  d:"Practice by topic, with explanations",
+     feeds:"Accuracy by topic feeds Analytics"},
+    {id:"mock",  t:"Mock exam",      ic:I.clip,  d:"A full sitting under timed conditions",
+     feeds:"Your score moves the predicted result"},
+    {id:"stats", t:"Analytics",      ic:I.chart, d:"Where you are losing marks",
+     feeds:"Reads your mocks and your coverage"},
+    {id:"tutor", t:"Live tutor",     ic:I.mic,   d:"Sessions with someone who has sat this stage",
+     feeds:"Attendance is logged to your record"}
+  ];
+  /* a clinical or OSCE stage is not prepared for with a question bank, and
+     offering one is the fastest way to look like we have never sat it */
+  function gymFor(e){
+    var clinical = /Clinical|OSCE/i.test(e.fmt || "");
+    return GYM.filter(function(g){ return !(clinical && g.id === "qbank"); });
+  }
+
+  function examActive(id){ return (S.examActive || []).indexOf(id) > -1; }
+  function mocksFor(id){ return (S.mocks || {})[id] || []; }
+  function topicsFor(id){ return (S.topicsDone || {})[id] || {}; }
+  function predictedFor(id){
+    var m = mocksFor(id);
+    if (!m.length) return null;
+    var r = m.slice(-3);
+    return Math.round(r.reduce(function(a, x){ return a + x.pct; }, 0) / r.length);
+  }
+  function trendFor(id){
+    var m = mocksFor(id);
+    if (m.length < 2) return null;
+    return {from:m[0].pct, to:m[m.length - 1].pct, delta:m[m.length - 1].pct - m[0].pct,
+            points:m.map(function(x){ return x.pct; })};
+  }
+  /* weeks to the sitting. We hold a closing date, not a sitting timetable, so
+     an entry-stage exam is paced against the application that asks for it and
+     anything else says plainly that it has no date. */
+  function weeksTo(e){
+    var c = situation().cycle;
+    if (!c || e.when !== "entry") return null;
+    var d = until(c.apply);
+    return d < 0 ? null : Math.max(0, Math.round(d / 7));
+  }
+  var TOPICS = ["Cardiology", "Respiratory", "Gastroenterology", "Nephrology",
+                "Endocrinology", "Neurology", "Haematology", "Infectious disease"];
+
   VIEWS.exams = {
-    title:"Exam prep", sub:"Where you are in the membership exam your route requires.",
+    title:"Exam prep", sub:"Every stage you could sit, and a hub for each one you are working on.",
     render:function(){
-      var sit = situation(), parts = examParts(), held = S.examStages;
-      var pct = Math.round(held / 3 * 100);
-      var next = parts.filter(function(p){ return !p.held; })[0] || null;
-
-      var h = '<div class="card"><div class="card-head"><h2>' + pct + '% of ' + esc(sit.exam) + ' held</h2>' +
-        '<span class="aside num">' + held + " of 3 stages</span></div>" + bar(pct) +
-        '<p class="lede" style="margin-top:10px">' +
-        (next ? "Next up is " + esc(next.t) + "." : "All three stages held. Nothing left to sit.") +
-        " This is the exam family for " + esc(S.specialty) + ", set by " + esc(sit.college) + ".</p></div>";
-
-      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>The three stages</h2></div>';
-      h += parts.map(function(p){
-        return '<div class="row"><span class="t">' + esc(p.t) + "<small>" + esc(p.what) + "</small></span>" +
-          '<span class="r">' + chip(p.held ? {k:"good", icon:I.tick, label:"Held"} : {k:"mute", icon:I.clock, label:"Not held"}) +
-          (p.held ? "" : '<button class="btn btn-sm btn-ghost" data-act="passExam">Mark passed</button>') + "</span></div>";
-      }).join("") + "</div>";
-
-      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>What this feeds</h2></div>' +
-        '<p class="lede">Exams are one of six scored domains. Holding all three stages takes that domain from ' +
-        '3 points to 8 on your shortlisting score.</p>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">' +
-        '<a class="btn btn-sm btn-ghost" href="#/score">See the scoring</a>' +
-        '<a class="btn btn-sm btn-ghost" href="../preparation/exams.html">Exam reference pages</a></div></div>';
-      return h;
+      var open = S.examOpen ? examById(S.examOpen) : null;
+      return open ? examHub(open) : examCatalogue();
     }
   };
+
+  function examCatalogue(){
+    var sit = situation(), rec = recommendedExams();
+    var h = "";
+
+    /* what your record says you should be sitting. The gap the product owner
+       named: onboarding collects everything needed to work this out and
+       nothing ever told the doctor. */
+    if (rec.length){
+      h += '<p class="sec-label">Recommended for you</p>';
+      h += rec.map(function(r){ return examCard(r.exam, r.why, true); }).join("");
+    } else if (!S.specialty){
+      h += ctx("No specialty set, so nothing is recommended yet. Everything below is still open to browse, " +
+        "and setting a target on your profile turns this into a shortlist.");
+    }
+
+    var active = (S.examActive || []).map(examById).filter(Boolean)
+      .filter(function(e){ return !rec.some(function(r){ return r.exam.id === e.id; }); });
+    if (active.length){
+      h += '<p class="sec-label">You are preparing for</p>';
+      h += active.map(function(e){ return examCard(e, "", false); }).join("");
+    }
+
+    /* everything else, grouped by body, because a doctor browsing is asking
+       "what does this college run" rather than scanning one flat list */
+    h += '<p class="sec-label">All exams</p>';
+    var bodies = [];
+    EXAMS.forEach(function(e){ if (bodies.indexOf(e.body) === -1) bodies.push(e.body); });
+    bodies.forEach(function(bd){
+      var items = EXAMS.filter(function(e){ return e.body === bd; });
+      h += '<p class="group-h">' + esc(bd) + "</p>";
+      h += '<div class="card" style="padding:6px 18px">' + items.map(function(e){
+        var held = stageHeld(e.id);
+        return '<div class="row"><span class="t">' + esc(e.fam + " " + e.stage) +
+          "<small>" + esc(e.fmt) + " · " + esc(WHEN_LABEL[e.when]) + "</small></span>" +
+          '<span class="r">' + (held ? '<span class="chip good">' + ico(I.tick, 12) + "Held</span>" : "") +
+          (examActive(e.id) ? '<span class="chip mute">Preparing</span>' : "") +
+          '<button class="btn btn-sm btn-ghost" data-exam-open="' + e.id + '">Open</button></span></div>';
+      }).join("") + "</div>";
+    });
+
+    h += ctxFoot("Stage names, formats and structures are illustrative in this prototype and are each college's " +
+      "to set. Confirm the current structure with the college before planning around it.");
+    return h;
+  }
+
+  var WHEN_LABEL = {entry:"Usually needed to apply", membership:"Sat during training", exit:"Sat to complete training"};
+
+  function examCard(e, why, recommended){
+    var held = stageHeld(e.id), wk = weeksTo(e), pred = predictedFor(e.id);
+    return '<div class="card' + (recommended ? " lead" : "") + '" style="margin-bottom:10px">' +
+      '<div class="card-head"><h2>' + esc(e.fam + " " + e.stage) + "</h2>" +
+      '<span class="r" style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+      (held ? '<span class="chip good">' + ico(I.tick, 12) + "Held</span>" : "") +
+      (pred !== null ? '<span class="chip mute">' + pred + "% predicted</span>" : "") +
+      (wk !== null ? chip({k: wk <= 4 ? "crit" : wk <= 10 ? "warn" : "mute", icon:I.clock,
+                           label:wk + (wk === 1 ? " week" : " weeks")}) : "") + "</span></div>" +
+      '<p class="lede" style="max-width:64ch">' + (why ? "<b>" + esc(why) + "</b><br>" : "") +
+      esc(e.d) + "</p>" +
+      '<div style="margin-top:13px;display:flex;gap:8px;flex-wrap:wrap">' +
+      '<button class="btn btn-sm btn-primary" data-exam-open="' + e.id + '">' +
+      (examActive(e.id) ? "Open the hub" : "Start preparing") + "</button>" +
+      (held ? "" : '<button class="btn btn-sm btn-ghost" data-exam-held="' + e.id + '">Mark as held</button>') +
+      "</div></div>";
+  }
+
+  function examHub(e){
+    var surface = S.gymSurface || "";
+    var list = gymFor(e), g = list.filter(function(x){ return x.id === surface; })[0];
+    var wk = weeksTo(e), pred = predictedFor(e.id), held = stageHeld(e.id);
+
+    var h = '<button class="btn btn-sm btn-ghost" data-exam-open="" style="margin-bottom:12px">' +
+      ico(I.arrow, 13) + "All exams</button>";
+
+    h += '<div class="gym-h"><div class="gym-id"><span class="gym-k">' + esc(e.body) + "</span>" +
+      "<h2>" + esc(e.fam + " " + e.stage) + "</h2>" +
+      "<p>" + esc(e.fmt) + ". " + (wk === null
+        ? "No sitting dated for this stage in your record."
+        : wk + (wk === 1 ? " week" : " weeks") + " until the application that asks for it closes.") + "</p></div>";
+    h += '<div class="gym-stat"><span class="k">Predicted</span><b>' + (pred === null ? "—" : pred + "%") + "</b>" +
+      "<small>" + (pred === null ? "Sit a mock to start" : "Mean of your last " + Math.min(3, mocksFor(e.id).length)) + "</small></div>";
+    h += '<div class="gym-stat"><span class="k">This stage</span><b>' + (held ? "Held" : "Open") + "</b>" +
+      "<small>" + (held ? "Recorded on your ladder" : "Not yet passed") + "</small></div></div>";
+
+    h += '<div class="gym-grid">' + list.map(function(x){
+      return '<button class="gym-card' + (x.id === surface ? " on" : "") + '" data-gym="' + x.id + '">' +
+        '<span class="gym-ic">' + ico(x.ic, 17) + "</span><b>" + esc(x.t) + "</b>" +
+        '<span class="gd">' + esc(x.d) + "</span>" +
+        '<span class="gf">' + ico(I.arrow, 11) + esc(x.feeds) + "</span></button>";
+    }).join("") + "</div>";
+
+    if (!g){
+      h += ctx("This is the structure of the hub. The teaching text and the questions behind each surface are " +
+        "written by doctors who have sat this stage and are never generated, so what is here is the shape they " +
+        "go into.");
+      return h;
+    }
+    h += '<p class="sec-label">' + esc(g.t) + "</p>" + gymSurface(g, e, wk);
+    return h;
+  }
+
+  function gymSurface(g, e, wk){
+    if (g.id === "plan"){
+      if (wk === null){
+        return '<div class="card"><p class="empty"><b>No date to plan against.</b>' +
+          "This stage is sat during training rather than to enter it, so the plan starts when you book a sitting.</p></div>";
+      }
+      var blocks = [
+        {w:"Weeks 1 to 2", t:"Cover the ground", d:"One pass of the knowledge base, flagging what you do not know rather than stopping to fix it"},
+        {w:"Weeks 3 to 5", t:"Practice by topic", d:"Work the flagged topics in blocks, reading the explanations"},
+        {w:"Week 6", t:"First mock", d:"Timed and full length, to find out where you actually are"},
+        {w:"Weeks 7 to 8", t:"Close what the mock found", d:"Analytics ranks them. Work down, not across."},
+        {w:"Final week", t:"Second mock, then taper", d:"Confirm the direction of travel and stop"}
+      ];
+      var h = '<div class="card"><div class="card-head"><h2>' + wk + (wk === 1 ? " week" : " weeks") + " to go</h2>" +
+        '<span class="aside">Six to eight weeks is the working minimum</span></div>';
+      h += blocks.map(function(b){
+        return '<div class="row"><span class="t">' + esc(b.t) + "<small>" + esc(b.d) + "</small></span>" +
+          '<span class="r"><span class="chip mute">' + esc(b.w) + "</span></span></div>";
+      }).join("");
+      return h + ctxFoot("The shape of the plan is ours. The weeks come from your own cycle dates, which are " +
+        "illustrative in this prototype.") + "</div>";
+    }
+
+    if (g.id === "kb" || g.id === "qbank"){
+      var done = topicsFor(e.id), n = TOPICS.filter(function(t){ return done[t]; }).length;
+      var h2 = '<div class="card"><div class="card-head"><h2>' + n + " of " + TOPICS.length + " topics covered</h2>" +
+        '<span class="aside">' + esc(e.fam + " " + e.stage) + "</span></div>" + bar(Math.round(n / TOPICS.length * 100));
+      h2 += '<div class="picks" style="margin-top:14px">' + TOPICS.map(function(t){
+        return '<span class="pick">' + esc(t) + (done[t]
+          ? '<span class="chip good">' + ico(I.tick, 12) + "Covered</span>"
+          : '<button class="btn btn-sm btn-ghost" data-topic="' + esc(t) + '">Mark covered</button>') + "</span>";
+      }).join("") + "</div>";
+      return h2 + ctx("The topic list is illustrative and is not this stage's syllabus. The teaching text and the " +
+        "questions behind each topic are authored by doctors who have sat it and are not generated, which is why " +
+        "this shows the structure rather than pretending to hold the content.", true) + "</div>";
+    }
+
+    if (g.id === "mock"){
+      var ms = mocksFor(e.id);
+      var h3 = '<div class="card"><div class="card-head"><h2>Record a mock result</h2>' +
+        '<span class="aside">' + ms.length + " recorded for this stage</span></div>" +
+        '<p class="lede" style="max-width:64ch;margin-bottom:14px">Sit it timed and full length, then enter what you ' +
+        "scored. It moves the predicted result for this stage and nothing else on your record: a mock is not a stage held.</p>" +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+        '<input id="mockPct" type="number" min="0" max="100" placeholder="Score %" ' +
+        'style="border:1.5px solid var(--line);border-radius:11px;padding:9px 13px;font-size:13.5px;width:118px">' +
+        '<button class="btn btn-sm btn-primary" data-act="logMock">Record it</button></div>';
+      if (ms.length){
+        h3 += '<p class="group-h">Your mocks</p>' + ms.slice().reverse().map(function(m){
+          return '<div class="row"><span class="t">' + m.pct + "%<small>" + fmtLong(m.at) + "</small></span>" +
+            '<span class="r"><span class="chip ' + (m.pct >= 70 ? "good" : m.pct >= 50 ? "warn" : "crit") + '">' +
+            (m.pct >= 70 ? "Comfortable" : m.pct >= 50 ? "Borderline" : "Behind") + "</span></span></div>";
+        }).join("");
+      }
+      return h3 + "</div>";
+    }
+
+    if (g.id === "stats"){
+      var tr = trendFor(e.id), pr = predictedFor(e.id);
+      var h4 = '<div class="card"><div class="card-head"><h2>' + (pr === null ? "Nothing to read yet" : pr + "% predicted") + "</h2>" +
+        (tr ? '<span class="aside">' + (tr.delta >= 0 ? "up " : "down ") + Math.abs(tr.delta) + " across " +
+          mocksFor(e.id).length + " mocks</span>" : "") + "</div>";
+      if (pr === null){
+        h4 += '<p class="empty">Record a mock and this reads it back: your trend, and what your coverage says.</p>';
+      } else {
+        h4 += '<p class="trend' + (tr && tr.delta > 0 ? " up" : tr && tr.delta < 0 ? " down" : "") + '">' +
+          (tr ? spark(tr.points, 80, 24) : "") + "<span>" +
+          (tr ? "From " + tr.from + "% to " + tr.to + "%" : "One mock recorded, so no trend yet") + "</span></p>";
+        var cov = Object.keys(topicsFor(e.id)).length;
+        h4 += '<div class="barrow" style="margin-top:14px"><span class="lbl">Topics covered</span>' +
+          '<span class="val num">' + cov + " of " + TOPICS.length + "</span>" +
+          bar(Math.round(cov / TOPICS.length * 100)) +
+          '<span class="note">Coverage and score together are what a prediction can honestly be built from.</span></div>';
+      }
+      return h4 + ctxFoot("Predicted is the mean of your last three mocks for this stage. It reads your own scores " +
+        "back to you and is not a claim about what the college will award.") + "</div>";
+    }
+
+    return '<div class="card"><div class="card-head"><h2>Live tutor</h2>' +
+      '<span class="chip mute">Not wired up in this prototype</span></div>' +
+      '<p class="lede" style="max-width:64ch">Sessions with a doctor who has sat ' + esc(e.fam + " " + e.stage) +
+      ". Availability, booking and payment are real product surfaces rather than things to mock up here, so this " +
+      "one is named and left honest.</p></div>";
+  }
+
+  /* ================= INTERVIEW PREP =================
+     Built the same shape as exam prep, because it is the same kind of thing:
+     a catalogue of what you could be sitting, and a hub for each one you are.
+
+     The unit is the interview for a PROGRAMME, not a generic "interview". An
+     RCPI HST panel and the ICGP scenario assessment are different formats
+     scored on different things, and a doctor tracking both is preparing twice.
+
+     The surface that makes this worth having is "Your evidence". The interview
+     scores the same domains the portfolio does, and this product already holds
+     the portfolio. So when the panel asks about quality improvement it can
+     name the audit the doctor logged, rather than leaving them to remember it
+     under pressure. Nothing else in the market can do that, because nothing
+     else holds both halves. */
+  var IV_DOMAINS = [
+    {id:"clinical",   t:"Clinical skills and knowledge", from:["clinical","exams"],
+     d:"Judgement on real cases, and the knowledge behind it"},
+    {id:"qi",         t:"Quality improvement", from:["auditqi"],
+     d:"A project you ran, what changed, and what you would do differently"},
+    {id:"comm",       t:"Communication and teaching", from:["teaching"],
+     d:"Explaining to patients, families and colleagues"},
+    {id:"appraisal",  t:"Research and critical appraisal", from:["research"],
+     d:"Reading a paper properly and saying what it is worth"},
+    {id:"teamwork",   t:"Teamwork and leadership", from:["leadership"],
+     d:"Where you led, where you followed, and how you handled it going wrong"},
+    {id:"self",       t:"Professionalism and self-awareness", from:[],
+     d:"Insight, probity, and knowing your own limits"}
+  ];
+
+  /* one interview per college, keyed the way CYCLE is, so a doctor's active
+     interviews derive from the routes they are already tracking */
+  var INTERVIEWS = {
+    "RCPI":                              {t:"HST selection interview", fmt:"Structured panel",
+      d:"A panel scoring you against set domains, with your portfolio in front of them."},
+    "RCSI":                              {t:"HST selection interview", fmt:"Structured panel",
+      d:"A panel scoring you against set domains, with your portfolio in front of them."},
+    "ICGP":                              {t:"Scenario-Based Competency Assessment", fmt:"Simulated stations",
+      d:"Competency-based stations rather than a panel. Scored per station, on the same domains."},
+    "College of Psychiatrists":          {t:"HST selection interview", fmt:"Structured panel",
+      d:"A panel scoring you against set domains."},
+    "College of Anaesthesiologists":     {t:"HST selection interview", fmt:"Structured panel",
+      d:"A panel scoring you against set domains."},
+    "Faculty of Radiologists":           {t:"HST selection interview", fmt:"Structured panel",
+      d:"A panel scoring you against set domains."},
+    "Faculty of Pathology":              {t:"HST selection interview", fmt:"Structured panel",
+      d:"A panel scoring you against set domains."},
+    "Faculty of Public Health Medicine": {t:"HST selection interview", fmt:"Structured panel",
+      d:"A panel scoring you against set domains."}
+  };
+
+  function interviewFor(specialty){
+    var info = SPECIALTY_INFO[specialty] || {};
+    var body = (specialty === S.specialty ? situation().college : info.body) || info.body;
+    var iv = INTERVIEWS[body];
+    return iv ? {id:body, body:body, t:iv.t, fmt:iv.fmt, d:iv.d, target:info.target || specialty,
+                 cycle: CYCLE[body] || null} : null;
+  }
+  function myInterviews(){
+    var out = [], seen = [];
+    [S.specialty].concat(S.otherTargets || []).forEach(function(sp){
+      if (!sp) return;
+      var iv = interviewFor(sp);
+      if (iv && seen.indexOf(iv.id) === -1){ seen.push(iv.id); out.push(iv); }
+    });
+    return out;
+  }
+  function ivRatings(id){ return (S.ivRatings || {})[id] || {}; }
+  function ivMocks(id){ return (S.ivMocks || {})[id] || []; }
+  function ivReady(id){
+    var r = ivRatings(id), keys = Object.keys(r);
+    if (!keys.length) return null;
+    return Math.round(keys.reduce(function(a, k){ return a + r[k]; }, 0) / keys.length * 20);
+  }
+  /* what the doctor already holds that answers a given interview domain,
+     read straight off the portfolio rather than asked for again */
+  function evidenceFor(d){
+    return (d.from || []).map(function(id){
+      return DOMAINS.filter(function(x){ return x.id === id; })[0];
+    }).filter(Boolean);
+  }
+
+  var IV_GYM = [
+    {id:"what",  t:"What is assessed", ic:I.target, d:"The domains this format scores, and what each one means",
+     feeds:"Frames everything else in the hub"},
+    {id:"evid",  t:"Your evidence",    ic:I.clip,   d:"What you already hold that answers each domain",
+     feeds:"Read straight off your portfolio"},
+    {id:"qs",    t:"Practice questions", ic:I.list, d:"Questions by domain, with what a strong answer covers",
+     feeds:"Practice is tracked per domain"},
+    {id:"mock",  t:"Mock interview",   ic:I.mic,    d:"Run one, then rate yourself honestly per domain",
+     feeds:"Your ratings drive the readiness figure"},
+    {id:"stats", t:"Analytics",        ic:I.chart,  d:"Which domains you are weakest on",
+     feeds:"Reads your self-ratings and your evidence"},
+    {id:"tutor", t:"Mock with a tutor", ic:I.user,  d:"A scored practice interview with someone who has sat on a panel",
+     feeds:"Attendance is logged to your record"}
+  ];
 
   VIEWS.interviews = {
-    title:"Interview prep", sub:"What you are being scored on, and how long you have.",
+    title:"Interview prep", sub:"Every interview you are heading for, and a hub for each one.",
     render:function(){
-      var sit = situation(), c = sit.cycle;
-      if (!c){
-        return '<p class="empty"><b>No cycle dates yet.</b>Pick a target specialty in your profile and the interview timeline fills in.</p>';
-      }
-      var iv = until(c.interview), ap = until(c.apply);
-      var h = ctx("The dates below are illustrative in this prototype. Replace them with " + sit.college +
-        "'s published cycle before anyone relies on them.", true);
-
-      h += '<div class="card"><div class="card-head"><h2>' + esc(sit.target) + " interview</h2>" +
-        '<span class="aside">' + esc(awayText(iv)) + "</span></div>" +
-        '<div class="row"><span class="t">Applications close<small>' + fmtLong(c.apply) + "</small></span>" +
-        '<span class="r">' + chip(ap < 0 ? {k:"mute", icon:I.tick, label:"Closed"}
-          : {k: ap <= 21 ? "crit" : "warn", icon:I.clock, label:awayText(ap)}) + "</span></div>" +
-        '<div class="row"><span class="t">Interview<small>' + fmtLong(c.interview) + "</small></span>" +
-        '<span class="r">' + chip({k: iv <= 28 ? "crit" : "mute", icon:I.cal, label:awayText(iv)}) + "</span></div>" +
-        '<div class="row"><span class="t">Offers issued<small>' + fmtLong(addDays(c.interview, 39)) + "</small></span>" +
-        '<span class="r"><span class="lede">' + esc(awayText(until(addDays(c.interview, 39)))) + "</span></span></div></div>";
-
-      /* the preparation window is computed backwards from the interview date
-         rather than stated as a fixed month, so it stays true for any college */
-      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Your preparation window</h2></div>' +
-        '<p class="lede">Counting back from ' + fmtLong(c.interview) + ".</p>";
-      [
-        {d:56, t:"Start structured practice", w:"Eight weeks out"},
-        {d:28, t:"Portfolio and evidence assembled", w:"Four weeks out"},
-        {d:14, t:"Mock interview done", w:"Two weeks out"},
-        {d:2,  t:"Documents and travel confirmed", w:"Two days out"}
-      ].forEach(function(s){
-        var iso = addDays(c.interview, -s.d), dl = until(iso);
-        h += '<div class="row"><span class="t">' + esc(s.t) + "<small>" + esc(s.w) + ", " + fmtLong(iso) + "</small></span>" +
-          '<span class="r">' + chip(dl < 0 ? {k:"mute", icon:I.clock, label:"Passed"}
-            : {k: dl <= 14 ? "warn" : "mute", icon:I.clock, label:awayText(dl)}) + "</span></div>";
-      });
-      h += "</div>";
-
-      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Reference</h2></div>' +
-        '<p class="lede">Scoring domains and worked answers per programme are reference content, not part of this record.</p>' +
-        '<a class="btn btn-sm btn-ghost" style="margin-top:12px" href="../preparation/interviews.html">Interview reference pages</a></div>';
-      return h;
+      var open = S.ivOpen ? myInterviews().filter(function(x){ return x.id === S.ivOpen; })[0] : null;
+      return open ? ivHub(open) : ivCatalogue();
     }
   };
+
+  function ivCatalogue(){
+    var mine = myInterviews();
+    if (!mine.length){
+      return '<div class="card"><div class="card-head"><h2>No interview to prepare for yet</h2></div>' +
+        '<p class="lede">Set a target specialty and this fills in with the interview that route runs, its format, ' +
+        "and how long you have.</p>" +
+        '<div style="margin-top:12px"><a class="btn btn-sm btn-primary" href="#/profile">Edit profile</a></div></div>';
+    }
+    var h = '<p class="sec-label">' + (mine.length > 1 ? "Your interviews" : "Your interview") + "</p>";
+    h += mine.map(function(iv, i){
+      var d = iv.cycle ? until(iv.cycle.interview) : null;
+      var rd = ivReady(iv.id);
+      return '<div class="card' + (i === 0 ? " lead" : "") + '" style="margin-bottom:10px">' +
+        '<div class="card-head"><h2>' + esc(iv.t) + "</h2>" +
+        '<span class="r" style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+        '<span class="chip mute">' + esc(iv.body) + "</span>" +
+        (rd !== null ? '<span class="chip ' + (rd >= 70 ? "good" : rd >= 50 ? "warn" : "crit") + '">' + rd + "% ready</span>" : "") +
+        (d !== null ? chip({k: d < 0 ? "mute" : d <= 21 ? "crit" : d <= 60 ? "warn" : "mute", icon:I.clock,
+                            label: d < 0 ? "Passed" : awayText(d)}) : "") + "</span></div>" +
+        '<p class="lede" style="max-width:66ch">For <b>' + esc(iv.target) + "</b>. " + esc(iv.fmt) + ". " + esc(iv.d) + "</p>" +
+        '<div style="margin-top:13px"><button class="btn btn-sm btn-primary" data-iv-open="' + esc(iv.id) +
+        '">Open the hub</button></div></div>';
+    }).join("");
+    h += ctxFoot("Interview formats and the domains they score are illustrative in this prototype. Each college " +
+      "sets what it actually assesses, and that is the list that counts.");
+    return h;
+  }
+
+  function ivHub(iv){
+    var surface = S.gymSurface || "";
+    var g = IV_GYM.filter(function(x){ return x.id === surface; })[0];
+    var d = iv.cycle ? until(iv.cycle.interview) : null, rd = ivReady(iv.id);
+
+    var h = '<button class="btn btn-sm btn-ghost" data-iv-open="" style="margin-bottom:12px">' +
+      ico(I.arrow, 13) + "All interviews</button>";
+    h += '<div class="gym-h"><div class="gym-id"><span class="gym-k">' + esc(iv.body) + "</span>" +
+      "<h2>" + esc(iv.t) + "</h2><p>" + esc(iv.fmt) + ". " +
+      (d === null ? "No date held." : d < 0 ? "That date has passed." : awayText(d) + ", for " + esc(iv.target) + ".") + "</p></div>";
+    h += '<div class="gym-stat"><span class="k">Self-rated</span><b>' + (rd === null ? "—" : rd + "%") + "</b>" +
+      "<small>" + (rd === null ? "Rate yourself in a mock" : "Across " + Object.keys(ivRatings(iv.id)).length + " domains") + "</small></div>";
+    h += '<div class="gym-stat"><span class="k">Mocks run</span><b>' + ivMocks(iv.id).length + "</b>" +
+      "<small>Recorded by you</small></div></div>";
+
+    h += '<div class="gym-grid">' + IV_GYM.map(function(x){
+      return '<button class="gym-card' + (x.id === surface ? " on" : "") + '" data-gym="' + x.id + '">' +
+        '<span class="gym-ic">' + ico(x.ic, 17) + "</span><b>" + esc(x.t) + "</b>" +
+        '<span class="gd">' + esc(x.d) + "</span>" +
+        '<span class="gf">' + ico(I.arrow, 11) + esc(x.feeds) + "</span></button>";
+    }).join("") + "</div>";
+
+    if (!g){
+      h += ctx("This is the structure of the hub. The questions and model answers behind it are written by doctors " +
+        "who have sat on these panels and are never generated.");
+      return h;
+    }
+    h += '<p class="sec-label">' + esc(g.t) + "</p>" + ivSurface(g, iv);
+    return h;
+  }
+
+  function ivSurface(g, iv){
+    if (g.id === "what"){
+      var h = '<div class="card"><div class="card-head"><h2>' + IV_DOMAINS.length + " domains</h2>" +
+        '<span class="aside">' + esc(iv.fmt) + "</span></div>";
+      h += IV_DOMAINS.map(function(d){
+        return '<div class="row"><span class="t">' + esc(d.t) + "<small>" + esc(d.d) + "</small></span></div>";
+      }).join("");
+      return h + ctxFoot("The domain list is illustrative. " + esc(iv.body) + " publishes what it actually scores.") + "</div>";
+    }
+
+    if (g.id === "evid"){
+      /* the reason this module is worth having: the portfolio is already here */
+      var h2 = '<div class="card"><div class="card-head"><h2>What you already hold</h2>' +
+        '<span class="aside">Read from your portfolio</span></div>' +
+        '<p class="lede" style="max-width:68ch;margin-bottom:12px">The interview scores the same domains your ' +
+        "application does. Nothing here is asked for again: this is what your record already says you can talk about.</p>";
+      h2 += IV_DOMAINS.map(function(d){
+        var ev = evidenceFor(d);
+        var strong = ev.length && ev.every(function(x){ return x.pts() === x.maxPts; });
+        var thin = ev.length && ev.every(function(x){ return x.pts() === 0; });
+        return '<div class="chk' + (strong ? " done" : "") + '">' +
+          '<span class="chk-box auto' + (strong ? " on" : "") + '" aria-hidden="true">' +
+          (strong ? ico(I.tick, 12) : ico(I.clock, 11)) + "</span>" +
+          '<div class="chk-b"><b>' + esc(d.t) + "</b>" +
+          (ev.length
+            ? "<small>" + ev.map(function(x){ return esc(x.name) + ": " + esc(x.note()); }).join(" · ") + "</small>"
+            : '<small>Nothing in the portfolio scores this one. It is answered from how you talk about your practice, ' +
+              "not from evidence you can upload.</small>") +
+          (thin ? '<small class="chk-note">Nothing logged against this yet, so expect to be pushed on it.</small>' : "") +
+          "</div>" +
+          '<div class="chk-r">' + (ev.length && !strong
+            ? '<a class="btn-link" href="#/gaps">Close it</a>' : "") + "</div></div>";
+      }).join("");
+      return h2 + "</div>";
+    }
+
+    if (g.id === "qs"){
+      return '<div class="card"><div class="card-head"><h2>Practice questions</h2>' +
+        '<span class="chip mute">Content to be authored</span></div>' +
+        '<p class="lede" style="max-width:66ch">Questions by domain, each with what a strong answer covers and what ' +
+        "a panel is listening for. Written by doctors who have sat on these panels, never generated, so the " +
+        "structure is here and the content is the work.</p>" +
+        '<p class="group-h">Domains they would be organised under</p>' +
+        '<div class="picks">' + IV_DOMAINS.map(function(d){
+          return '<span class="pick">' + esc(d.t) + "</span>";
+        }).join("") + "</div></div>";
+    }
+
+    if (g.id === "mock"){
+      var r = ivRatings(iv.id);
+      var h3 = '<div class="card"><div class="card-head"><h2>Rate yourself by domain</h2>' +
+        '<span class="aside">' + ivMocks(iv.id).length + " mocks run</span></div>" +
+        '<p class="lede" style="max-width:66ch;margin-bottom:12px">Run a mock, then rate each domain one to five. ' +
+        "Honestly: the figure is only worth having if it is uncomfortable.</p>";
+      h3 += IV_DOMAINS.map(function(d){
+        var v = r[d.id] || 0;
+        return '<div class="row"><span class="t">' + esc(d.t) +
+          (v ? "<small>Rated " + v + " of 5</small>" : "<small>Not rated</small>") + "</span>" +
+          '<span class="r rate">' + [1,2,3,4,5].map(function(n){
+            return '<button class="rt' + (v >= n ? " on" : "") + '" data-iv-rate="' + d.id + ':' + n +
+              '" aria-label="Rate ' + esc(d.t) + " " + n + ' of 5">' + n + "</button>";
+          }).join("") + "</span></div>";
+      }).join("");
+      h3 += '<div style="margin-top:14px"><button class="btn btn-sm btn-primary" data-iv-mock="' + esc(iv.id) +
+        '">Log this mock</button></div>';
+      return h3 + "</div>";
+    }
+
+    if (g.id === "stats"){
+      var r2 = ivRatings(iv.id), keys = Object.keys(r2);
+      if (!keys.length){
+        return '<div class="card"><p class="empty"><b>Nothing to read yet.</b>' +
+          "Rate yourself after a mock and this ranks the domains by where you are weakest.</p></div>";
+      }
+      var ranked = IV_DOMAINS.filter(function(d){ return r2[d.id]; })
+        .sort(function(a, b){ return r2[a.id] - r2[b.id]; });
+      var h4 = '<div class="card"><div class="card-head"><h2>' + ivReady(iv.id) + "% self-rated</h2>" +
+        '<span class="aside">Weakest first</span></div>';
+      h4 += ranked.map(function(d){
+        var pct = r2[d.id] * 20;
+        return '<div class="barrow" style="padding:9px 0"><span class="lbl">' + esc(d.t) + "</span>" +
+          '<span class="val num">' + r2[d.id] + "/5</span>" + bar(pct) + "</div>";
+      }).join("");
+      return h4 + ctxFoot("This is your own rating of yourself, not a mark. It is useful because it ranks what to " +
+        "work on, not because the number means anything on its own.") + "</div>";
+    }
+
+    return '<div class="card"><div class="card-head"><h2>Mock with a tutor</h2>' +
+      '<span class="chip mute">Not wired up in this prototype</span></div>' +
+      '<p class="lede" style="max-width:66ch">A scored practice interview with a doctor who has sat on a ' +
+      esc(iv.body) + " panel. Availability, booking and payment are real product surfaces rather than things to " +
+      "mock up here.</p></div>";
+  }
 
   VIEWS.profile = {
     title:"Your profile", sub:"Change any of this and every view recalculates.",
@@ -3237,7 +3842,7 @@ a.nudge:hover{text-decoration:underline}
     {id:"opportunities", t:"Matched to you",                 ic:I.brief,  zone:"Your applications"},
     {id:"exams",         t:"Exam prep",                      ic:I.book,   zone:"Preparation", rel:function(sit){
       if (!sit.stillApplying) return {k:"aside", why:"Your membership exams are behind you. Kept here so the record stays complete."};
-      if (S.examStages >= 3) return {k:"aside", why:"You hold full " + sit.exam + " membership, so there is nothing left to sit."};
+      if (stagesHeld() >= stagesTotal()) return {k:"aside", why:"You hold every stage your route asks for. The catalogue stays open for anything else you want to sit."};
       return null;
     }},
     {id:"interviews",    t:"Interview prep",                 ic:I.mic,    zone:"Preparation", rel:function(sit){
@@ -3382,10 +3987,13 @@ a.nudge:hover{text-decoration:underline}
       return "Tracking against the " + cpdRegime().target + "-point target for your regime";
     },
     passExam: function(){
-      if (S.examStages >= 3) return null;
-      S.examStages += 1;
+      var nx = examsInFamily(entryFamilyFor(S.specialty)).filter(function(e){ return !stageHeld(e.id); })[0];
+      if (!nx) return null;
+      S.examStageDone = S.examStageDone || {};
+      S.examStageDone[nx.id] = new Date().toISOString().slice(0, 10);
       var ex = situation().exam;
-      return S.examStages >= 3 ? "Full " + ex + " membership recorded" : ex + " stage recorded, " + S.examStages + " of 3";
+      return stagesHeld() >= stagesTotal() ? "Full " + ex + " recorded"
+        : nx.stage + " recorded, " + stagesHeld() + " of " + stagesTotal();
     },
     doLeadership: function(){ S.leadership = true; return "Leadership course recorded"; },
     togglePast: function(){ S.showPast = !S.showPast; return null; },
@@ -3459,6 +4067,21 @@ a.nudge:hover{text-decoration:underline}
       var end = document.getElementById("fCpdEnd").value;
       if (end) S.cpdCycleEnd = end;
       return "CPD target and cycle saved";
+    },
+    /* a mock result belongs to the stage it was sat for, and moves the
+       predicted figure only: a mock is not a stage held and must never touch
+       the shortlisting rubric. */
+    logMock: function(){
+      var el = document.getElementById("mockPct");
+      var n = el ? parseInt(el.value, 10) : NaN;
+      if (isNaN(n) || n < 0 || n > 100){ toast("Enter a score between 0 and 100."); return null; }
+      if (!S.examOpen) return null;
+      S.mocks = S.mocks || {};
+      S.mocks[S.examOpen] = S.mocks[S.examOpen] || [];
+      S.mocks[S.examOpen].push({pct:n, at:new Date().toISOString().slice(0, 10)});
+      var me = examById(S.examOpen);
+      logActivity("Mock recorded, " + n + "%", me ? me.fam + " " + me.stage : "");
+      return "Mock recorded. Predicted now " + predictedFor(S.examOpen) + "%";
     },
     saveCV: function(){
       S.cvUpdatedAt = new Date().toISOString().slice(0, 10);
@@ -3554,11 +4177,13 @@ a.nudge:hover{text-decoration:underline}
         save(); render(); toast("Unmarked."); return;
       }
       if (rc === "exam"){
-        if (S.examStages < 3) S.examStages += 1;
+        var nex = examsInFamily(entryFamilyFor(S.specialty)).filter(function(e){ return !stageHeld(e.id); })[0];
+        if (nex){ S.examStageDone = S.examStageDone || {}; S.examStageDone[nex.id] = today; }
         var ex = situation().exam;
-        logActivity(S.examStages >= 3 ? "Full " + ex + " membership recorded"
-                                      : ex + " stage recorded, " + S.examStages + " of 3", "");
-        save(); render(); toast(S.examStages + " of 3 stages held."); return;
+        logActivity(stagesHeld() >= stagesTotal() ? "Full " + ex + " recorded"
+                                      : (nex ? nex.stage : "Stage") + " recorded", "");
+        save(); render();
+        toast(stagesHeld() + " of " + stagesTotal() + " stages held."); return;
       }
       if (rc === "apply"){
         S.applications.unshift({target:rv, cycle:cycleLabel(), appliedAt:today, outcome:"", outcomeAt:""});
@@ -3845,6 +4470,89 @@ a.nudge:hover{text-decoration:underline}
       save(); render();
       var pr = checkProgress(target);
       toast("<em>" + esc(item.t) + "</em> ready. " + pr.done + " of " + pr.total + " for " + esc(target) + ".");
+    }
+  }, true);
+
+  /* opening a stage's hub, moving between its surfaces, and the two things
+     they write. Everything is keyed by stage id, never by family. */
+  document.addEventListener("click", function(ev){
+    var xo = ev.target.closest("[data-exam-open]");
+    if (xo){
+      ev.preventDefault();
+      var xid = xo.getAttribute("data-exam-open");
+      S.examOpen = xid;
+      S.gymSurface = "";
+      if (xid){
+        S.examActive = S.examActive || [];
+        if (S.examActive.indexOf(xid) === -1){
+          S.examActive.push(xid);
+          var xe = examById(xid);
+          if (xe) logActivity("Started preparing for " + xe.fam + " " + xe.stage, xe.body);
+        }
+      }
+      save(); render(); return;
+    }
+    var xh = ev.target.closest("[data-exam-held]");
+    if (xh){
+      ev.preventDefault();
+      var hid = xh.getAttribute("data-exam-held"), he = examById(hid);
+      S.examStageDone = S.examStageDone || {};
+      S.examStageDone[hid] = new Date().toISOString().slice(0, 10);
+      if (he) logActivity(he.fam + " " + he.stage + " recorded as held", he.body);
+      save(); render();
+      toast(he ? "<em>" + esc(he.fam + " " + he.stage) + "</em> recorded." : "Recorded."); return;
+    }
+    var io = ev.target.closest("[data-iv-open]");
+    if (io){
+      ev.preventDefault();
+      S.ivOpen = io.getAttribute("data-iv-open");
+      S.gymSurface = "";
+      save(); render(); return;
+    }
+    var ir = ev.target.closest("[data-iv-rate]");
+    if (ir){
+      ev.preventDefault();
+      var bits = ir.getAttribute("data-iv-rate").split(":");
+      if (!S.ivOpen) return;
+      S.ivRatings = S.ivRatings || {};
+      S.ivRatings[S.ivOpen] = S.ivRatings[S.ivOpen] || {};
+      /* clicking the rating you already hold clears it, so a doctor can undo
+         without having to pick a number they do not mean */
+      if (S.ivRatings[S.ivOpen][bits[0]] === +bits[1]) delete S.ivRatings[S.ivOpen][bits[0]];
+      else S.ivRatings[S.ivOpen][bits[0]] = +bits[1];
+      save(); render(); return;
+    }
+    var im = ev.target.closest("[data-iv-mock]");
+    if (im){
+      ev.preventDefault();
+      var mid = im.getAttribute("data-iv-mock");
+      var rated = Object.keys(ivRatings(mid)).length;
+      if (!rated){ toast("Rate at least one domain first."); return; }
+      S.ivMocks = S.ivMocks || {};
+      S.ivMocks[mid] = S.ivMocks[mid] || [];
+      S.ivMocks[mid].push({at:new Date().toISOString().slice(0, 10), ready:ivReady(mid)});
+      logActivity("Mock interview logged, " + ivReady(mid) + "% self-rated", mid);
+      save(); render();
+      toast("Mock logged. <em>" + ivReady(mid) + "%</em> self-rated across " + rated + " domains."); return;
+    }
+    var gs = ev.target.closest("[data-gym]");
+    if (gs){
+      ev.preventDefault();
+      var gid = gs.getAttribute("data-gym");
+      S.gymSurface = S.gymSurface === gid ? "" : gid;
+      save(); render(); return;
+    }
+    var tp = ev.target.closest("[data-topic]");
+    if (tp){
+      ev.preventDefault();
+      if (!S.examOpen) return;
+      var tname = tp.getAttribute("data-topic");
+      S.topicsDone = S.topicsDone || {};
+      S.topicsDone[S.examOpen] = S.topicsDone[S.examOpen] || {};
+      S.topicsDone[S.examOpen][tname] = new Date().toISOString().slice(0, 10);
+      logActivity(tname + " covered", (examById(S.examOpen) || {}).stage || "");
+      save(); render();
+      toast("<em>" + esc(tname) + "</em> covered."); return;
     }
   }, true);
 
