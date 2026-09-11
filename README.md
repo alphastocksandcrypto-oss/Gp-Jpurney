@@ -452,6 +452,76 @@ too — the Plan B control was being offered to an intern for an application the
 reach in about three years — so the rung carries the answer down rather than
 letting the renderer decide.
 
+## Gap analysis, which used to be three pages
+
+Application readiness, Shortlisting score and the old Gap analyser were one
+table — `DOMAINS` — rendered three times by hand, with three separately
+maintained orderings. They drifted, and the merge was not a tidying exercise:
+the drift was producing wrong answers.
+
+**The bug that settled it.** The gap page's tier list named five domain ids and
+omitted `exams`. A doctor holding no MRCPI stage at all — eight points down, the
+largest single gap the rubric allows — opened the page whose entire job is
+completeness and was told **"No gaps left. Every domain is complete against the
+published criteria."** The summary card directly beneath it said the opposite,
+and its closing line ("closing the audit and QI gap alone is worth more than the
+other three together") was hardcoded prose that was simply false for that
+doctor.
+
+Nothing on the merged page hand-lists a domain. It iterates `DOMAINS` and orders
+by points at stake, so a domain cannot be dropped again, and the page finally
+does what its subtitle always promised. Two further bugs surfaced the moment
+exams became visible: `gapActions` had no branch for it, so the domain you sit
+an exam for was described as accruing with time in post; and `levers()` offered
+"start a second project" to a doctor whose second project was already at 40%,
+so the page's headline action contradicted the row's.
+
+**The page, in order:** the eligibility framing; the two measures side by side;
+the gap between them; the rule that governs all of it; domain by domain; and the
+interview note. Each domain row carries both bars — assembled solid, scores
+hatched, because banded scoring moves in steps and the fill should say so — with
+the divergence explained only where the two measures are 15+ points apart.
+Printed on every row it would be wallpaper.
+
+**What was dropped:** the ranked levers list (the domain ordering *is* that
+ranking, and its top item is the lead card's button), the summary card, the
+Met/In-progress/Behind chips (a third status encoding next to two bars and a
+points chip), and the three tier headings.
+
+**Routes, not just pages.** `#/readiness` and `#/score` still resolve — links
+live all over the app and in whatever a doctor has bookmarked, and a merge is no
+reason to break either. `ROUTE_ALIAS` maps them to the module that absorbed
+them, so a consultant landing on `#/score` still gets the "nothing here is
+scoring you any more" banner that the nav registry provides.
+
+**Nav:** thirteen items became eleven, and "Your readiness" folded away. Its one
+surviving page sits in *Your applications*, which is what it was readiness for.
+
+### Movement, not just a deficit
+
+A page that only ever shows what is missing is a nag. `logActivity` now also
+snapshots the score, and only when the total actually changed — a log of
+identical numbers would be noise, and a trend needs turning points rather than
+ticks. The page reports the delta since the first snapshot, with a small line
+when there are three or more.
+
+This has a pleasant side effect: logging a third teaching session writes no
+snapshot, because three sessions still score 2. The log makes banded scoring
+visible by staying silent.
+
+### Notes against a domain
+
+Six parallel workstreams and nowhere to record why one is stalled. A free-text
+note per domain, edited in place like the rotation row, styled as the doctor's
+own rather than as a warning.
+
+### One rubric, and whose
+
+A doctor tracking a second specialty sees one score, and it is the primary
+college's rubric. The other route weights these domains differently and is not
+modelled, so the page says so rather than letting the figure be read as covering
+both.
+
 ### Plan B, and what happens when a cycle does not land
 
 Contingency used to be a card that appeared on the roadmap the moment a doctor
