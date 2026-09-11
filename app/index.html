@@ -345,6 +345,37 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 .trend .spark{flex:none;overflow:visible}
 .trend.down .spark polyline{stroke:var(--coral)}
 @media(max-width:820px){ .heads{grid-template-columns:minmax(0,1fr)} }
+/* ============ CHECKLIST ============
+   A derived item and a manual one must not look alike: one is a control the
+   doctor owns, the other is the record reporting itself. The derived box is
+   not a button and never pretends to be. */
+.chk{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px dashed var(--line)}
+.chk:last-child{border-bottom:0}
+/* 24 is the WCAG 2.2 2.5.8 floor, not a design preference */
+.chk-box{flex:none;width:24px;height:24px;margin-top:0;border-radius:7px;border:1.5px solid var(--line);
+  background:#fff;display:grid;place-items:center;color:#fff;padding:0}
+button.chk-box{cursor:pointer;transition:border-color .18s,background .18s}
+button.chk-box:hover{border-color:var(--deep)}
+.chk-box.on{background:var(--mint);border-color:var(--mint);color:#052a22}
+.chk-box.auto{border-style:dashed;background:var(--paper);color:var(--txt-mute)}
+.chk-box.auto.on{background:var(--mint-soft);border-color:var(--mint);border-style:solid;color:var(--good-text)}
+.chk-b{flex:1;min-width:0}
+.chk-b b{font-size:13.5px;font-weight:600;color:var(--ink);margin-right:7px}
+.chk.done .chk-b b{color:var(--txt-soft)}
+.chk-b small{display:block;font-size:11.5px;color:var(--txt-soft);font-weight:500;margin-top:2px;line-height:1.45}
+.chk-b small.chk-note{color:var(--txt-mute)}
+.chip.sm{font-size:10px;padding:1px 7px;vertical-align:1px}
+.chk-r{flex:none;display:flex;gap:9px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.chk-r .btn-link{min-height:24px;display:inline-flex;align-items:center}
+.g-count{font-weight:600;color:var(--txt-soft);letter-spacing:0;text-transform:none;font-size:11px}
+/* this chip carries a phrase ("Evidence upload closes, 84 days away") rather
+   than a short status token, so it has to be allowed to wrap: nowrap made it
+   286px wide and pushed the page off a 320px screen */
+.chk-r .chip{white-space:normal;text-align:left}
+@media(max-width:560px){
+  .chk{flex-wrap:wrap}
+  .chk-r{width:100%;justify-content:flex-start;padding-left:36px}
+}
 /* ============ LISTS ============ */
 .row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
 .row:last-child{border-bottom:0}
@@ -587,6 +618,15 @@ a.nudge:hover{text-decoration:underline}
     domainNotes:{},
     deadlinesDone:{},
     customMilestones:[],
+    /* a checklist tick the record cannot derive. Shared requirements are keyed
+       by item alone, since a doctor has one CV and one Garda vetting however
+       many programmes they apply to; per-application ones are keyed by
+       target and cycle, because references and a submitted form are not
+       shared between two applications. */
+    checks:{},
+    /* the doctor's own additions, per application. Replaces customMilestones,
+       which sat on a page whose milestones are now the ladder. */
+    customChecks:[],
     activity:[]
   };
   var KEY = "mednav.demo.v1";
@@ -769,6 +809,141 @@ a.nudge:hover{text-decoration:underline}
          pts:5, act:"secondQI", cta:"Start project"});
     out.sort(function(a,b){ return b.pts - a.pts; });
     return out;
+  }
+
+  /* ================= APPLICATION CHECKLIST =================
+     What a doctor has to have in place to apply, as opposed to what scores
+     them once they have. The scoring rubric is the Gap analysis page; this is
+     the paperwork, and the two fail differently: a weak portfolio scores
+     badly, a missing Garda vetting stops the application dead.
+
+     Two rules hold this together.
+
+     First, nothing is asked for twice. Wherever the record already knows the
+     answer the item derives it and cannot be ticked by hand, because a
+     checklist that made a doctor re-enter their vetting date after logging it
+     on the admin page would be the opposite of one record, every view derives.
+
+     Second, the SHAPE is generic and the CONTENT is not ours. Every Irish
+     training application asks for registration, a CV, references, clearances
+     and evidence; exactly which documents, in which format, is the college's
+     own list and is authoritative over this one. Flagged in the page. */
+  var CHECKS = [
+    /* ---- eligibility: these gate whether an application can be made ---- */
+    {id:"imc", g:"Eligibility", t:"Medical Council registration",
+     d:"Registration in the appropriate division, held at the time you apply",
+     auto:function(){ return S.clinicalMonths > 0; },
+     autoNote:function(){ return S.clinicalMonths > 0 ? "Held, inferred from your post-internship months" : "Not yet held"; },
+     fix:["#/profile","Your profile"]},
+    {id:"months", g:"Eligibility", t:"Minimum experience by the closing date",
+     d:"Months post-internship, counted at the date the application closes",
+     auto:function(){ return S.clinicalMonths >= ENTRY.monthsByStart; },
+     autoNote:function(){ return S.clinicalMonths + " months post-internship, entry is set around " + ENTRY.monthsByStart; },
+     fix:["#/roadmap","Your roadmap"]},
+    {id:"exam", g:"Eligibility", t:"Exam stage held",
+     d:"At least one membership stage by the closing date",
+     auto:function(){ return S.examStages >= ENTRY.examStagesByApply; },
+     autoNote:function(){ var e = situation().exam || "membership";
+       return S.examStages + " of 3 " + e + " stages held"; },
+     fix:["#/exams","Exam prep"]},
+    /* ---- documents ---- */
+    {id:"cv", g:"Documents", t:"CV in the required format", shared:true,
+     d:"Colleges set their own template. An out of date CV is the most common avoidable delay.",
+     auto:function(){ return !!S.cvUpdatedAt; },
+     autoNote:function(){ return S.cvUpdatedAt ? "Last updated " + fmtLong(S.cvUpdatedAt) : "Not recorded yet"; },
+     fix:["#/profile","Update it"]},
+    {id:"refs", g:"Documents", t:"Structured references requested",
+     d:"Usually named referees who submit directly, so they need lead time you do not control"},
+    {id:"logbook", g:"Documents", t:"Logbook and rotation history",
+     d:"A continuous record of posts held, with dates",
+     auto:function(){ return (S.rotations || []).length > 0; },
+     autoNote:function(){ var n = (S.rotations || []).length;
+       return n ? n + (n === 1 ? " rotation logged" : " rotations logged") : "Nothing logged yet"; },
+     fix:["#/profile","Log rotations"]},
+    {id:"id", g:"Documents", t:"Photo identification", shared:true,
+     d:"Passport or equivalent, in date on the closing date"},
+    /* ---- clearances, which the practical pages already track ---- */
+    {id:"garda", g:"Clearances", t:"Garda vetting", shared:true,
+     d:"Renews on a cycle, so a current date matters as much as ever having had one",
+     auto:function(){ var g = gardaStatus(); return g.k === "good"; },
+     autoNote:function(){ return gardaStatus().label; },
+     fix:["#/admin","Occupational health and admin"]},
+    {id:"occ", g:"Clearances", t:"Occupational health clearance", shared:true,
+     d:"Required before starting, and commonly asked for at application",
+     auto:function(){ return !!S.occClearance; },
+     autoNote:function(){ return S.occClearance ? "Recorded" : "Not recorded"; },
+     fix:["#/admin","Occupational health and admin"]},
+    /* ---- evidence: the portfolio, which is scored elsewhere ---- */
+    {id:"evidence", g:"Evidence", t:"Portfolio evidence dated and uploaded",
+     d:"Everything scored has to be dated before the application closes",
+     auto:function(){ return scorePts() === scoreMax(); },
+     autoNote:function(){ return scorePts() + " of " + scoreMax() + " points, " +
+       (scoreMax() - scorePts()) + " still on the table"; },
+     fix:["#/gaps","Gap analysis"]},
+    /* ---- the application itself ---- */
+    {id:"form", g:"Submission", t:"Application form submitted",
+     d:"The form itself, by the closing date"}
+  ];
+
+  /* IMG-specific requirements, added only for a doctor they apply to. A
+     checklist that asked an Irish graduate for a work permit would be noise;
+     one that never mentioned it to someone who needs it would be worse. */
+  var CHECKS_IMG = [
+    {id:"english", g:"Eligibility", t:"English language requirement", shared:true,
+     d:"Where your primary qualification was not taught in English. The accepted tests and scores are the college's."},
+    {id:"permit", g:"Documents", t:"Right to work in Ireland", shared:true,
+     d:"Visa or permit covering the post's start date, where one is needed"},
+    {id:"creds", g:"Documents", t:"Qualification verification", shared:true,
+     d:"Primary medical degree verified through the route the Medical Council accepts"}
+  ];
+
+  function checksFor(){
+    var sit = situation();
+    var list = CHECKS.slice();
+    if (sit.isIMG || sit.newToIreland){
+      /* inserted into their groups rather than appended, so the page does not
+         read as "the normal list, then the foreign doctor's extra bit" */
+      CHECKS_IMG.forEach(function(c){ list.push(c); });
+    }
+    (S.customChecks || []).forEach(function(c){
+      list.push({id:"custom:" + c.id, g:c.g || "Your own", t:c.t, d:"", custom:true});
+    });
+    return list;
+  }
+
+  /* the key a manual tick is stored under. Shared requirements are one fact
+     about the doctor; the rest belong to one application. */
+  function checkKey(c, target){
+    return c.shared ? c.id : (target + "::" + cycleLabel() + "::" + c.id);
+  }
+  function checkState(c, target){
+    if (c.auto){
+      var done = !!c.auto();
+      return {done:done, auto:true, note:c.autoNote ? c.autoNote() : ""};
+    }
+    var at = (S.checks || {})[checkKey(c, target)];
+    return {done:!!at, auto:false, note:at ? "Marked ready " + fmtLong(at) : ""};
+  }
+
+  /* the deadline that governs an item, taken from deadlines() rather than
+     stored again. Evidence and the form are the two the cycle actually dates. */
+  function checkDue(c){
+    var sit = situation(), cyc = sit.cycle, step = nextStep();
+    if (!cyc || !step || !step.usesCycle) return null;
+    if (c.id === "form") return {iso:cyc.apply, why:"Applications close", governing:true};
+    if (c.id === "evidence"){
+      var up = deadlines().filter(function(d){ return d.id === "upload"; })[0];
+      return up ? {iso:up.iso, why:"Evidence upload closes"} : {iso:cyc.apply, why:"Applications close", governing:true};
+    }
+    /* everything else is governed by the closing date rather than dated
+       separately, and the card says that once above them */
+    return {iso:cyc.apply, why:"Needed by the closing date", governing:true};
+  }
+
+  function checkProgress(target){
+    var list = checksFor(), done = 0;
+    list.forEach(function(c){ if (checkState(c, target).done) done++; });
+    return {done:done, total:list.length, pct: Math.round(done / list.length * 100)};
   }
 
   /* ================= MILESTONES ================= */
@@ -2370,54 +2545,138 @@ a.nudge:hover{text-decoration:underline}
     }
   };
 
+  /* ================= APPLICATION TRACKER =================
+     Was the Progress tracker, whose milestones became the roadmap ladder and
+     whose portfolio items became Gap analysis. What was left was a page of
+     other pages' content.
+
+     It answers a question nothing else did: am I actually able to apply. The
+     Gap analysis page scores a portfolio; this one tracks the paperwork, and
+     they fail differently. A weak portfolio scores badly. A missing Garda
+     vetting stops the application dead however good the portfolio is. */
   VIEWS.progress = {
-    title:"Progress tracker", sub:"Every milestone on your route, and what state it is in.",
+    title:"Application tracker", sub:"What each application needs, and what you already have.",
     render:function(){
-      var ms = milestones();
-      var done = ms.filter(function(m){ return m.state === "done"; });
-      var doing = ms.filter(function(m){ return m.state === "doing"; });
-      var todo = ms.filter(function(m){ return m.state === "todo"; });
-      var pct = Math.round(done.length / ms.length * 100);
+      var sit = situation(), step = nextStep();
+      var targets = [S.specialty].concat(S.otherTargets || []).filter(function(t, i, a){
+        return t && a.indexOf(t) === i;
+      });
 
-      var h = '<div class="card"><div class="card-head"><h2>' + pct + '% of your milestones</h2>' +
-        '<span class="aside num">' + done.length + " of " + ms.length + " complete</span></div>" + bar(pct) + "</div>";
+      if (!sit.stillApplying || !targets.length){
+        var h0 = '<div class="card"><div class="card-head"><h2>No application open</h2></div><p class="lede">' +
+          (sit.isConsultant
+            ? "You have reached consultant, so there is no training application to track. Your record stays here."
+            : "Set a specialty on your profile and this page tracks what that application needs.") + "</p>" +
+          (sit.isConsultant ? "" : '<div style="margin-top:12px"><a class="btn btn-sm btn-primary" href="#/profile">Edit profile</a></div>') +
+          "</div>";
+        return h0 + activityCard();
+      }
 
-      h += '<p class="sec-label" style="color:var(--good-text)">Complete (' + done.length + ")</p><div class=\"card\">" +
-        done.map(function(m){
-          return '<div class="row"><span class="t">' + ico(I.tick, 14) + " " + esc(m.t) + '</span><span class="r"><span class="lede">' + esc(m.when) + "</span></span></div>";
-        }).join("") + "</div>";
+      var h = "";
+      /* one card per application, because a doctor running two is running two
+         sets of paperwork, and only some of it is shared */
+      targets.forEach(function(target, i){
+        h += applicationCard(target, i === 0);
+      });
 
-      h += '<p class="sec-label" style="color:var(--warn-text)">In progress (' + doing.length + ")</p>";
-      h += doing.length ? doing.map(function(m){
-        return '<div class="card" style="margin-bottom:10px"><div class="barrow">' +
-          '<span class="lbl">' + esc(m.t) + '</span><span class="val num">' + esc(m.when) + "</span>" + bar(m.pct || 0) + "</div>" +
-          '<div style="margin-top:11px;display:flex;gap:8px;flex-wrap:wrap">' + (m.act ? actBtn(m.act, m.cta, true) : "") + "</div></div>";
-      }).join("") : '<div class="card"><p class="empty">Nothing in progress.</p></div>';
+      if (targets.length > 1){
+        h += ctxFoot("Requirements marked shared are one fact about you and count for every application: one CV, " +
+          "one Garda vetting. The rest belong to the application they sit under, because references and a " +
+          "submitted form are not shared between two.");
+      }
 
-      h += '<p class="sec-label">Not started (' + todo.length + ")</p><div class=\"card\">" +
-        todo.map(function(m){
-          return '<div class="row"><span class="t" style="color:var(--txt-soft)">' + esc(m.t) + '</span><span class="r"><span class="lede">' + esc(m.when) + "</span>" +
-            (m.act ? actBtn(m.act, m.cta) : "") + "</span></div>";
-        }).join("") + "</div>";
-
-      /* moved off Today, where it answered "what did you do" on a page whose
-         job is "what do you do next". A log belongs beside the milestones it
-         is a log of. */
-      var acts = (S.activity || []).slice(0, 8);
-      h += '<p class="sec-label">Recent activity</p><div class="card">';
-      h += acts.length ? acts.map(function(a){
-        return '<div class="feed-item"><span class="fi">' + ico(I.tick, 13) + "</span>" +
-          '<span class="ft">' + esc(a.t) + (a.d ? "<small>" + esc(a.d) + "</small>" : "") + "</span>" +
-          '<span class="fw">' + esc(ago(a.at)) + "</span></div>";
-      }).join("") : '<p class="empty">Nothing logged yet. Anything you mark complete shows up here with what it changed.</p>';
-      h += "</div>";
-
+      h += '<p class="sec-label">Recent activity</p>' + activityCard();
       h += '<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">' +
-        '<button class="btn btn-sm btn-ghost" data-act="addMilestone">Add custom milestone</button>' +
-        '<button class="btn btn-sm btn-ghost" data-act="printReport">Print progress report</button></div>';
+        '<button class="btn btn-sm btn-ghost" data-act="addMilestone">Add your own requirement</button>' +
+        '<button class="btn btn-sm btn-ghost" data-act="printReport">Print this checklist</button></div>';
+      h += ctxFoot("These requirements are the shape every Irish training application takes, not any " +
+        "college's published list. " + esc(sit.college || "Each college") + " sets the documents, formats and " +
+        "deadlines that actually apply, and that list is the one that counts.");
       return h;
     }
   };
+
+  function applicationCard(target, primary){
+    var sit = situation();
+    var info = SPECIALTY_INFO[target] || {};
+    var body = (primary ? sit.college : info.body) || sit.college;
+    var cyc = primary ? sit.cycle : (CYCLE[info.body] || null);
+    var app = applicationFor(target);
+    var pr = checkProgress(target);
+    var d = cyc ? until(cyc.apply) : null;
+
+    var h = '<div class="card' + (primary ? " lead" : "") + '" style="margin-top:14px">' +
+      '<div class="card-head"><h2>' + esc(info.target || target) + "</h2>" +
+      '<span class="r" style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+      (primary ? '<span class="chip good">Main route</span>' : '<span class="chip mute">' + esc(body) + "</span>") +
+      (app && app.outcome ? '<span class="chip ' + OUTCOMES[app.outcome].k + '">' + esc(OUTCOMES[app.outcome].label) + "</span>"
+        : app ? '<span class="chip good">' + ico(I.tick, 12) + "Applied</span>"
+        : d !== null ? chip({k: d < 0 ? "mute" : (d <= 21 ? "crit" : d <= 60 ? "warn" : "mute"), icon:I.clock,
+                             label: d < 0 ? "Closed" : awayText(d)}) : "") +
+      "</span></div>";
+
+    h += '<div class="barrow" style="margin-bottom:14px">' +
+      '<span class="lbl">' + pr.done + " of " + pr.total + " requirements ready</span>" +
+      '<span class="val num">' + pr.pct + "%</span>" + bar(pr.pct) +
+      '<span class="note">' + (cyc
+        ? esc(body) + ". Everything below has to be in place by " + fmtLong(cyc.apply) + ", when applications close, " +
+          "unless it carries a date of its own."
+        : "No published cycle held for " + esc(body)) + "</span></div>";
+
+    /* grouped, because eligibility failing is a different kind of problem to a
+       reference not being back yet */
+    var list = checksFor(), groups = [];
+    list.forEach(function(c){ if (groups.indexOf(c.g) === -1) groups.push(c.g); });
+    groups.forEach(function(g){
+      var items = list.filter(function(c){ return c.g === g; });
+      var gdone = items.filter(function(c){ return checkState(c, target).done; }).length;
+      h += '<p class="group-h">' + esc(g) + ' <span class="g-count">' + gdone + " of " + items.length + "</span></p>";
+      h += items.map(function(c){ return checkRow(c, target); }).join("");
+    });
+    return h + "</div>";
+  }
+
+  function checkRow(c, target){
+    var st = checkState(c, target), due = checkDue(c);
+    var dd = due ? until(due.iso) : null;
+    var h = '<div class="chk' + (st.done ? " done" : "") + '">' +
+      (st.auto
+        /* derived: not a control, because ticking it here would mean entering
+           the same fact twice */
+        ? '<span class="chk-box auto' + (st.done ? " on" : "") + '" aria-hidden="true">' +
+          (st.done ? ico(I.tick, 12) : ico(I.clock, 11)) + "</span>"
+        : '<button class="chk-box' + (st.done ? " on" : "") + '" data-check="' + esc(c.id) +
+          '" data-check-target="' + esc(target) + '" aria-pressed="' + (st.done ? "true" : "false") +
+          '"><span class="sr-only">' + (st.done ? "Mark not ready: " : "Mark ready: ") + esc(c.t) + "</span>" +
+          (st.done ? ico(I.tick, 12) : "") + "</button>");
+
+    h += '<div class="chk-b"><b>' + esc(c.t) + "</b>" +
+      (c.shared ? '<span class="chip mute sm">Shared</span>' : "") +
+      (st.auto ? '<span class="chip mute sm">From your record</span>' : "") +
+      (c.d ? "<small>" + esc(c.d) + "</small>" : "") +
+      (st.note ? '<small class="chk-note">' + esc(st.note) + "</small>" : "") + "</div>";
+
+    h += '<div class="chk-r">' +
+      (!st.done && due && !due.governing && dd !== null && dd >= 0
+        ? chip({k: dd <= 21 ? "crit" : dd <= 60 ? "warn" : "mute", icon:I.clock,
+                label:due.why + ", " + awayText(dd)}) : "") +
+      (c.fix && !st.done ? '<a class="btn-link" href="' + c.fix[0] + '">' + esc(c.fix[1]) + "</a>" : "") +
+      (c.custom ? '<button class="btn-link" data-check-remove="' + esc(c.id) + '">Remove</button>' : "") +
+      "</div></div>";
+    return h;
+  }
+
+  /* the log, which belongs beside the requirements it is a log of */
+  function activityCard(){
+    var acts = (S.activity || []).slice(0, 8);
+    var h = '<div class="card">';
+    h += acts.length ? acts.map(function(a){
+      return '<div class="feed-item"><span class="fi">' + ico(I.tick, 13) + "</span>" +
+        '<span class="ft">' + esc(a.t) + (a.d ? "<small>" + esc(a.d) + "</small>" : "") + "</span>" +
+        '<span class="fw">' + esc(ago(a.at)) + "</span></div>";
+    }).join("") : '<p class="empty">Nothing logged yet. Anything you mark complete shows up here with what it changed.</p>';
+    return h + "</div>";
+  }
 
   VIEWS.opportunities = {
     title:"Matched to you", sub:"Posts, shifts and courses that fit your route and close your gaps.",
@@ -2661,8 +2920,9 @@ a.nudge:hover{text-decoration:underline}
         '<div style="margin-top:12px">' +
         '<div class="row"><span class="t">Application readiness<small>Weighted percentage assembled</small></span><span class="r"><b class="num">' + readiness() + "%</b></span></div>" +
         '<div class="row"><span class="t">Shortlisting score<small>Banded points against ' + esc(S.body) + ' criteria</small></span><span class="r"><b class="num">' + scorePts() + "/" + scoreMax() + "</b></span></div>" +
-        '<div class="row"><span class="t">Milestones complete<small>Across your whole route</small></span><span class="r"><b class="num">' +
-          milestones().filter(function(m){ return m.state === "done"; }).length + "/" + milestones().length + "</b></span></div>" +
+        '<div class="row"><span class="t">Application requirements<small>Documents and clearances in place</small></span>' +
+          '<span class="r"><b class="num">' +
+          checkProgress(S.specialty).done + "/" + checkProgress(S.specialty).total + "</b></span></div>" +
         '<div class="row"><span class="t">Open gaps<small>Domains still losing points</small></span><span class="r"><b class="num">' +
           losingDomains() + "</b></span></div>" +
         "</div>" +
@@ -2753,7 +3013,7 @@ a.nudge:hover{text-decoration:underline}
   var MODULES = [
     {id:"today",         t:"Today",                          ic:I.home,   zone:"Overview"},
     {id:"roadmap",       t:"My roadmap",                     ic:I.map,    zone:"Your pathway"},
-    {id:"progress",      t:"Progress tracker",               ic:I.chart,  zone:"Your pathway"},
+    {id:"progress",      t:"Application tracker",            ic:I.clip,   zone:"Your applications", rel:applyingOnly},
     /* one entry, because it is one table. Readiness and Shortlisting score
        still resolve as routes, they just no longer occupy the nav with two
        more views of what this one already shows. */
@@ -3194,7 +3454,7 @@ a.nudge:hover{text-decoration:underline}
     if (!btn) return;
     var wrap = document.createElement("span");
     wrap.style.cssText = "display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap";
-    wrap.innerHTML = '<input id="newMs" placeholder="Milestone name" style="border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;min-width:200px">' +
+    wrap.innerHTML = '<input id="newMs" placeholder="What else does this application need?" style="border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;min-width:240px">' +
       '<button class="btn btn-sm btn-primary" id="newMsAdd">Add</button>' +
       '<button class="btn btn-sm btn-ghost" id="newMsCancel">Cancel</button>';
     btn.replaceWith(wrap);
@@ -3203,10 +3463,12 @@ a.nudge:hover{text-decoration:underline}
     function commit(){
       var val = input.value.trim();
       if (!val){ render(); return; }
-      S.customMilestones = S.customMilestones || [];
-      S.customMilestones.push(val.slice(0, 80));
+      /* the doctor's own requirement, which joins the checklist rather than a
+         milestone list no page shows any more */
+      S.customChecks = S.customChecks || [];
+      S.customChecks.push({id:String(Date.now()), t:val.slice(0, 80), g:"Your own"});
       save(); render();
-      toast("Milestone added.");
+      toast("Requirement added.");
     }
     document.getElementById("newMsAdd").addEventListener("click", commit);
     document.getElementById("newMsCancel").addEventListener("click", function(){ render(); });
@@ -3283,6 +3545,36 @@ a.nudge:hover{text-decoration:underline}
     document.getElementById("domNoteSave").addEventListener("click", commit);
     document.getElementById("domNoteCancel").addEventListener("click", function(){ render(); });
     input.addEventListener("keydown", function(e){ if (e.key === "Enter") commit(); });
+  }, true);
+
+  /* a manual requirement ticked, or a custom one removed */
+  document.addEventListener("click", function(ev){
+    var rm = ev.target.closest("[data-check-remove]");
+    if (rm){
+      ev.preventDefault();
+      var rid = rm.getAttribute("data-check-remove").replace(/^custom:/, "");
+      S.customChecks = (S.customChecks || []).filter(function(c){ return String(c.id) !== rid; });
+      save(); render(); toast("Requirement removed.");
+      return;
+    }
+    var box = ev.target.closest("[data-check]");
+    if (!box) return;
+    ev.preventDefault();
+    var id = box.getAttribute("data-check"), target = box.getAttribute("data-check-target");
+    var all = checksFor(), item = all.filter(function(c){ return c.id === id; })[0];
+    if (!item) return;
+    S.checks = S.checks || {};
+    var key = checkKey(item, target);
+    if (S.checks[key]){
+      delete S.checks[key];
+      save(); render(); toast("Marked not ready.");
+    } else {
+      S.checks[key] = new Date().toISOString().slice(0, 10);
+      logActivity(item.t + " marked ready", item.shared ? "Counts for every application" : target);
+      save(); render();
+      var pr = checkProgress(target);
+      toast("<em>" + esc(item.t) + "</em> ready. " + pr.done + " of " + pr.total + " for " + esc(target) + ".");
+    }
   }, true);
 
   document.getElementById("resetBtn").addEventListener("click", function(){ runAction("reset"); });

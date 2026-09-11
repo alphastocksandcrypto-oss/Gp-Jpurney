@@ -452,6 +452,52 @@ too — the Plan B control was being offered to an intern for an application the
 reach in about three years — so the rung carries the answer down rather than
 letting the renderer decide.
 
+## Application tracker, which used to be the Progress tracker
+
+The Progress tracker's milestones became the roadmap ladder, and its portfolio
+items became Gap analysis. What was left was a page of other pages' content. It
+now answers a question nothing else did: **am I actually able to apply.**
+
+Gap analysis scores a portfolio. This tracks the paperwork, and the two fail
+differently — a weak portfolio scores badly, a missing Garda vetting stops the
+application dead however good the portfolio is.
+
+**Nothing is asked for twice.** Wherever the record already knows the answer,
+the item derives it and *cannot be ticked by hand*. The CV item reads
+`cvUpdatedAt`, Garda vetting reads `gardaStatus()`, the exam item reads
+`examStages`, the evidence item reads the score. A checklist that made a doctor
+re-enter their vetting date after logging it on the admin page would be the
+opposite of one record, every view derives. Derived boxes render as dashed,
+non-interactive, and are marked "From your record" with the fact they derived
+from — eight of eleven items for a typical doctor.
+
+**The shape is generic; the content is not ours.** Every Irish training
+application asks for registration, a CV, references, clearances and evidence.
+Exactly which documents, in which format, is the college's own list and is
+authoritative over this one — stated on the page, not buried here.
+
+**It adapts.** `CHECKS_IMG` adds the work permit, English language and
+qualification-verification requirements only for a doctor they apply to. A
+checklist that asked an Irish graduate for a work permit would be noise; one
+that never mentioned it to someone who needs it would be worse. A consultant is
+told there is no application to track rather than shown an empty list.
+
+**Two applications, and what is shared between them.** A doctor running two gets
+two cards. Requirements marked shared are one fact about the person — one CV,
+one Garda vetting — and are keyed by item alone, so ticking one counts for both.
+The rest are keyed by `target::cycle::item`, because references and a submitted
+form are not shared between two applications. The test asserts exactly that:
+ticking photo ID ticks both, submitting one form submits only one.
+
+**One date, stated once.** Everything is due by the closing date, so chipping
+every row with the same date produced seven identical amber chips and taught the
+eye to skip them. The card states the governing date once; a chip now means
+"this one is different", which in practice is the evidence upload window that
+closes after the application does.
+
+Custom milestones became custom requirements, joining the checklist rather than
+a milestone list no page shows any more.
+
 ## Gap analysis, which used to be three pages
 
 Application readiness, Shortlisting score and the old Gap analyser were one
@@ -782,6 +828,14 @@ inherited it, so the fix is applied in all six files.
   before any of it is shown to a real doctor.
 - Dashboard actions that are honestly stubbed and say so: calendar export,
   reminders and sign out.
+- Dashboard: `CHECKS` and `CHECKS_IMG` are the *shape* an Irish training
+  application takes, not any college's published requirement list. The
+  categories are safe (registration, CV, references, clearances, evidence, right
+  to work); the specifics — which documents, which formats, which English tests
+  and scores, what counts as qualification verification — are each college's and
+  the Medical Council's. Flagged on the page itself. Replace with the real per-
+  college lists before launch, or keep the page explicitly framed as a starting
+  checklist rather than the authoritative one.
 - Dashboard: `PIVOTS` claims that hospital training is commonly credited
   towards general practice, and Plan B offers GP as a move off every hospital
   exam family on that basis. The direction is real and was named by the product
