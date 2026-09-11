@@ -482,6 +482,31 @@ checklist that asked an Irish graduate for a work permit would be noise; one
 that never mentioned it to someone who needs it would be worse. A consultant is
 told there is no application to track rather than shown an empty list.
 
+**Four stages, not one list.** A tracker that stops at "form submitted"
+abandons the doctor for the half of the year that decides the outcome:
+references chased over Christmas, an interview, offers, then indemnity and
+Garda clearance before day one. The page is now **I Preparation · II
+Application · III Selection and interview · IV Starting the post**, each with
+its own key dates, its own requirements and its own progress.
+
+Every stage boundary is *derived from the cycle*, not a fixed calendar — prep
+runs to the closing date, application from close to interview, selection from
+interview to offers, starting from offers to the post start. So it adapts to
+whichever college the doctor is applying to rather than being one college's
+calendar with other names pasted over it. The page opens on the stage the
+doctor is actually in, and both the stage and the application choice stick, so
+someone who came back to chase one reference is not returned to the top of the
+year.
+
+**Act where you read.** An item that can be acted on carries the action, with
+the fuller page as a second option rather than the only one: the CV item marks
+itself updated, Garda vetting and occupational health record today's date, an
+exam stage is passed, and a rotation is logged inline with the same four fields
+the profile uses. `logGardaToday` and `logOccToday` exist because the admin
+page's versions read date inputs that only exist there; entering any other date
+is still what the admin page is for. Everything writes to the one record, so the
+admin page and the profile show it immediately.
+
 **Two applications, and what is shared between them.** A doctor running two gets
 two cards. Requirements marked shared are one fact about the person — one CV,
 one Garda vetting — and are keyed by item alone, so ticking one counts for both.
@@ -494,6 +519,15 @@ every row with the same date produced seven identical amber chips and taught the
 eye to skip them. The card states the governing date once; a chip now means
 "this one is different", which in practice is the evidence upload window that
 closes after the application does.
+
+**A cycle belongs to an application, not to the record.** Switching to a second
+programme showed that programme's name and college but the *primary* route's
+stage dates, because the phase functions reached for `situation().cycle`. They
+now take a cycle, resolved from whichever application is selected — the same
+class of bug as the roadmap's cycle leak, caught by a test that switched to GP
+and read the dates back. `cycleEvents()` builds any cycle's dated events the way
+`deadlines()` builds the primary one, and a test asserts the closing date on the
+tracker matches the deadlines page so the two can never drift.
 
 Custom milestones became custom requirements, joining the checklist rather than
 a milestone list no page shows any more.

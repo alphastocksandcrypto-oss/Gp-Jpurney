@@ -345,6 +345,42 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 .trend .spark{flex:none;overflow:visible}
 .trend.down .spark polyline{stroke:var(--coral)}
 @media(max-width:820px){ .heads{grid-template-columns:minmax(0,1fr)} }
+/* ============ PHASES ============
+   The year has four stages and a doctor is in one of them. Tabs rather than
+   one long page, because the stage you are not in is reference, not work. */
+.switch{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.sw{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1.5px solid var(--line);
+  background:#fff;border-radius:14px;padding:9px 15px;text-align:left;min-height:24px}
+.sw b{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--deep)}
+.sw span{font-size:11px;color:var(--txt-soft);font-weight:600}
+.sw:hover{border-color:var(--deep)}
+.sw.on{border-color:var(--mint);background:var(--mint-soft)}
+.sw.on span{color:var(--good-text)}
+.phases{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.ph{display:flex;flex-direction:column;align-items:flex-start;gap:3px;border:1.5px solid var(--line);
+  background:#fff;border-radius:14px;padding:11px 14px;text-align:left;min-width:0;position:relative}
+.ph:hover{border-color:var(--deep)}
+.ph .ph-n{font-family:var(--fd);font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--txt-mute)}
+.ph .ph-t{font-size:13px;font-weight:700;color:var(--deep);line-height:1.25}
+.ph .ph-p{font-size:11px;font-weight:600;color:var(--txt-soft);font-variant-numeric:tabular-nums}
+.ph.past{background:var(--paper)}
+.ph.past .ph-t{color:var(--txt-soft)}
+.ph.now{border-color:var(--mint)}
+.ph.now .ph-n,.ph.now .ph-p{color:var(--good-text)}
+.ph.on{border-color:var(--deep);border-width:2px;padding:10px 13px;background:#fff}
+.ph.on .ph-n{color:var(--deep)}
+.ph-when{font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--txt-mute);margin:-8px 0 10px}
+/* a dated event inside a stage */
+.ms{display:flex;gap:12px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line)}
+.ms:last-of-type{border-bottom:0}
+.ms-d b{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--deep);font-variant-numeric:tabular-nums}
+.ms-d small{display:block;font-size:11.5px;color:var(--txt-soft);margin-top:1px}
+.ms-r{margin-left:auto}
+/* the action that belongs to a requirement, under it rather than on another page */
+.chk-a{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+@media(max-width:900px){ .phases{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:460px){ .phases{grid-template-columns:minmax(0,1fr)} }
 /* ============ CHECKLIST ============
    A derived item and a manual one must not look alike: one is a control the
    doctor owns, the other is the record reporting itself. The derived box is
@@ -627,6 +663,8 @@ a.nudge:hover{text-decoration:underline}
     /* the doctor's own additions, per application. Replaces customMilestones,
        which sat on a page whose milestones are now the ladder. */
     customChecks:[],
+    /* which application and which phase of it the tracker is showing */
+    trackTarget:"", trackPhase:"",
     activity:[]
   };
   var KEY = "mednav.demo.v1";
@@ -830,72 +868,189 @@ a.nudge:hover{text-decoration:underline}
      own list and is authoritative over this one. Flagged in the page. */
   var CHECKS = [
     /* ---- eligibility: these gate whether an application can be made ---- */
-    {id:"imc", g:"Eligibility", t:"Medical Council registration",
+    {id:"imc", p:"prep", g:"Eligibility", t:"Medical Council registration",
      d:"Registration in the appropriate division, held at the time you apply",
      auto:function(){ return S.clinicalMonths > 0; },
      autoNote:function(){ return S.clinicalMonths > 0 ? "Held, inferred from your post-internship months" : "Not yet held"; },
      fix:["#/profile","Your profile"]},
-    {id:"months", g:"Eligibility", t:"Minimum experience by the closing date",
+    {id:"months", p:"prep", g:"Eligibility", t:"Minimum experience by the closing date",
      d:"Months post-internship, counted at the date the application closes",
      auto:function(){ return S.clinicalMonths >= ENTRY.monthsByStart; },
      autoNote:function(){ return S.clinicalMonths + " months post-internship, entry is set around " + ENTRY.monthsByStart; },
      fix:["#/roadmap","Your roadmap"]},
-    {id:"exam", g:"Eligibility", t:"Exam stage held",
+    {id:"exam", p:"prep", g:"Eligibility", t:"Exam stage held",
      d:"At least one membership stage by the closing date",
      auto:function(){ return S.examStages >= ENTRY.examStagesByApply; },
      autoNote:function(){ var e = situation().exam || "membership";
        return S.examStages + " of 3 " + e + " stages held"; },
-     fix:["#/exams","Exam prep"]},
+     act:["passExam","Record a stage passed"], fix:["#/exams","Exam prep"]},
     /* ---- documents ---- */
-    {id:"cv", g:"Documents", t:"CV in the required format", shared:true,
+    {id:"cv", p:"prep", g:"Documents", t:"CV in the required format", shared:true,
      d:"Colleges set their own template. An out of date CV is the most common avoidable delay.",
      auto:function(){ return !!S.cvUpdatedAt; },
      autoNote:function(){ return S.cvUpdatedAt ? "Last updated " + fmtLong(S.cvUpdatedAt) : "Not recorded yet"; },
-     fix:["#/profile","Update it"]},
-    {id:"refs", g:"Documents", t:"Structured references requested",
+     act:["saveCV","Mark updated today"], fix:["#/profile","Your profile"]},
+    {id:"refs", p:"apply", g:"Documents", t:"Structured references requested",
      d:"Usually named referees who submit directly, so they need lead time you do not control"},
-    {id:"logbook", g:"Documents", t:"Logbook and rotation history",
+    {id:"logbook", p:"apply", g:"Documents", t:"Logbook and rotation history",
      d:"A continuous record of posts held, with dates",
+     act:["addRotationHere","Log a rotation"],
      auto:function(){ return (S.rotations || []).length > 0; },
      autoNote:function(){ var n = (S.rotations || []).length;
        return n ? n + (n === 1 ? " rotation logged" : " rotations logged") : "Nothing logged yet"; },
      fix:["#/profile","Log rotations"]},
-    {id:"id", g:"Documents", t:"Photo identification", shared:true,
+    {id:"id", p:"apply", g:"Documents", t:"Photo identification", shared:true,
      d:"Passport or equivalent, in date on the closing date"},
     /* ---- clearances, which the practical pages already track ---- */
-    {id:"garda", g:"Clearances", t:"Garda vetting", shared:true,
+    {id:"garda", p:"start", g:"Clearances", t:"Garda vetting", shared:true,
      d:"Renews on a cycle, so a current date matters as much as ever having had one",
      auto:function(){ var g = gardaStatus(); return g.k === "good"; },
      autoNote:function(){ return gardaStatus().label; },
-     fix:["#/admin","Occupational health and admin"]},
-    {id:"occ", g:"Clearances", t:"Occupational health clearance", shared:true,
+     act:["logGardaToday","Vetted today"], fix:["#/admin","Enter another date"]},
+    {id:"occ", p:"start", g:"Clearances", t:"Occupational health clearance", shared:true,
      d:"Required before starting, and commonly asked for at application",
      auto:function(){ return !!S.occClearance; },
      autoNote:function(){ return S.occClearance ? "Recorded" : "Not recorded"; },
-     fix:["#/admin","Occupational health and admin"]},
+     act:["logOccToday","Cleared today"], fix:["#/admin","Enter another date"]},
     /* ---- evidence: the portfolio, which is scored elsewhere ---- */
-    {id:"evidence", g:"Evidence", t:"Portfolio evidence dated and uploaded",
+    {id:"evidence", p:"apply", g:"Evidence", t:"Portfolio evidence dated and uploaded",
      d:"Everything scored has to be dated before the application closes",
      auto:function(){ return scorePts() === scoreMax(); },
      autoNote:function(){ return scorePts() + " of " + scoreMax() + " points, " +
        (scoreMax() - scorePts()) + " still on the table"; },
      fix:["#/gaps","Gap analysis"]},
     /* ---- the application itself ---- */
-    {id:"form", g:"Submission", t:"Application form submitted",
-     d:"The form itself, by the closing date"}
+    {id:"form", p:"apply", g:"Submission", t:"Application form submitted",
+     d:"The form itself, by the closing date"},
+    /* ---- selection: the half of the year the old tracker ignored ---- */
+    {id:"ivdate", p:"select", g:"Interview", t:"Interview date and format confirmed",
+     d:"Panel or online, and how long. Test the setup the day before if it is remote."},
+    {id:"ivprep", p:"select", g:"Interview", t:"Interview preparation done",
+     d:"The interview scores the same domains as the portfolio, so nothing you closed is wasted on it",
+     fix:["#/interviews","Interview prep"]},
+    {id:"ivfolio", p:"select", g:"Interview", t:"Portfolio ready to present",
+     d:"Evidence you can talk to, in the order you would be asked about it",
+     fix:["#/gaps","Gap analysis"]},
+    {id:"prefs", p:"select", g:"Interview", t:"Site or scheme preferences submitted",
+     d:"Where a college ranks your preferences separately from the application"},
+    /* ---- starting the post ---- */
+    {id:"indemnity", p:"start", g:"Before day one", t:"Medical indemnity at the right grade",
+     d:"Cover has to match the grade you are starting at, active from your first day"},
+    {id:"contract", p:"start", g:"Before day one", t:"Contract and start date confirmed",
+     d:"In writing, with the site and the rotation you have been allocated"},
+    {id:"induction", p:"start", g:"Before day one", t:"Induction attended",
+     d:"Usually mandatory, and usually dated before the post formally starts"}
   ];
 
   /* IMG-specific requirements, added only for a doctor they apply to. A
      checklist that asked an Irish graduate for a work permit would be noise;
      one that never mentioned it to someone who needs it would be worse. */
   var CHECKS_IMG = [
-    {id:"english", g:"Eligibility", t:"English language requirement", shared:true,
+    {id:"english", p:"prep", g:"Eligibility", t:"English language requirement", shared:true,
      d:"Where your primary qualification was not taught in English. The accepted tests and scores are the college's."},
-    {id:"permit", g:"Documents", t:"Right to work in Ireland", shared:true,
+    {id:"permit", p:"start", g:"Documents", t:"Right to work in Ireland", shared:true,
      d:"Visa or permit covering the post's start date, where one is needed"},
-    {id:"creds", g:"Documents", t:"Qualification verification", shared:true,
+    {id:"creds", p:"prep", g:"Documents", t:"Qualification verification", shared:true,
      d:"Primary medical degree verified through the route the Medical Council accepts"}
   ];
+
+  /* ================= THE FOUR PHASES =================
+     A tracker that stops at "form submitted" abandons the doctor for the half
+     of the year that decides the outcome: references chased over Christmas,
+     an interview, offers, then indemnity and Garda clearance before day one.
+
+     Every boundary is derived from the cycle we already hold, so this adapts
+     to whichever college the doctor is applying to rather than being a GP
+     calendar with other names pasted over it. */
+  var PHASES = [
+    {id:"prep",   n:"I",   t:"Preparation",
+     blurb:"The months before the window opens: building the portfolio, holding the exam stage, and getting the paperwork into a state where applying is a formality."},
+    {id:"apply",  n:"II",  t:"Application",
+     blurb:"The window itself. Evidence has to be dated before it closes, references need lead time you do not control, and the form is the easy part."},
+    {id:"select", n:"III", t:"Selection and interview",
+     blurb:"Preparation meets performance. The interview scores the same domains the portfolio does, so nothing you closed earlier is wasted here."},
+    {id:"start",  n:"IV",  t:"Starting the post",
+     blurb:"Between an offer and day one. Clearances and indemnity take weeks, and they are the things that delay a start rather than prevent one."}
+  ];
+
+  /* WHICH application the tracker is showing, and its cycle. Everything below
+     takes a cycle rather than reaching for situation().cycle, which is always
+     the primary target's: reading it here showed a doctor viewing their GP
+     application the RCPI stage dates. */
+  function trackTarget(){
+    var targets = [S.specialty].concat(S.otherTargets || []).filter(function(t, i, a){
+      return t && a.indexOf(t) === i;
+    });
+    return targets.indexOf(S.trackTarget) > -1 ? S.trackTarget : (targets[0] || "");
+  }
+  function cycleForTarget(t){
+    var sit = situation();
+    if (!t || t === S.specialty) return sit.cycle;
+    var info = SPECIALTY_INFO[t] || {};
+    return CYCLE[info.body] || null;
+  }
+
+  /* the window each phase occupies, from the cycle rather than a fixed calendar */
+  function phaseRange(id, cyc){
+    var c = cyc === undefined ? cycleForTarget(trackTarget()) : cyc;
+    if (!c) return null;
+    var offers = c.offers || addDays(c.interview, 39);
+    if (id === "prep")   return {from:null,          to:c.apply};
+    if (id === "apply")  return {from:c.apply,       to:c.interview};
+    if (id === "select") return {from:c.interview,   to:offers};
+    return {from:offers, to:c.start};
+  }
+  function phaseState(id, cyc){
+    var r = phaseRange(id, cyc);
+    if (!r) return "ahead";
+    if (until(r.to) < 0) return "past";
+    if (!r.from || until(r.from) <= 0) return "now";
+    return "ahead";
+  }
+  function phaseLabel(id, cyc){
+    var r = phaseRange(id, cyc);
+    if (!r) return "";
+    return (r.from ? fmtLong(r.from) + " to " : "Now to ") + fmtLong(r.to);
+  }
+  /* the phase the doctor is actually in, which is where the page opens */
+  function currentPhase(cyc){
+    for (var i = 0; i < PHASES.length; i++){
+      if (phaseState(PHASES[i].id, cyc) === "now") return PHASES[i].id;
+    }
+    return phaseState("start", cyc) === "past" ? "start" : "prep";
+  }
+  /* dated events inside a phase, filtered out of deadlines() rather than
+     written again, so a date can never disagree with the deadlines page */
+  /* the dated events of any cycle, built the same way deadlines() builds the
+     primary one, so the two can never disagree for the main route and a
+     secondary route gets its own dates rather than borrowing them */
+  function cycleEvents(cyc, target){
+    if (!cyc) return [];
+    var name = (SPECIALTY_INFO[target] || {}).target || target;
+    return [
+      {iso:cyc.apply,                t:name + " applications close"},
+      {iso:addDays(cyc.apply, 26),   t:"Portfolio evidence upload closes"},
+      {iso:cyc.interview,            t:name + " interviews"},
+      {iso:cyc.offers || addDays(cyc.interview, 39), t:"Offers issued"},
+      {iso:cyc.start,                t:name + " post starts"}
+    ];
+  }
+  function phaseMilestones(id, cyc, target){
+    var r = phaseRange(id, cyc);
+    if (!r) return [];
+    /* the doctor's own deadlines are route-agnostic: an audit finished for one
+       application is finished for both */
+    var personal = deadlines().filter(function(d){ return d.kind === "personal"; });
+    return cycleEvents(cyc, target).concat(personal).filter(function(d){
+      if (r.from && day(d.iso) < day(r.from)) return false;
+      return day(d.iso) <= day(r.to);
+    }).sort(function(a, b){ return day(a.iso) - day(b.iso); });
+  }
+  function phaseProgress(id, target){
+    var list = checksFor().filter(function(c){ return c.p === id; }), done = 0;
+    list.forEach(function(c){ if (checkState(c, target).done) done++; });
+    return {done:done, total:list.length, pct: list.length ? Math.round(done / list.length * 100) : 0};
+  }
 
   function checksFor(){
     var sit = situation();
@@ -906,7 +1061,7 @@ a.nudge:hover{text-decoration:underline}
       CHECKS_IMG.forEach(function(c){ list.push(c); });
     }
     (S.customChecks || []).forEach(function(c){
-      list.push({id:"custom:" + c.id, g:c.g || "Your own", t:c.t, d:"", custom:true});
+      list.push({id:"custom:" + c.id, p:c.p || "prep", g:c.g || "Your own", t:c.t, d:"", custom:true});
     });
     return list;
   }
@@ -2554,30 +2709,122 @@ a.nudge:hover{text-decoration:underline}
      Gap analysis page scores a portfolio; this one tracks the paperwork, and
      they fail differently. A weak portfolio scores badly. A missing Garda
      vetting stops the application dead however good the portfolio is. */
+  /* ================= APPLICATION TRACKER =================
+     Was the Progress tracker, whose milestones became the roadmap ladder and
+     whose portfolio items became Gap analysis.
+
+     It answers a question nothing else does: am I actually able to apply, and
+     what happens after I do. Gap analysis scores a portfolio; this tracks the
+     paperwork and the calendar, and they fail differently. A weak portfolio
+     scores badly. A missing Garda vetting delays a start date.
+
+     Two rules. Nothing is asked for twice: wherever the record knows the
+     answer the item derives it. And nothing sends the doctor away to do a
+     thing they could do here: an item that can be acted on carries the action,
+     with the fuller page as a second option rather than the only one. */
   VIEWS.progress = {
-    title:"Application tracker", sub:"What each application needs, and what you already have.",
+    title:"Application tracker", sub:"Every stage of the application, and what each one needs from you.",
     render:function(){
-      var sit = situation(), step = nextStep();
+      var sit = situation();
       var targets = [S.specialty].concat(S.otherTargets || []).filter(function(t, i, a){
         return t && a.indexOf(t) === i;
       });
 
       if (!sit.stillApplying || !targets.length){
-        var h0 = '<div class="card"><div class="card-head"><h2>No application open</h2></div><p class="lede">' +
+        return '<div class="card"><div class="card-head"><h2>No application open</h2></div><p class="lede">' +
           (sit.isConsultant
             ? "You have reached consultant, so there is no training application to track. Your record stays here."
-            : "Set a specialty on your profile and this page tracks what that application needs.") + "</p>" +
+            : "Set a specialty on your profile and this page tracks what that application needs, stage by stage.") + "</p>" +
           (sit.isConsultant ? "" : '<div style="margin-top:12px"><a class="btn btn-sm btn-primary" href="#/profile">Edit profile</a></div>') +
-          "</div>";
-        return h0 + activityCard();
+          "</div>" + '<p class="sec-label">Recent activity</p>' + activityCard();
       }
 
+      /* which application, and which stage of it. Both stick, so a doctor who
+         came back to chase a reference is not returned to the top each time. */
+      var target = trackTarget();
+      var cyc = cycleForTarget(target);
+      var phase = PHASES.filter(function(x){ return x.id === S.trackPhase; })[0]
+        ? S.trackPhase : currentPhase(cyc);
+      var ph = PHASES.filter(function(x){ return x.id === phase; })[0];
+      var info = SPECIALTY_INFO[target] || {};
+      var primary = target === S.specialty;
+      var body = (primary ? sit.college : info.body) || sit.college;
+      var app = applicationFor(target);
+      var overall = checkProgress(target);
+
       var h = "";
-      /* one card per application, because a doctor running two is running two
-         sets of paperwork, and only some of it is shared */
-      targets.forEach(function(target, i){
-        h += applicationCard(target, i === 0);
+
+      /* ---- which application ---- */
+      if (targets.length > 1){
+        h += '<div class="switch" role="tablist" aria-label="Application">' + targets.map(function(t){
+          var i2 = SPECIALTY_INFO[t] || {}, pr = checkProgress(t);
+          return '<button class="sw' + (t === target ? " on" : "") + '" role="tab" aria-selected="' +
+            (t === target ? "true" : "false") + '" data-track-target="' + esc(t) + '">' +
+            "<b>" + esc(i2.target || t) + "</b><span>" + (i2.body || body) + " · " + pr.done + " of " + pr.total + "</span></button>";
+        }).join("") + "</div>";
+      }
+
+      /* ---- the four phases ---- */
+      h += '<div class="phases" role="tablist" aria-label="Stage">' + PHASES.map(function(x){
+        var st = phaseState(x.id, cyc), pr = phaseProgress(x.id, target);
+        return '<button class="ph ' + st + (x.id === phase ? " on" : "") + '" role="tab" aria-selected="' +
+          (x.id === phase ? "true" : "false") + '" data-track-phase="' + x.id + '">' +
+          '<span class="ph-n">' + x.n + "</span>" +
+          '<span class="ph-t">' + esc(x.t) + "</span>" +
+          '<span class="ph-p">' + (pr.total ? pr.done + "/" + pr.total : "—") +
+          (st === "now" ? " · now" : st === "past" ? " · passed" : "") + "</span></button>";
+      }).join("") + "</div>";
+
+      /* ---- the phase itself ---- */
+      var pst = phaseState(phase, cyc), pr = phaseProgress(phase, target);
+      h += '<div class="card lead" style="margin-top:14px"><div class="card-head">' +
+        '<h2>' + esc(ph.t) + "</h2>" +
+        '<span class="r" style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+        (app && app.outcome ? '<span class="chip ' + OUTCOMES[app.outcome].k + '">' + esc(OUTCOMES[app.outcome].label) + "</span>" : "") +
+        chip(pst === "now" ? {k:"good", icon:I.target, label:"You are here"}
+           : pst === "past" ? {k:"mute", icon:I.tick, label:"Passed"}
+           : {k:"mute", icon:I.clock, label:"Ahead"}) + "</span></div>";
+      h += '<p class="ph-when">' + esc(phaseLabel(phase, cyc)) + "</p>";
+      h += '<p class="lede" style="max-width:68ch;margin-bottom:14px">' + esc(ph.blurb) + "</p>";
+
+      var ms = phaseMilestones(phase, cyc, target);
+      if (ms.length){
+        h += '<p class="group-h">Key dates</p>';
+        h += ms.map(function(d){
+          var dd = d.days === undefined ? until(d.iso) : d.days;
+          return '<div class="ms"><span class="ms-d"><b>' + fmtLong(d.iso) + "</b><small>" + esc(d.t) + "</small></span>" +
+            '<span class="ms-r">' + chip(d.done ? {k:"good", icon:I.tick, label:"Done"}
+              : {k: dd < 0 ? "mute" : dd <= 21 ? "crit" : dd <= 60 ? "warn" : "mute",
+                 icon:I.clock, label: dd < 0 ? "Passed" : awayText(dd)}) + "</span></div>";
+        }).join("");
+      }
+
+      h += '<div class="barrow" style="margin:16px 0 6px">' +
+        '<span class="lbl">' + pr.done + " of " + pr.total + " ready for this stage</span>" +
+        '<span class="val num">' + pr.pct + "%</span>" + bar(pr.pct) +
+        '<span class="note">' + overall.done + " of " + overall.total + " across the whole application, for " +
+        esc(info.target || target) + " via " + esc(body) + "." +
+        /* the rows below suppress a deadline chip when the closing date is the
+           only date governing them, so the card has to say that once */
+        (cyc && until(cyc.apply) >= 0
+          ? " Everything here has to be in place by " + fmtLong(cyc.apply) + ", when applications close, " +
+            "unless it carries a date of its own."
+          : "") + "</span></div>";
+
+      /* grouped, because eligibility failing is a different kind of problem to
+         a reference not being back yet */
+      var list = checksFor().filter(function(c){ return c.p === phase; }), groups = [];
+      list.forEach(function(c){ if (groups.indexOf(c.g) === -1) groups.push(c.g); });
+      if (!list.length){
+        h += '<p class="empty">Nothing to prepare for this stage yet.</p>';
+      }
+      groups.forEach(function(g){
+        var items = list.filter(function(c){ return c.g === g; });
+        var gdone = items.filter(function(c){ return checkState(c, target).done; }).length;
+        h += '<p class="group-h">' + esc(g) + ' <span class="g-count">' + gdone + " of " + items.length + "</span></p>";
+        h += items.map(function(c){ return checkRow(c, target); }).join("");
       });
+      h += "</div>";
 
       if (targets.length > 1){
         h += ctxFoot("Requirements marked shared are one fact about you and count for every application: one CV, " +
@@ -2585,56 +2832,17 @@ a.nudge:hover{text-decoration:underline}
           "submitted form are not shared between two.");
       }
 
-      h += '<p class="sec-label">Recent activity</p>' + activityCard();
-      h += '<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">' +
+      h += '<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">' +
         '<button class="btn btn-sm btn-ghost" data-act="addMilestone">Add your own requirement</button>' +
-        '<button class="btn btn-sm btn-ghost" data-act="printReport">Print this checklist</button></div>';
-      h += ctxFoot("These requirements are the shape every Irish training application takes, not any " +
-        "college's published list. " + esc(sit.college || "Each college") + " sets the documents, formats and " +
-        "deadlines that actually apply, and that list is the one that counts.");
+        '<button class="btn btn-sm btn-ghost" data-act="printReport">Print this stage</button></div>';
+
+      h += '<p class="sec-label">Recent activity</p>' + activityCard();
+      h += ctxFoot("These requirements are the shape an Irish training application takes, not any college's " +
+        "published list, and the stage dates follow the same illustrative cycle as the rest of the dashboard. " +
+        esc(body || "Each college") + " sets what actually applies, and that list is the one that counts.");
       return h;
     }
   };
-
-  function applicationCard(target, primary){
-    var sit = situation();
-    var info = SPECIALTY_INFO[target] || {};
-    var body = (primary ? sit.college : info.body) || sit.college;
-    var cyc = primary ? sit.cycle : (CYCLE[info.body] || null);
-    var app = applicationFor(target);
-    var pr = checkProgress(target);
-    var d = cyc ? until(cyc.apply) : null;
-
-    var h = '<div class="card' + (primary ? " lead" : "") + '" style="margin-top:14px">' +
-      '<div class="card-head"><h2>' + esc(info.target || target) + "</h2>" +
-      '<span class="r" style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-      (primary ? '<span class="chip good">Main route</span>' : '<span class="chip mute">' + esc(body) + "</span>") +
-      (app && app.outcome ? '<span class="chip ' + OUTCOMES[app.outcome].k + '">' + esc(OUTCOMES[app.outcome].label) + "</span>"
-        : app ? '<span class="chip good">' + ico(I.tick, 12) + "Applied</span>"
-        : d !== null ? chip({k: d < 0 ? "mute" : (d <= 21 ? "crit" : d <= 60 ? "warn" : "mute"), icon:I.clock,
-                             label: d < 0 ? "Closed" : awayText(d)}) : "") +
-      "</span></div>";
-
-    h += '<div class="barrow" style="margin-bottom:14px">' +
-      '<span class="lbl">' + pr.done + " of " + pr.total + " requirements ready</span>" +
-      '<span class="val num">' + pr.pct + "%</span>" + bar(pr.pct) +
-      '<span class="note">' + (cyc
-        ? esc(body) + ". Everything below has to be in place by " + fmtLong(cyc.apply) + ", when applications close, " +
-          "unless it carries a date of its own."
-        : "No published cycle held for " + esc(body)) + "</span></div>";
-
-    /* grouped, because eligibility failing is a different kind of problem to a
-       reference not being back yet */
-    var list = checksFor(), groups = [];
-    list.forEach(function(c){ if (groups.indexOf(c.g) === -1) groups.push(c.g); });
-    groups.forEach(function(g){
-      var items = list.filter(function(c){ return c.g === g; });
-      var gdone = items.filter(function(c){ return checkState(c, target).done; }).length;
-      h += '<p class="group-h">' + esc(g) + ' <span class="g-count">' + gdone + " of " + items.length + "</span></p>";
-      h += items.map(function(c){ return checkRow(c, target); }).join("");
-    });
-    return h + "</div>";
-  }
 
   function checkRow(c, target){
     var st = checkState(c, target), due = checkDue(c);
@@ -2654,13 +2862,20 @@ a.nudge:hover{text-decoration:underline}
       (c.shared ? '<span class="chip mute sm">Shared</span>' : "") +
       (st.auto ? '<span class="chip mute sm">From your record</span>' : "") +
       (c.d ? "<small>" + esc(c.d) + "</small>" : "") +
-      (st.note ? '<small class="chk-note">' + esc(st.note) + "</small>" : "") + "</div>";
+      (st.note ? '<small class="chk-note">' + esc(st.note) + "</small>" : "") +
+      /* the action lives with the requirement. Sending a doctor to another
+         page to tick something they are looking at is the whole complaint. */
+      (!st.done && (c.act || c.fix)
+        ? '<span class="chk-a">' +
+          (c.act ? '<button class="btn btn-sm btn-primary" data-act="' + esc(c.act[0]) + '">' + esc(c.act[1]) + "</button>" : "") +
+          (c.fix ? '<a class="btn btn-sm btn-ghost" href="' + c.fix[0] + '">' + esc(c.fix[1]) + "</a>" : "") +
+          "</span>" : "") +
+      "</div>";
 
     h += '<div class="chk-r">' +
       (!st.done && due && !due.governing && dd !== null && dd >= 0
         ? chip({k: dd <= 21 ? "crit" : dd <= 60 ? "warn" : "mute", icon:I.clock,
                 label:due.why + ", " + awayText(dd)}) : "") +
-      (c.fix && !st.done ? '<a class="btn-link" href="' + c.fix[0] + '">' + esc(c.fix[1]) + "</a>" : "") +
       (c.custom ? '<button class="btn-link" data-check-remove="' + esc(c.id) + '">Remove</button>' : "") +
       "</div></div>";
     return h;
@@ -3248,6 +3463,18 @@ a.nudge:hover{text-decoration:underline}
     saveCV: function(){
       S.cvUpdatedAt = new Date().toISOString().slice(0, 10);
       return "CV marked updated today";
+    },
+    /* the admin page's versions read date inputs that only exist there. These
+       record today, which is the common case, and the admin page stays the
+       way to enter any other date. */
+    logGardaToday: function(){
+      S.gardaVettingDate = new Date().toISOString().slice(0, 10);
+      return "Garda vetting dated today, renews " + fmtLong(gardaExpiry());
+    },
+    logOccToday: function(){
+      S.occClearance = true;
+      S.occClearanceAt = new Date().toISOString().slice(0, 10);
+      return "Occupational health clearance recorded";
     }
   };
 
@@ -3545,6 +3772,50 @@ a.nudge:hover{text-decoration:underline}
     document.getElementById("domNoteSave").addEventListener("click", commit);
     document.getElementById("domNoteCancel").addEventListener("click", function(){ render(); });
     input.addEventListener("keydown", function(e){ if (e.key === "Enter") commit(); });
+  }, true);
+
+  /* switching application or stage. Both stick, so a doctor who came back to
+     chase one reference is not returned to the top of the year each time. */
+  document.addEventListener("click", function(ev){
+    var tt = ev.target.closest("[data-track-target]");
+    if (tt){ ev.preventDefault(); S.trackTarget = tt.getAttribute("data-track-target"); save(); render(); return; }
+    var tp = ev.target.closest("[data-track-phase]");
+    if (tp){ ev.preventDefault(); S.trackPhase = tp.getAttribute("data-track-phase"); save(); render(); return; }
+  }, true);
+
+  /* a rotation logged where it is asked for, rather than on another page */
+  document.addEventListener("click", function(ev){
+    var btn = ev.target.closest('[data-act="addRotationHere"]');
+    if (!btn) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    var wrap = document.createElement("div");
+    wrap.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px";
+    var fld = "border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px";
+    wrap.innerHTML =
+      '<input id="rotHosp" placeholder="Hospital" style="' + fld + ';min-width:150px">' +
+      '<input id="rotSpec" placeholder="Specialty" style="' + fld + ';min-width:130px">' +
+      '<input id="rotFrom" type="date" style="' + fld + '">' +
+      '<input id="rotTo" type="date" style="' + fld + '">' +
+      '<button class="btn btn-sm btn-primary" id="rotAdd">Add</button>' +
+      '<button class="btn btn-sm btn-ghost" id="rotCancel">Cancel</button>';
+    btn.closest(".chk-a").replaceWith(wrap);
+    document.getElementById("rotHosp").focus();
+    function commit(){
+      var hosp = document.getElementById("rotHosp").value.trim();
+      if (!hosp){ render(); return; }
+      S.rotations = S.rotations || [];
+      S.rotations.unshift({
+        hospital: hosp.slice(0, 80),
+        specialty: document.getElementById("rotSpec").value.trim().slice(0, 60),
+        from: document.getElementById("rotFrom").value,
+        to: document.getElementById("rotTo").value
+      });
+      logActivity("Rotation logged", hosp.slice(0, 80));
+      save(); render(); toast("Rotation added.");
+    }
+    document.getElementById("rotAdd").addEventListener("click", commit);
+    document.getElementById("rotCancel").addEventListener("click", function(){ render(); });
   }, true);
 
   /* a manual requirement ticked, or a custom one removed */
