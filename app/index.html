@@ -360,14 +360,6 @@ table.data td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:7
 /* ============ PHASES ============
    The year has four stages and a doctor is in one of them. Tabs rather than
    one long page, because the stage you are not in is reference, not work. */
-.switch{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.sw{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1.5px solid var(--line);
-  background:#fff;border-radius:14px;padding:9px 15px;text-align:left;min-height:24px}
-.sw b{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--deep)}
-.sw span{font-size:11px;color:var(--txt-soft);font-weight:600}
-.sw:hover{border-color:var(--deep)}
-.sw.on{border-color:var(--mint);background:var(--mint-soft)}
-.sw.on span{color:var(--good-text)}
 .phases{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .ph{display:flex;flex-direction:column;align-items:flex-start;gap:3px;border:1.5px solid var(--line);
   background:#fff;border-radius:14px;padding:11px 14px;text-align:left;min-width:0;position:relative}
@@ -529,9 +521,17 @@ button.pick-b.on{background:var(--deep);border-color:var(--deep);color:#fff}
 .pc{background:#fff;border:1.5px solid var(--sp);border-radius:18px;overflow:hidden;
     box-shadow:4px 4px 0 rgba(11,46,54,.12);display:flex;flex-direction:column;min-width:0}
 .pc.iv{box-shadow:4px 4px 0 rgba(11,46,54,.12)}
-/* locked overrides the hue on the BORDER only: the band keeps its specialty,
-   because which specialty a prep belongs to does not change with who owns it */
-.pc.lock{border-color:var(--line);box-shadow:4px 4px 0 rgba(11,46,54,.05)}
+/* Locked keeps its specialty border. The old rule greyed it out and kept only
+   the band, which meant the hue was complete on your own route and broken
+   everywhere else -- Surgery is always locked for a physician, so Surgery never
+   showed its colour at all, and the palette read as decoration rather than a
+   system. Which specialty a prep belongs to does not change with who owns it,
+   and that has to hold for the whole card, not just the 8px strip.
+
+   Locked is carried by three channels that are not the hue: a flatter shadow
+   (the card sits down rather than standing proud), the word in the eyebrow,
+   and the button saying Get access rather than Open. */
+.pc.lock{box-shadow:1px 1px 0 rgba(11,46,54,.06)}
 .pc.lead{border-width:2.5px}
 /* The hue says which specialty on both shelves now, so it can no longer also
    say exam-or-interview. That moves to a second channel: an exam band is
@@ -591,7 +591,10 @@ button.pick-b.on{background:var(--deep);border-color:var(--deep);color:#fff}
        box-shadow:3px 3px 0 rgba(11,46,54,.1)}
 .rstop.iv .rcard{box-shadow:3px 3px 0 rgba(107,92,165,.12)}
 .rstop.now .rcard{border-width:2.5px}
-.rstop.todo .rcard{border-color:var(--line);box-shadow:3px 3px 0 rgba(11,46,54,.05)}
+/* a stop you have not reached keeps its specialty border for the same reason a
+   locked card does: the hue says WHICH specialty, and where you have got to is
+   a different question. The flatter shadow carries "not yet". */
+.rstop.todo .rcard{box-shadow:1px 1px 0 rgba(11,46,54,.06)}
 .rcard .rk{font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--sp-t)}
 .rcard h2{font-size:14.5px;color:var(--deep);margin:4px 0 3px}
 .rcard p{font-size:12.5px;color:var(--txt-soft)}
@@ -620,7 +623,30 @@ button.pick-b.on{background:var(--deep);border-color:var(--deep);color:#fff}
 .due-set{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
          border-radius:999px;padding:4px 10px;min-height:24px;background:var(--mint-soft);
          color:var(--good-text);border:1px solid transparent}
-.switch .sw{border-left:4px solid var(--sp,var(--line))}
+/* ---- the application switcher, as programme cards ----
+   The tracker used two thin pills that named the programme and a count. The
+   programme is the thing being tracked, so it gets the card language it wears
+   everywhere else in the app, and the whole card is the control: a doctor
+   choosing between two applications is choosing between two programmes. */
+.pgrid-sw{margin-bottom:16px}
+button.pcsw{cursor:pointer;text-align:left;padding:0;font:inherit;color:inherit;width:100%;
+            transition:transform .18s,box-shadow .18s}
+button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,.14)}
+.pcsw .pc-b{gap:0}
+.pcsw .pc-k{display:block}
+.pcsw-t{display:block;font-family:var(--fd);font-size:15px;font-weight:800;color:var(--deep);
+        letter-spacing:-.01em;margin:6px 0 3px;line-height:1.3}
+.pcsw .pc-sub{display:block}
+.pcsw .pc-f{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:auto;padding-top:13px}
+/* the selected card says so in words as well as in border weight, because
+   "which one am I looking at" must not rest on a 1px difference alone */
+.pcsw-s{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--txt-mute)}
+.pcsw.on .pcsw-s{color:var(--sp-t)}
+.pcsw:not(.on){box-shadow:1px 1px 0 rgba(11,46,54,.06)}
+/* 24px is the WCAG 2.2 2.5.8 floor. Every other .btn-link in this file sets
+   it explicitly; this one shipped at 15px tall. */
+.pick-more{margin:-6px 0 16px}
+.pick-more .btn-link{display:inline-flex;align-items:center;min-height:24px}
 
 /* ============ PRINT ============
    There was no @media print anywhere in this file, and the tracker had a
@@ -3247,6 +3273,45 @@ a.nudge:hover{text-decoration:underline}
         (phase && cyc ? esc(phaseLabel(phase.id, cyc)) : "No cycle held") + "</span></div></div>";
   }
 
+  /* The tracked programmes, as the cards from the picker. Concept D's top half
+     is the switcher: a doctor picking between two applications is picking
+     between two programmes, and the thin pills said neither the closing date
+     nor how ready each one was -- the two things that decide which to look at
+     first. The whole card is the control, so the target is the card, not a
+     word inside it. */
+  function trackCard(x, on, primary){
+    var cyc = cycleForProg(x), pr = checkProgress(x.id), d = cyc ? until(cyc.apply) : null;
+    var meta = [x.fam || x.body];
+    /* the long form, matching the stats bar directly above it: a card that
+       says "closes 8 Nov" beside a header saying "8 Nov 2026" makes the
+       reader check whether they are the same date */
+    if (d !== null && d >= 0) meta.push("closes " + fmtLong(cyc.apply));
+    meta.push(pr.done + " of " + pr.total + " ready");
+    return '<button class="pc pcsw ' + specClass(x.grp) + (on ? " lead on" : "") +
+      '" role="tab" aria-selected="' + (on ? "true" : "false") +
+      '" data-track-target="' + esc(x.id) + '">' +
+      '<span class="pc-band" aria-hidden="true"></span><span class="pc-b">' +
+      '<span class="pc-k">' + esc(x.grp) + " \u00b7 " + esc(x.body) + " \u00b7 " +
+        esc(TIER_LABEL[x.tier] || "") + "</span>" +
+      '<b class="pcsw-t">' + esc(x.t) + "</b>" +
+      '<span class="pc-sub">' + esc(meta.join(" \u00b7 ")) + "</span>" +
+      '<span class="pc-f">' +
+        '<span class="chip ' + (primary ? "good" : "mute") + '">' +
+          (primary ? "Main route" : "Also tracking") + "</span>" +
+        '<span class="pcsw-s">' + (on ? "Showing this one" : "Show this one") + "</span>" +
+      "</span></span></button>";
+  }
+  function trackPicker(progs, target){
+    var h = '<p class="group-h">Tracking now <span class="g-count">\u00b7 ' + progs.length + "</span></p>" +
+      '<div class="pgrid pgrid-sw" role="tablist" aria-label="Application">' +
+      /* the main route is the first tracked programme -- setProgrammes() takes
+         S.specialty from list[0], so the order in the record is the answer */
+      progs.map(function(x, i){ return trackCard(x, x.id === target, i === 0); }).join("") + "</div>" +
+      '<p class="pick-more"><a class="btn-link" href="#/programmes">Add another programme, or see ' +
+      "everything you could apply to</a></p>";
+    return h;
+  }
+
   /* tab two: every date, every application, grouped by month */
   function allDatesPanel(){
     var rows = datesGrouped(allDates().filter(function(d){ return S.showPast || d.days >= 0; }));
@@ -3331,19 +3396,13 @@ a.nudge:hover{text-decoration:underline}
       var h = trackTabs() + '<div id="trackPanel" role="tabpanel" tabindex="-1">';
       h += trackStats(prog);
 
-      /* ---- which application. Programmes, not specialties: a doctor tracking
-         a trunk and the thing it feeds has two applications, and keying the
-         switcher on the specialty collapsed them into one. ---- */
-      if (progs.length > 1){
-        h += '<div class="switch" role="tablist" aria-label="Application">' + progs.map(function(x){
-          var pr = checkProgress(x.id);
-          return '<button class="sw ' + specClass(x.grp) + (x.id === target ? " on" : "") +
-            '" role="tab" aria-selected="' + (x.id === target ? "true" : "false") +
-            '" data-track-target="' + esc(x.id) + '">' +
-            "<b>" + esc(x.t) + "</b><span>" + esc(x.body) + " \u00b7 " + pr.done + " of " + pr.total +
-            "</span></button>";
-        }).join("") + "</div>";
-      }
+      /* ---- which application, as the cards from the programme picker rather
+         than two thin pills. The programme IS the thing being tracked, so it
+         gets the same card language it has everywhere else: its specialty's
+         band and border, its college, its closing date and how ready it is.
+         With one programme this is not a choice, it is the identity of the
+         page; with two it is the switcher. ---- */
+      h += trackPicker(progs, target);
 
       /* ---- the four phases ---- */
       h += '<div class="phases" role="tablist" aria-label="Stage">' + PHASES.map(function(x){
@@ -3368,7 +3427,11 @@ a.nudge:hover{text-decoration:underline}
       h += '<p class="ph-when">' + esc(phaseLabel(phase, cyc)) + "</p>";
       h += '<p class="lede" style="max-width:68ch;margin-bottom:14px">' + esc(ph.blurb) + "</p>";
 
-      var ms = phaseMilestones(phase, cyc, target);
+      /* phaseMilestones wants a NAME to put in front of "applications close",
+         not the key the checklist is stored under. target became a programme
+         id in the merge and this line rendered "p-cardiology applications
+         close" until the programme's own title was passed instead. */
+      var ms = phaseMilestones(phase, cyc, prog.t);
       if (ms.length){
         h += '<p class="group-h">Key dates</p>';
         h += ms.map(function(d){

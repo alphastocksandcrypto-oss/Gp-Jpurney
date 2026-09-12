@@ -1582,6 +1582,53 @@ shadows and avoid breaking mid-row, links stop spewing their URLs. A test
 emulates print media and asserts the sidebar and tab controls compute to
 `display:none`.
 
+### The switcher is the programme cards
+
+The merge shipped the switcher as two thin pills — programme name, college, a
+count. That was the wrong component: the programme is the thing being tracked,
+and it wears a card everywhere else in the app. The tracker now uses the top
+half of the picker design, `trackCard()`, so choosing between two applications
+means choosing between two programmes, in the same card language, with the two
+facts the pills left out: **when it closes and how ready it is**. The whole card
+is the control, and a link underneath goes to the full programme browse.
+
+With one programme this is not a choice, it is the identity of the page — which
+application these eighteen requirements belong to — so it renders either way.
+
+### A programme id was leaking into the dates
+
+`target` became a programme id in the merge, and one call still wanted a name:
+
+```js
+var ms = phaseMilestones(phase, cyc, target);   // "p-cardiology applications close"
+```
+
+`cycleEvents()` resolves its label as `(SPECIALTY_INFO[target] || {}).target ||
+target`, so an id that is not a specialty key falls straight through to the
+output. It now takes `prog.t`. Every other use of `target` in that view is a
+storage key — `checkProgress`, `phaseProgress`, `checkState`, `checkKey` — and
+is correct as an id; this was the one place a human-readable name was wanted.
+A test asserts no `p-` or `bst-` id renders anywhere on the tracker.
+
+### Locked no longer eats the specialty colour
+
+The rule said:
+
+```css
+/* locked overrides the hue on the BORDER only: the band keeps its specialty,
+   because which specialty a prep belongs to does not change with who owns it */
+.pc.lock{border-color:var(--line); ...}
+```
+
+The comment argues against the rule it is attached to. The effect was that the
+palette only completed on your own route: a physician sees Surgery, Psychiatry,
+Emergency Medicine and the rest **only ever locked**, so those hues never showed
+on a border at all and the colour-coding read as decoration rather than a
+system. Every card now keeps its specialty border. Locked is carried by three
+channels that were already there and are not the hue — a flatter shadow, the
+word in the eyebrow, and *Get access* rather than *Open*. `.rstop.todo` on the
+route line had the same rule for the same bad reason and got the same fix.
+
 ### The urgency badge came with it
 
 `navBadge("deadlines")` counted dates inside 21 days and put a red dot on the
