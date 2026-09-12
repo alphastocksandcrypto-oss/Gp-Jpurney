@@ -1247,9 +1247,9 @@ Four searches were run before accepting that, not one:
 | 11 hues, shelf order | adjacent pairs | 10.7 | 21.0 |
 | 11 hues + hue-family constraint | all pairs | 7.2 | 13.4 |
 | four muted second-tier hues | all pairs | 1.5 | 6.9 |
-| **8 hues (shipped)** | **all pairs** | **9.2** | **17.7** |
+| **7 specialty hues + one merged bucket (shipped)** | **all pairs** | **9.2** | **17.7** |
 
-Floors are CVD ≥ 8 and normal-vision ≥ 15. Only eight clears them.
+Floors are CVD ≥ 8 and normal-vision ≥ 15. Only the eight-slot set clears them.
 
 The third row is the instructive one: optimising the *adjacent* pairlist scored
 well by parking two near-identical magentas in blocks far apart on the page.
@@ -1259,12 +1259,32 @@ the four extra hues makes them *less* separable, not more, because low chroma
 compresses the space they had to fit into.
 
 So the four specialties with **no exam on the other shelf** — Anaesthesiology,
-Radiology, Pathology, Public Health — take `sp-none`, a neutral. They are the
-right four to drop precisely because they have no exam counterpart, so no
-cross-shelf coherence is lost. The shelf says so once, above the first of them,
-rather than leaving four grey blocks reading as a rendering fault.
+Radiology, Pathology, Public Health — share **one labelled group, "Other
+specialties"**, with one hue. They are the right four to merge precisely because
+they have no exam counterpart, so no cross-shelf coherence is lost.
 
-Adding a ninth hue later means removing one, not appending.
+`specGroup()` does the bucketing in one place, and everything downstream reads
+it: the group headings, the specialty filter pills (nine, not twelve), and
+`specClass`. Two things deliberately do **not** fold:
+
+- **The card still names its own specialty.** A Radiology interview's eyebrow
+  reads `RADIOLOGY · FACULTY OF RADIOLOGISTS · LOCKED`. Only the grouping and
+  the hue are shared, and a test asserts all four distinct names survive.
+- **Search still matches the real specialty.** Typing "radiology" finds it;
+  the bucket name is added to the haystack as well, so "other" finds all four.
+
+The group says what it is where it sits, rather than leaving a reader to work
+out why four specialties share a heading.
+
+The eighth hue was searched for the same way as the first seven, over every hue
+family: `#8665f0` violet holds the set at **CVD ΔE 9.2 and normal-vision 17.7**,
+identical to the seven-hue margins. A bright blue scored the same on CVD but
+landed beside Medicine's blue, so the violet was taken instead — the binding
+pair is Obstetrics ↔ Emergency Medicine either way, not the new slot.
+
+Adding a **ninth** hue later means removing one, not appending. `sp-none` stays
+as the fallback for a group the map has never heard of, and a test asserts
+nothing currently falls through to it.
 
 | Slot | Specialty | Block `--sp` | Label `--sp-t` |
 |---|---|---|---|
@@ -1276,7 +1296,8 @@ Adding a ninth hue later means removing one, not appending.
 | 6 | Paediatrics | `#daa50b` | `#9b6900` |
 | 7 | Obstetrics and Gynaecology | `#4d920c` | `#418200` |
 | 8 | Any specialty | `#64767c` | `#4a585d` |
-| — | no slot (`sp-none`) | `#8a9a9f` | `#4a585d` |
+| 9 | Other specialties | `#8665f0` | `#7760cc` |
+| — | fallback (`sp-none`) | `#8a9a9f` | `#4a585d` |
 
 **Two steps per specialty, because one cannot do both jobs.** `--sp` is the
 block colour — an 8px band, a 7px bar, a 2.5px border, a 31px node. `--sp-t` is

@@ -517,10 +517,13 @@ button.pick-b.on{background:var(--deep);border-color:var(--deep);color:#fff}
 .sp-paed {--sp:#daa50b; --sp-t:#9b6900}
 .sp-og   {--sp:#4d920c; --sp-t:#418200}
 .sp-any  {--sp:#64767c; --sp-t:#4a585d}
-/* a specialty with no slot. Eight hues is what this palette can carry and be
-   told apart; the interview registry names eleven specialties, so the four with
-   no exam beside them get the neutral rather than a ninth hue nobody validated.
-   Measured, not assumed — see the README. */
+/* the specialties that share one slot rather than holding one each. Eight hues
+   is what this palette can carry and still have them told apart, so the four
+   with no exam on the other shelf are one labelled group with one colour.
+   Validated with the other seven on the all-pairs list: adding it holds CVD
+   delta-E at 9.2 and normal-vision at 17.7. */
+.sp-other{--sp:#8665f0; --sp-t:#7760cc}
+/* the fallback, for a group the map has never heard of */
 .sp-none {--sp:#8a9a9f; --sp-t:#4a585d}
 
 .pc{background:#fff;border:1.5px solid var(--sp);border-radius:18px;overflow:hidden;
@@ -541,6 +544,7 @@ button.pick-b.on{background:var(--deep);border-color:var(--deep);color:#fff}
    var(--sp) 0 5px, rgba(255,255,255,.55) 5px 10px)}
 .pc-k svg{vertical-align:-2px;margin-right:5px}
 /* the swatch that makes a group heading its own legend */
+.group-n{font-size:12px;color:var(--txt-soft);margin:-4px 0 10px;max-width:78ch;line-height:1.5}
 .spdot{display:inline-block;width:10px;height:10px;border-radius:3px;
     background:var(--sp,var(--txt-mute));margin-right:8px;vertical-align:-1px}
 /* the heading names its specialty in that specialty's own text step, so the
@@ -3325,7 +3329,7 @@ a.nudge:hover{text-decoration:underline}
     /* word starts, not raw substrings: "BST" matched "obstetrics" on a plain
        indexOf, which is the kind of result that makes a search box feel
        broken. Every typed term has to start some word in the haystack. */
-    var words = [o.label, o.body, o.grp, o.meta, o.d].filter(Boolean).join(" ")
+    var words = [o.label, o.body, o.grp, specGroup(o.grp), o.meta, o.d].filter(Boolean).join(" ")
       .toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
     return q.split(/\s+/).filter(Boolean).every(function(term){
       return words.some(function(w){ return w.indexOf(term) === 0; });
@@ -3340,23 +3344,34 @@ a.nudge:hover{text-decoration:underline}
   var SPEC_CLASS = {
     "Medicine":"sp-med", "Surgery":"sp-surg", "General Practice":"sp-gp",
     "Psychiatry":"sp-psy", "Emergency Medicine":"sp-em", "Paediatrics":"sp-paed",
-    "Obstetrics and Gynaecology":"sp-og", "Any specialty":"sp-any"
+    "Obstetrics and Gynaecology":"sp-og", "Any specialty":"sp-any",
+    "Other specialties":"sp-other"
   };
-  function specClass(grp){ return SPEC_CLASS[grp] || "sp-none"; }
-  function specColoured(grp){ return !!SPEC_CLASS[grp]; }
+  /* Eleven specialties, eight slots. Rather than four blocks with no colour,
+     the four that hold an interview and no exam share one labelled group: a
+     reader is told they are a bucket instead of being left to wonder why four
+     headings look alike. The CARD still names the real specialty — only the
+     grouping and the hue are shared. */
+  var OTHER_SPECIALTIES = ["Anaesthesiology", "Radiology", "Pathology", "Public Health"];
+  var OTHER_LABEL = "Other specialties";
+  function specGroup(grp){ return OTHER_SPECIALTIES.indexOf(grp) > -1 ? OTHER_LABEL : grp; }
+  function specClass(grp){ return SPEC_CLASS[specGroup(grp)] || "sp-none"; }
   /* a group heading is the legend for its own grid */
   function groupHead(grp, coloured){
     return '<p class="group-h ' + (coloured ? esc(specClass(grp)) : "") + '">' +
       (coloured ? '<span class="spdot" aria-hidden="true"></span>' : "") + esc(grp) + "</p>";
   }
 
-  function prepInGroup(o){ return !S.prepGroup || o.grp === S.prepGroup; }
+  function prepInGroup(o){ return !S.prepGroup || specGroup(o.grp) === S.prepGroup; }
 
   /* the specialty groups present in a registry, in a stable order, so the
      filter row does not reshuffle itself as the shelf changes */
   function prepGroups(list){
     var out = [];
-    list.forEach(function(o){ if (o.grp && out.indexOf(o.grp) === -1) out.push(o.grp); });
+    list.forEach(function(o){
+      var g = specGroup(o.grp);
+      if (g && out.indexOf(g) === -1) out.push(g);
+    });
     return out;
   }
 
@@ -3739,7 +3754,7 @@ a.nudge:hover{text-decoration:underline}
       out += '<p class="sec-label">Browse other routes</p>';
       prepGroups(rest).forEach(function(g){
         out += groupHead(g, true);
-        out += '<div class="pgrid">' + rest.filter(function(o){ return o.grp === g; })
+        out += '<div class="pgrid">' + rest.filter(function(o){ return specGroup(o.grp) === g; })
           .map(function(o){ return examCard(o.e, "", false); }).join("") + "</div>";
       });
     }
@@ -4125,16 +4140,16 @@ a.nudge:hover{text-decoration:underline}
     var rest = vis.filter(function(o){ return !shown[o.id]; });
     if (rest.length){
       out += '<p class="sec-label">Browse other routes</p>';
-      var saidNeutral = false;
       prepGroups(rest).forEach(function(g){
-        if (!specColoured(g) && !saidNeutral){
-          saidNeutral = true;
-          out += ctxFoot("The specialties below have no exam on the other shelf and no colour of their own: " +
-            "eight hues is what this palette can carry and still have them told apart. They are named rather " +
-            "than coloured.");
-        }
         out += groupHead(g, true);
-        out += '<div class="pgrid">' + rest.filter(function(o){ return o.grp === g; })
+        /* the bucket says what it is where it sits, rather than leaving a
+           reader to work out why four specialties share one heading */
+        if (g === OTHER_LABEL){
+          out += '<p class="group-n">' + esc(OTHER_SPECIALTIES.join(", ")) +
+            ". Grouped together because each holds an interview and no exam, so none of them appears on the " +
+            "other shelf. Every card still names its own.</p>";
+        }
+        out += '<div class="pgrid">' + rest.filter(function(o){ return specGroup(o.grp) === g; })
           .map(function(o){ return ivCard(o.iv, false); }).join("") + "</div>";
       });
     }
