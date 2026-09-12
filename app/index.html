@@ -494,29 +494,59 @@ button.pick-b.on{background:var(--deep);border-color:var(--deep);color:#fff}
 .pgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 @media(max-width:1100px){ .pgrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
 @media(max-width:680px){ .pgrid{grid-template-columns:minmax(0,1fr)} }
-.pc{background:#fff;border:1.5px solid var(--deep);border-radius:18px;overflow:hidden;
+/* ---- the specialty palette ----
+   Every exam stage wears its specialty's hue, so a shelf of nineteen stops
+   reading as one undifferentiated block and a route reads as one colour with
+   the interview cutting across it.
+
+   Two steps per specialty, because one cannot do both jobs: --sp is the block
+   colour (an 8px band, a 7px bar, a 2.5px border, a 31px node) and --sp-t is
+   the darker step the label beside it wears, every one of them at or above
+   4.5:1 on white and on paper. The blocks are validated as a categorical set
+   on the ALL-PAIRS list, not the adjacent one, because a shelf puts every
+   specialty on screen at once: worst pair CVD delta-E 9.2, normal-vision 17.7.
+   Several blocks sit under 3:1 on white, which is allowed only because the
+   colour is never the carrier: each one has its specialty named beside it, in
+   its own --sp-t, on every card and every group heading. */
+.pc, .rstop{--sp:var(--mint); --sp-t:var(--good-text)}
+.sp-med  {--sp:#0056b6; --sp-t:#0b57b2}
+.sp-surg {--sp:#9a3506; --sp-t:#9a3506}
+.sp-gp   {--sp:#01baac; --sp-t:#008074}
+.sp-psy  {--sp:#9c087d; --sp-t:#912b76}
+.sp-em   {--sp:#f8535a; --sp-t:#c6484c}
+.sp-paed {--sp:#daa50b; --sp-t:#9b6900}
+.sp-og   {--sp:#4d920c; --sp-t:#418200}
+.sp-any  {--sp:#64767c; --sp-t:#4a585d}
+
+.pc{background:#fff;border:1.5px solid var(--sp);border-radius:18px;overflow:hidden;
     box-shadow:4px 4px 0 rgba(11,46,54,.12);display:flex;flex-direction:column;min-width:0}
-.pc.iv{border-color:var(--plum);box-shadow:4px 4px 0 rgba(107,92,165,.14)}
+.pc.iv{--sp:var(--plum); --sp-t:var(--plum-text); box-shadow:4px 4px 0 rgba(107,92,165,.14)}
+/* locked overrides the hue on the BORDER only: the band keeps its specialty,
+   because which specialty a prep belongs to does not change with who owns it */
 .pc.lock{border-color:var(--line);box-shadow:4px 4px 0 rgba(11,46,54,.05)}
 .pc.lead{border-width:2.5px}
-.pc-band{height:8px}
-.pc-band.ex{background:linear-gradient(90deg,var(--mint),var(--mint-2))}
-.pc-band.iv{background:linear-gradient(90deg,var(--plum),var(--plum-2))}
-.pc-band.lock{background:#d9ddda}
+.pc-band{height:8px;background:var(--sp)}
+/* the swatch that makes a group heading its own legend */
+.spdot{display:inline-block;width:10px;height:10px;border-radius:3px;
+    background:var(--sp,var(--txt-mute));margin-right:8px;vertical-align:-1px}
+/* the heading names its specialty in that specialty's own text step, so the
+   swatch beside it is read rather than decoded */
+.group-h.sp-med,.group-h.sp-surg,.group-h.sp-gp,.group-h.sp-psy,
+.group-h.sp-em,.group-h.sp-paed,.group-h.sp-og,.group-h.sp-any{color:var(--sp-t)}
 .pc-b{padding:15px 16px 15px;display:flex;flex-direction:column;flex:1;min-width:0}
-.pc-k{font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--good-text)}
-.pc.iv .pc-k{color:var(--plum-text)}
-.pc.lock .pc-k{color:var(--txt-mute)}
+.pc-k{font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--sp-t)}
 .pc-b h2{font-size:15px;color:var(--deep);margin:6px 0 3px;line-height:1.3}
 .pc-sub{font-size:12.5px;color:var(--txt-mute)}
-.pc-why{font-size:12.5px;color:var(--ink);margin-top:9px;background:var(--mint-soft);
-        border-radius:9px;padding:8px 11px}
+/* why this one is recommended. It used to wear mint-soft, which is the app's
+   "good" status tint: a reason is not a status, and reusing the tint spends a
+   colour that has to keep meaning one thing. */
+.pc-why{font-size:12.5px;color:var(--ink);margin-top:9px;background:var(--paper);
+        border-left:3px solid var(--sp);border-radius:0 9px 9px 0;padding:8px 11px}
 .pc-d{font-size:12.5px;color:var(--txt-soft);margin-top:9px}
 .pc-prog{margin-top:11px}
 .pc-prog .pr{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;font-weight:700;color:var(--deep)}
 .pc-bar{height:7px;border-radius:99px;background:#ececea;margin-top:6px;overflow:hidden}
-.pc-bar i{display:block;height:100%;background:var(--mint)}
-.pc.iv .pc-bar i{background:var(--plum)}
+.pc-bar i{display:block;height:100%;background:var(--sp)}
 .pc-f{margin-top:auto;padding-top:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .pc-f .btn{flex:1 1 auto;justify-content:center}
 .pc-wk{font-size:11px;font-weight:800;border-radius:999px;padding:5px 10px;white-space:nowrap;
@@ -533,18 +563,17 @@ button.pick-b.on{background:var(--deep);border-color:var(--deep);color:#fff}
 .rstop:last-child{padding-bottom:0}
 .rnode{position:absolute;left:5px;top:2px;width:31px;height:31px;border-radius:50%;display:grid;
        place-items:center;font-size:12px;font-weight:800;background:#fff;border:2.5px solid #d9ddda;color:var(--txt-mute)}
-.rstop.done .rnode{background:var(--mint);border-color:var(--mint);color:#043c31}
+.rstop.done .rnode{background:var(--sp);border-color:var(--sp);color:#fff}
 .rstop.now .rnode{background:var(--deep);border-color:var(--deep);color:#fff;box-shadow:0 0 0 5px rgba(20,179,148,.22)}
-.rstop.iv .rnode{border-color:var(--plum);color:var(--plum-text)}
-.rstop.iv.now .rnode{background:var(--plum);border-color:var(--plum);color:#fff;box-shadow:0 0 0 5px rgba(107,92,165,.2)}
-.rcard{background:#fff;border:1.5px solid var(--deep);border-radius:15px;padding:13px 15px;
+.rstop:not(.done):not(.now) .rnode{border-color:var(--sp);color:var(--sp-t)}
+.rstop.iv{--sp:var(--plum); --sp-t:var(--plum-text)}
+.rstop.iv.now .rnode{background:var(--plum);border-color:var(--plum);box-shadow:0 0 0 5px rgba(107,92,165,.2)}
+.rcard{background:#fff;border:1.5px solid var(--sp);border-radius:15px;padding:13px 15px;
        box-shadow:3px 3px 0 rgba(11,46,54,.1)}
-.rstop.iv .rcard{border-color:var(--plum);box-shadow:3px 3px 0 rgba(107,92,165,.12)}
+.rstop.iv .rcard{box-shadow:3px 3px 0 rgba(107,92,165,.12)}
 .rstop.now .rcard{border-width:2.5px}
 .rstop.todo .rcard{border-color:var(--line);box-shadow:3px 3px 0 rgba(11,46,54,.05)}
-.rcard .rk{font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--good-text)}
-.rstop.iv .rcard .rk{color:var(--plum-text)}
-.rstop.todo .rcard .rk{color:var(--txt-mute)}
+.rcard .rk{font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--sp-t)}
 .rcard h2{font-size:14.5px;color:var(--deep);margin:4px 0 3px}
 .rcard p{font-size:12.5px;color:var(--txt-soft)}
 .rmeta{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:9px}
@@ -3287,6 +3316,24 @@ a.nudge:hover{text-decoration:underline}
       return words.some(function(w){ return w.indexOf(term) === 0; });
     });
   }
+  /* ---- specialty colour ----
+     One hue per specialty, assigned in a fixed order and never cycled: a
+     specialty we have no slot for gets the neutral rather than a generated
+     hue, which is how a ninth colour nobody validated gets onto a page.
+     The hue is only ever an aid — every card and every group heading names
+     its specialty in words, in that specialty's own text step. */
+  var SPEC_CLASS = {
+    "Medicine":"sp-med", "Surgery":"sp-surg", "General Practice":"sp-gp",
+    "Psychiatry":"sp-psy", "Emergency Medicine":"sp-em", "Paediatrics":"sp-paed",
+    "Obstetrics and Gynaecology":"sp-og", "Any specialty":"sp-any"
+  };
+  function specClass(grp){ return SPEC_CLASS[grp] || "sp-any"; }
+  /* a group heading is the legend for its own grid */
+  function groupHead(grp, coloured){
+    return '<p class="group-h ' + (coloured ? esc(specClass(grp)) : "") + '">' +
+      (coloured ? '<span class="spdot" aria-hidden="true"></span>' : "") + esc(grp) + "</p>";
+  }
+
   function prepInGroup(o){ return !S.prepGroup || o.grp === S.prepGroup; }
 
   /* the specialty groups present in a registry, in a stable order, so the
@@ -3381,7 +3428,7 @@ a.nudge:hover{text-decoration:underline}
   }
 
   function routeStopCard(x, n){
-    var cls = "rstop" + (x.kind === "iv" ? " iv" : "") +
+    var cls = "rstop " + (x.kind === "iv" ? "iv" : specClass(x.e.grp)) +
       (x.done ? " done" : x.now ? " now" : " todo");
     var node = x.done ? ico(I.tick, 14) : x.now ? "●" : String(n);
     var h = '<div class="' + cls + '"><span class="rnode" aria-hidden="true">' + node + "</span>";
@@ -3675,7 +3722,7 @@ a.nudge:hover{text-decoration:underline}
     if (rest.length){
       out += '<p class="sec-label">Browse other routes</p>';
       prepGroups(rest).forEach(function(g){
-        out += '<p class="group-h">' + esc(g) + "</p>";
+        out += groupHead(g, true);
         out += '<div class="pgrid">' + rest.filter(function(o){ return o.grp === g; })
           .map(function(o){ return examCard(o.e, "", false); }).join("") + "</div>";
       });
@@ -3695,10 +3742,12 @@ a.nudge:hover{text-decoration:underline}
     var inc = examIncluded(e.id), open = prepOpen(e.id, inc);
     var topics = topicsFor(e.id), covered = Object.keys(topics).filter(function(k){ return topics[k]; }).length;
 
-    var state = held ? "held" : inc ? "included in your route" : open ? "unlocked" : "locked";
-    var h = '<div class="pc' + (lead ? " lead" : "") + (open ? "" : " lock") + '">' +
-      '<div class="pc-band ' + (open ? "ex" : "lock") + '" aria-hidden="true"></div><div class="pc-b">' +
-      '<p class="pc-k">Exam \u00b7 ' + esc(e.body) + " \u00b7 " + esc(state) + "</p>" +
+    var state = held ? "held" : inc ? "included" : open ? "unlocked" : "locked";
+    /* the eyebrow leads with the specialty, in that specialty's own colour, so
+       the band above it is never a hue with nothing to read it against */
+    var h = '<div class="pc ' + specClass(e.grp) + (lead ? " lead" : "") + (open ? "" : " lock") + '">' +
+      '<div class="pc-band" aria-hidden="true"></div><div class="pc-b">' +
+      '<p class="pc-k">' + esc(e.grp) + " \u00b7 " + esc(e.body) + " \u00b7 " + esc(state) + "</p>" +
       "<h2>" + esc(examLabel(e)) + "</h2>" +
       '<p class="pc-sub">' + esc(e.fmt) + " \u00b7 " + esc(WHEN_LABEL[e.when]) + "</p>" +
       (why ? '<p class="pc-why">' + esc(why) + "</p>" : '<p class="pc-d">' + esc(e.d) + "</p>");
@@ -4060,7 +4109,7 @@ a.nudge:hover{text-decoration:underline}
     if (rest.length){
       out += '<p class="sec-label">Browse other routes</p>';
       prepGroups(rest).forEach(function(g){
-        out += '<p class="group-h">' + esc(g) + "</p>";
+        out += groupHead(g, false);
         out += '<div class="pgrid">' + rest.filter(function(o){ return o.grp === g; })
           .map(function(o){ return ivCard(o.iv, false); }).join("") + "</div>";
       });
@@ -4106,11 +4155,14 @@ a.nudge:hover{text-decoration:underline}
     var d = iv.cycle ? until(iv.cycle.interview) : null, rd = ivReady(iv.id);
     var inc = ivIncluded(iv.id), open = prepOpen(iv.id, inc);
     var mocks = ivMocks(iv.id).length;
-    var state = inc ? "included in your route" : open ? "unlocked" : "locked";
+    var state = inc ? "included" : open ? "unlocked" : "locked";
 
-    var h = '<div class="pc' + (open ? " iv" : " lock") + (lead ? " lead" : "") + '">' +
-      '<div class="pc-band ' + (open ? "iv" : "lock") + '" aria-hidden="true"></div><div class="pc-b">' +
-      '<p class="pc-k">Interview \u00b7 ' + esc(iv.body) + " \u00b7 " + esc(state) + "</p>" +
+    /* interviews stay one colour. They are one product family rather than a
+       shelf spanning every specialty, and a second full palette would leave
+       nothing carrying the exam/interview distinction at all. */
+    var h = '<div class="pc iv' + (open ? "" : " lock") + (lead ? " lead" : "") + '">' +
+      '<div class="pc-band" aria-hidden="true"></div><div class="pc-b">' +
+      '<p class="pc-k">' + esc(iv.grp) + " \u00b7 " + esc(iv.body) + " \u00b7 " + esc(state) + "</p>" +
       "<h2>" + esc(iv.t) + "</h2>" +
       '<p class="pc-sub">' + esc(iv.fmt) + (iv.target ? " \u00b7 for " + esc(iv.target) : "") + "</p>" +
       '<p class="pc-d">' + esc(iv.d) + "</p>";

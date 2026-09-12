@@ -1216,6 +1216,75 @@ Two things moved off the card in the rebuild:
 - **Mark as held is gated on `open`.** It is book-keeping on your own route, not
   a shelf action; on all nineteen cards it was nineteen buttons of noise.
 
+### Colour-coded by specialty
+
+Every exam stage wears its specialty's hue: the 8px band, the card border, the
+progress fill, the route node and the group swatch all read one token, `--sp`.
+A shelf of nineteen stages stops being one undifferentiated block, and a route
+reads as **one colour with the interview cutting across it** — an RCPI line is
+blue with a plum interview, a GP line teal with a plum interview.
+
+**Interviews stay one colour.** They are one product family rather than a shelf
+spanning every specialty, and giving them a second full palette would leave
+nothing at all carrying the exam/interview distinction. Their four extra groups
+(Anaesthesiology, Radiology, Pathology, Public Health) also have no slot — see
+the fixed-order rule below.
+
+| Slot | Specialty | Block `--sp` | Label `--sp-t` |
+|---|---|---|---|
+| 1 | Medicine | `#0056b6` | `#0b57b2` |
+| 2 | Surgery | `#9a3506` | `#9a3506` |
+| 3 | General Practice | `#01baac` | `#008074` |
+| 4 | Psychiatry | `#9c087d` | `#912b76` |
+| 5 | Emergency Medicine | `#f8535a` | `#c6484c` |
+| 6 | Paediatrics | `#daa50b` | `#9b6900` |
+| 7 | Obstetrics and Gynaecology | `#4d920c` | `#418200` |
+| 8 | Any specialty | `#64767c` | `#4a585d` |
+
+**Two steps per specialty, because one cannot do both jobs.** `--sp` is the
+block colour — an 8px band, a 7px bar, a 2.5px border, a 31px node. `--sp-t` is
+the darker step of the same hue that the *label* beside it wears, and every one
+of the eight clears **4.5:1 on white and on paper** (measured in the rendered
+page, not asserted: 4.74 at worst, on Emergency Medicine).
+
+**Validated as a categorical set on the all-pairs list, not the adjacent one**,
+because a shelf puts every specialty on screen at once rather than in a fixed
+neighbour order. Worst pair: **CVD ΔE 9.2** (deutan, target ≥ 8) and
+**normal-vision ΔE 17.7** (floor ≥ 15). Lightness band and chroma floor pass for
+all eight. The hues were found by fixing each specialty's hue angle — so blue
+stays blue and orange stays orange — and searching only *lightness*, which is
+the axis that survives colourblindness; that is why the set is deliberately
+uneven in lightness rather than a tidy single-L ramp.
+
+Two hues were constrained out of the search rather than chosen freely:
+
+- Nothing near **the interview plum** (`#6b5ca5`), or an O&G exam and an
+  interview would be indistinguishable on the one route line where both appear.
+- Nothing near **brand mint** (`#14b394`), which is the "held/good" status and
+  every primary button. General Practice was re-stepped to a cyan-teal for
+  exactly this reason.
+
+**Several blocks sit under 3:1 on white**, which the palette validator flags as
+"relief required". The relief is structural: **the colour is never the carrier.**
+Every card's eyebrow now leads with its specialty in words, in that specialty's
+own `--sp-t` (`MEDICINE · RCPI · INCLUDED`), and every group heading is its own
+legend — a swatch plus the specialty name in the matching text step. A test
+asserts every card names its specialty and that no card relies on the hue alone.
+
+**Fixed order, never cycled.** `SPEC_CLASS` maps eight specialties to eight
+slots; anything not in it gets the neutral `sp-any` rather than a generated
+ninth hue. That is why the interview registry's extra specialties do not quietly
+acquire colours nobody validated.
+
+Two knock-on fixes in the same pass:
+
+- `.pc-why`, the "why this is recommended" panel, wore `--mint-soft` — the app's
+  *good* status tint. A reason is not a status, and spending a status tint on
+  one is how a colour stops meaning a single thing. It is now paper with a
+  3px left rule in `--sp`.
+- The swatch class was first written as `.sw`, which the application tracker
+  already uses for its programme-switch buttons. Renamed `.spdot`.
+
 ### Headings
 
 Card titles are `h2`, one step below the page `h1`. They were `h3` in the first
