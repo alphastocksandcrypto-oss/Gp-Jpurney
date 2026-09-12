@@ -874,6 +874,17 @@ inherited it, so the fix is applied in all six files.
   training takes, not any college's published prospectus. `RUN_THROUGH` is the
   same. Getting a `feeds[]` entry wrong sends a doctor to the wrong trunk, which
   is a worse error than a wrong date: confirm the full map before launch.
+- Dashboard: **the evidence-upload date is derived, and it derives wrong.**
+  `cycleEvents()` places "Portfolio evidence upload closes" at
+  `addDays(cyc.apply, 26)` — *twenty-six days after applications close* — and
+  `deadlines()` repeats the same expression. In the merged calendar the two
+  rows now sit side by side and the ordering is plainly odd: *Applications
+  close, 8 Nov 2026. Portfolio evidence upload closes, 4 Dec 2026.* The row's
+  own note says "evidence must already be dated", which reads as a condition to
+  meet *before* the form closes, not a month after it. Both the offset and the
+  direction are invented. Take this date from each college with the rest of the
+  cycle rather than deriving it; it is left as-is until then because guessing
+  the other direction would be the same error mirrored.
 - Dashboard: the **My route** order is derived from that same `when` field
   (`WHEN_ORDER` in `routeStops`), so it inherits its uncertainty. The principle
   — entry stages before the application, membership and exit stages after — is
@@ -1495,6 +1506,98 @@ Readiness/Score merge, and broke again the day Programmes was added. It now
 counts `zone:"` occurrences — the field only `MODULES` entries carry — and
 asserts every declared module renders, whatever the count is. The first attempt
 matched 24 because the regex also caught the `GYM` and `IV_GYM` surface lists.
+
+## Deadlines merged into the Application tracker
+
+They were one thing rendered twice. `phaseMilestones()` already called
+`deadlines()` and filtered it into each phase, so the tracker was **already a
+consumer of the deadlines list** — the dates were the work's schedule, kept on
+a separate page.
+
+One page, two tabs, direction A of the concepts set:
+
+```
+Application tracker    [ This application ]  [ All dates 5 ]
+```
+
+`#/deadlines` still resolves — links across the app and whatever a doctor has
+bookmarked point at it — and lands on the calendar tab. The old view body was
+**deleted rather than left behind**: two renderers of one list is how the two
+pages drifted apart in the first place.
+
+### The calendar spans every programme
+
+`deadlines()` is untouched — seven callers read it for the primary route — and
+`allDates()` sits beside it, walking `progsTracked()` so a dual-tracking doctor
+sees both applications interleaved by month, each row chip-tagged with the
+programme it belongs to. The old page showed the primary route in full and gave
+other targets a cut-down "Also on your radar" with three dates each.
+
+### One date is one row
+
+Two programmes under the same college share a cycle, so a doctor tracking BST
+General Internal Medicine alongside HST Cardiology got **eleven rows saying six
+things**: *Applications close, 8 Nov 2026, BST General Internal Medicine*
+immediately followed by *Applications close, 8 Nov 2026, HST Cardiology*. Only
+the chip differed. `datesGrouped()` collapses on `kind|title|date|note` and the
+row carries a chip per application. They are still two applications — this is
+one calendar entry, not one deadline — and every count (the tab, the nav badge,
+the past-dates button) reads the grouped list so the numbers match the rows.
+
+### One done-rule
+
+A college date **cannot be ticked — it passes**. Only a date the doctor set is
+theirs to clear. `deadlinesDone` and `checks` were two stores for overlapping
+ideas; the calendar no longer renders a Mark-done control on a college date at
+all, which a test asserts.
+
+### The two invented "your own deadline" rows are gone
+
+`deadlines()` used to open with:
+
+```js
+{id:"qi",    iso:"2026-10-15", note:"Your own deadline, set to land before applications open"},
+{id:"teach", iso:"2026-10-31", note:"Your own deadline, ..."}
+```
+
+Two fixed dates the doctor had never seen, labelled as theirs. They now set
+dates themselves, on the requirement, and those become the personal rows via
+`ownDueRows()`. **Every outstanding requirement takes one — derived or not.**
+The first cut gated the control on manual checks and the whole Preparation
+stage offered it nowhere, because every requirement in that stage is derived.
+
+### The switcher is programmes
+
+`S.trackTarget` holds a programme id. BST General Internal Medicine and HST
+General Internal Medicine share a specialty but are two applications with two
+checklists, and keying on the specialty collapsed them. `checkKey()` follows,
+so ticks belong to an application rather than to a specialty.
+
+### The app finally has a print stylesheet
+
+There was **no `@media print` anywhere in this file**, and the tracker had a
+"Print this stage" button that printed the sidebar, the nav and every button on
+the page. Now: rail, tabs, filters and controls drop out, cards lose their
+shadows and avoid breaking mid-row, links stop spewing their URLs. A test
+emulates print media and asserts the sidebar and tab controls compute to
+`display:none`.
+
+### The urgency badge came with it
+
+`navBadge("deadlines")` counted dates inside 21 days and put a red dot on the
+nav item. Deleting the page left that branch **dead code** — `navBadge` is only
+ever called with a `MODULES` id — so the signal would have vanished without
+anything saying so. It moved to `progress`, and reads `allDates()` rather than
+`deadlines()`, so it now counts across every programme tracked instead of just
+the primary route.
+
+### No verdict
+
+The shared header is a count and a date — *"16 of 18 outstanding. Next date:
+applications close, 8 Nov, 57 days away"* — and stops there. Neither tab
+computes whether the remaining work fits the remaining time. The dates are
+known placeholders and telling a doctor to give up on points they could still
+earn is the wrong way to be wrong.
 
 ## The alternate structure, `app/alt.html`
 
