@@ -43,6 +43,9 @@
   --deep:#0b2e36; --pine:#12404c; --ink:#12333c;
   --mint:#14b394; --mint-2:#3ed1a8; --mint-soft:#e0f5ec;
   --paper:#f7faf8; --cream:#fdfbf5;
+  /* interviews carry their own colour so that a shelf of both never has to be
+     read twice: mint is an exam, plum is an interview, everywhere. */
+  --plum:#6b5ca5; --plum-2:#9a8fd0; --plum-soft:#efeaf9; --plum-text:#584a8f;
   --coral:#ff7a59; --coral-soft:#fff1e6;
   --amber:#ffc061; --amber-soft:#fff4e0;
   /* txt-mute was #7d949b, which is 3.04:1 on paper and 3.19:1 on white. It
@@ -474,6 +477,83 @@ button.pick-b.on{background:var(--deep);border-color:var(--deep);color:#fff}
 .card.locked{border-style:dashed}
 .chip.lock{background:var(--paper);color:var(--txt-soft);border:1px solid var(--line)}
 @media(max-width:620px){ .feat{grid-template-columns:minmax(0,1fr)} }
+
+/* ============ PREP SHELVES ============
+   Exams and interviews are separate pages that share one card language and one
+   route. Mint means exam, plum means interview, grey means locked, and the
+   colour is never the only thing carrying that: every card says it in words. */
+.seg{display:inline-flex;background:var(--paper);border:1.5px solid var(--deep);
+     border-radius:999px;padding:3px;gap:2px;max-width:100%;flex-wrap:wrap}
+.seg button{font-family:var(--fd);font-size:12.5px;font-weight:800;border:0;border-radius:999px;
+     padding:8px 17px;min-height:34px;color:var(--txt-soft);background:transparent;cursor:pointer}
+.seg button:hover{color:var(--deep)}
+.seg button[aria-selected="true"]{background:var(--deep);color:#fff}
+.seg button .n{opacity:.7;font-weight:700;margin-left:5px}
+.prep-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+
+.pgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media(max-width:1100px){ .pgrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:680px){ .pgrid{grid-template-columns:minmax(0,1fr)} }
+.pc{background:#fff;border:1.5px solid var(--deep);border-radius:18px;overflow:hidden;
+    box-shadow:4px 4px 0 rgba(11,46,54,.12);display:flex;flex-direction:column;min-width:0}
+.pc.iv{border-color:var(--plum);box-shadow:4px 4px 0 rgba(107,92,165,.14)}
+.pc.lock{border-color:var(--line);box-shadow:4px 4px 0 rgba(11,46,54,.05)}
+.pc.lead{border-width:2.5px}
+.pc-band{height:8px}
+.pc-band.ex{background:linear-gradient(90deg,var(--mint),var(--mint-2))}
+.pc-band.iv{background:linear-gradient(90deg,var(--plum),var(--plum-2))}
+.pc-band.lock{background:#d9ddda}
+.pc-b{padding:15px 16px 15px;display:flex;flex-direction:column;flex:1;min-width:0}
+.pc-k{font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--good-text)}
+.pc.iv .pc-k{color:var(--plum-text)}
+.pc.lock .pc-k{color:var(--txt-mute)}
+.pc-b h2{font-size:15px;color:var(--deep);margin:6px 0 3px;line-height:1.3}
+.pc-sub{font-size:12.5px;color:var(--txt-mute)}
+.pc-why{font-size:12.5px;color:var(--ink);margin-top:9px;background:var(--mint-soft);
+        border-radius:9px;padding:8px 11px}
+.pc-d{font-size:12.5px;color:var(--txt-soft);margin-top:9px}
+.pc-prog{margin-top:11px}
+.pc-prog .pr{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;font-weight:700;color:var(--deep)}
+.pc-bar{height:7px;border-radius:99px;background:#ececea;margin-top:6px;overflow:hidden}
+.pc-bar i{display:block;height:100%;background:var(--mint)}
+.pc.iv .pc-bar i{background:var(--plum)}
+.pc-f{margin-top:auto;padding-top:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pc-f .btn{flex:1 1 auto;justify-content:center}
+.pc-wk{font-size:11px;font-weight:800;border-radius:999px;padding:5px 10px;white-space:nowrap;
+       background:var(--paper);color:var(--txt-soft);border:1px solid var(--line)}
+.pc-wk.warn{background:var(--amber-soft);color:var(--warn-text);border-color:transparent}
+.pc-wk.crit{background:var(--coral-soft);color:var(--crit-text);border-color:transparent}
+.pc-st{font-size:11px;font-weight:800;border-radius:999px;padding:4px 10px;white-space:nowrap;margin-left:auto}
+.pc-st.held{background:var(--mint-soft);color:var(--good-text)}
+
+/* the route: one line, both kinds of stop on it */
+.rte{position:relative;max-width:660px;margin-top:4px}
+.rte::before{content:"";position:absolute;left:19px;top:14px;bottom:14px;width:3px;border-radius:3px;background:var(--line)}
+.rstop{position:relative;padding:0 0 14px 56px}
+.rstop:last-child{padding-bottom:0}
+.rnode{position:absolute;left:5px;top:2px;width:31px;height:31px;border-radius:50%;display:grid;
+       place-items:center;font-size:12px;font-weight:800;background:#fff;border:2.5px solid #d9ddda;color:var(--txt-mute)}
+.rstop.done .rnode{background:var(--mint);border-color:var(--mint);color:#043c31}
+.rstop.now .rnode{background:var(--deep);border-color:var(--deep);color:#fff;box-shadow:0 0 0 5px rgba(20,179,148,.22)}
+.rstop.iv .rnode{border-color:var(--plum);color:var(--plum-text)}
+.rstop.iv.now .rnode{background:var(--plum);border-color:var(--plum);color:#fff;box-shadow:0 0 0 5px rgba(107,92,165,.2)}
+.rcard{background:#fff;border:1.5px solid var(--deep);border-radius:15px;padding:13px 15px;
+       box-shadow:3px 3px 0 rgba(11,46,54,.1)}
+.rstop.iv .rcard{border-color:var(--plum);box-shadow:3px 3px 0 rgba(107,92,165,.12)}
+.rstop.now .rcard{border-width:2.5px}
+.rstop.todo .rcard{border-color:var(--line);box-shadow:3px 3px 0 rgba(11,46,54,.05)}
+.rcard .rk{font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--good-text)}
+.rstop.iv .rcard .rk{color:var(--plum-text)}
+.rstop.todo .rcard .rk{color:var(--txt-mute)}
+.rcard h2{font-size:14.5px;color:var(--deep);margin:4px 0 3px}
+.rcard p{font-size:12.5px;color:var(--txt-soft)}
+.rmeta{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:9px}
+.rm{font-size:11px;font-weight:800;border-radius:999px;padding:4px 10px;background:var(--mint-soft);color:var(--good-text)}
+.rm.warn{background:var(--amber-soft);color:var(--warn-text)}
+.rm.mute{background:var(--paper);color:var(--txt-mute);border:1px solid var(--line)}
+.rm.plum{background:var(--plum-soft);color:var(--plum-text)}
+.rmeta .btn{margin-left:auto}
+@media(max-width:520px){ .rstop{padding-left:46px} .rnode{left:0} .rte::before{left:14px} }
 /* ============ LISTS ============ */
 .row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
 .row:last-child{border-bottom:0}
@@ -742,7 +822,7 @@ a.nudge:hover{text-decoration:underline}
     /* one list for both kinds. A prep is locked until it is unlocked, the
        doctor's own route comes unlocked with the account, and nothing here
        charges anybody: billing is a real surface, not something to fake. */
-    unlocked:[], prepQuery:"", prepGroup:"",
+    unlocked:[], prepQuery:"", prepGroup:"", prepTab:"list",
     activity:[]
   };
   var KEY = "mednav.demo.v1";
@@ -3241,6 +3321,155 @@ a.nudge:hover{text-decoration:underline}
     }).join("") + "</div>";
   }
 
+  /* ================= THE SHARED ROUTE =================
+     Exams and interviews stay separate pages, because a doctor arrives wanting
+     one or the other and mixing them made both harder to scan. What the two
+     pages share is the ORDER, so the route is built once and rendered
+     identically from either side: switching to it from Exams and from
+     Interviews lands on the same thing.
+
+     The order is read off the registry rather than invented. An entry stage is
+     one a route asks for before you can apply, the interview IS the
+     application, and membership and exit stages are sat once you are in. */
+  var WHEN_ORDER = {entry:0, membership:2, exit:3};
+
+  /* the exam families one route actually touches: the one that gets you in,
+     and the one you finish. For general practice those are two different
+     families, which is the case that makes this a function. */
+  function routeFamilies(sp){
+    var out = [], info = SPECIALTY_INFO[sp] || {};
+    [entryFamilyFor(sp), info.exam].forEach(function(f){
+      if (f && out.indexOf(f) === -1) out.push(f);
+    });
+    return out;
+  }
+
+  /* every stop on one target's route, in order, each carrying its own state.
+     Nothing here reads situation().cycle: an exam is paced by the college that
+     sets it and the interview by the college that runs it, which is the leak
+     that has bitten this file at every view that showed two routes at once. */
+  function routeStops(sp){
+    var stops = [], sit = situation();
+    if (sit.isIMG || sit.newToIreland){
+      var lang = examById("ielts");
+      if (lang) stops.push({kind:"exam", e:lang, ord:-1, pre:true});
+    }
+    routeFamilies(sp).forEach(function(f){
+      examsInFamily(f).forEach(function(e){
+        if (!stops.some(function(x){ return x.kind === "exam" && x.e.id === e.id; })){
+          stops.push({kind:"exam", e:e, ord:WHEN_ORDER[e.when]});
+        }
+      });
+    });
+    var iv = interviewFor(sp);
+    if (iv) stops.push({kind:"iv", iv:iv, ord:1});
+
+    stops.forEach(function(x, i){ x.seq = i; });
+    stops.sort(function(a, b){ return a.ord - b.ord || a.seq - b.seq; });
+
+    /* what is done, then the first thing that is not, then the rest. An
+       interview counts as behind you only when the application it belongs to
+       has an outcome recorded — we have no other way of knowing you sat it. */
+    var info = SPECIALTY_INFO[sp] || {}, app = applicationFor(info.target || sp), running = false;
+    stops.forEach(function(x){
+      x.done = x.kind === "exam"
+        ? stageHeld(x.e.id)
+        : !!(app && app.outcome && app.outcome !== "waiting");
+      if (!x.done && !running){ x.now = true; running = true; }
+    });
+    return stops;
+  }
+
+  function routeStopCard(x, n){
+    var cls = "rstop" + (x.kind === "iv" ? " iv" : "") +
+      (x.done ? " done" : x.now ? " now" : " todo");
+    var node = x.done ? ico(I.tick, 14) : x.now ? "●" : String(n);
+    var h = '<div class="' + cls + '"><span class="rnode" aria-hidden="true">' + node + "</span>";
+
+    if (x.kind === "iv"){
+      var iv = x.iv, d = iv.cycle ? until(iv.cycle.interview) : null;
+      var open = prepOpen(iv.id, ivIncluded(iv.id)), rd = ivReady(iv.id);
+      h += '<div class="rcard"><p class="rk">Step ' + n + " · Interview · " +
+        (x.done ? "outcome recorded" : x.now ? "next" : "later") + "</p>" +
+        "<h2>" + esc(iv.t) + "</h2><p>" + esc(iv.fmt) + ". " + esc(iv.d) + "</p>" +
+        '<div class="rmeta">' +
+        '<span class="rm plum">' + esc(iv.body) + "</span>" +
+        (d === null ? '<span class="rm mute">No date held</span>'
+         : d < 0 ? '<span class="rm mute">That date has passed</span>'
+         : '<span class="rm ' + (d <= 21 ? "warn" : "mute") + '">' + esc(awayText(d)) + "</span>") +
+        (rd !== null ? '<span class="rm mute">' + rd + "% self-rated</span>" : "") +
+        '<button class="btn btn-sm ' + (x.now ? "btn-primary" : "btn-ghost") + '" data-iv-open="' +
+        esc(iv.id) + '">' + (open ? "Open the hub" : "Look inside") + "</button></div></div></div>";
+      return h;
+    }
+
+    var e = x.e, wk = weeksTo(e), pred = predictedFor(e.id);
+    var inc = examIncluded(e.id), eopen = prepOpen(e.id, inc);
+    h += '<div class="rcard"><p class="rk">Step ' + n + " · Exam · " +
+      (x.done ? "held" : x.pre ? "before registration" : WHEN_LABEL[e.when]) + "</p>" +
+      "<h2>" + esc(examLabel(e)) + "</h2><p>" + esc(e.fmt) + ". " + esc(e.d) + "</p>" +
+      '<div class="rmeta">' +
+      '<span class="rm mute">' + esc(e.body) + "</span>" +
+      (x.done ? '<span class="rm">Held</span>' : "") +
+      (pred !== null ? '<span class="rm mute">' + pred + "% predicted</span>" : "") +
+      /* a stage already behind you has no countdown: the date it was paced
+         against stopped meaning anything the moment it was passed */
+      (wk !== null && !x.done ? '<span class="rm ' + (wk <= 10 ? "warn" : "mute") + '">' + wk +
+        (wk === 1 ? " week" : " weeks") + " to the close</span>" : "") +
+      '<button class="btn btn-sm ' + (x.now ? "btn-primary" : "btn-ghost") + '" data-exam-open="' +
+      esc(e.id) + '">' + (eopen ? (x.done ? "Review" : "Open the hub") : "Look inside") +
+      "</button></div></div></div>";
+    return h;
+  }
+
+  /* the route panel, rendered from the exams page and the interviews page
+     alike. One target gets one line; a doctor tracking two gets two, labelled,
+     because a single merged line would put one college's dates on the other's
+     exams. */
+  function routePanel(){
+    var targets = [S.specialty].concat(S.otherTargets || []).filter(function(sp, i, a){
+      return sp && a.indexOf(sp) === i;
+    });
+    if (!targets.length){
+      return '<p class="empty"><b>No route set yet.</b>The route is built from the specialty you are ' +
+        "heading for, so there is nothing to order until you pick one. Both shelves are still browsable." +
+        '</p><div class="prep-cta" style="justify-content:center">' +
+        '<a class="btn btn-sm btn-primary" href="#/profile">Set a target specialty</a></div>';
+    }
+    var h = "";
+    targets.forEach(function(sp){
+      var stops = routeStops(sp), info = SPECIALTY_INFO[sp] || {};
+      h += '<p class="sec-label">' + esc(info.target || sp) +
+        (info.body ? " · via " + esc(info.body) : "") +
+        " · " + stops.length + " step" + (stops.length === 1 ? "" : "s") + "</p>";
+      if (!stops.length){
+        h += '<p class="empty">Nothing is registered against this route yet.</p>';
+        return;
+      }
+      h += '<div class="rte">' + stops.map(function(x, i){
+        return routeStopCard(x, i + 1);
+      }).join("") + "</div>";
+    });
+    h += ctxFoot("The order is the registry's: stages marked as needed to apply come before the interview, " +
+      "and the rest are sat once you are in. Stage names, formats and what each college assesses are " +
+      "illustrative and are each college's to set.");
+    return h;
+  }
+
+  /* the two-tab header both prep pages carry. The list tab is the page you are
+     on; the route tab is the same on both. */
+  function prepTabs(kind, n, extra){
+    var route = S.prepTab === "route";
+    var listLabel = kind === "exam" ? "Exams" : "Interviews";
+    var h = '<div class="prep-head"><div class="seg" role="tablist" aria-label="' +
+      esc(listLabel) + ' view">' +
+      '<button role="tab" aria-selected="' + (!route) + '" aria-controls="prepPanel" data-prep-tab="list">' +
+      esc(listLabel) + '<span class="n">' + n + "</span></button>" +
+      '<button role="tab" aria-selected="' + route + '" aria-controls="prepPanel" data-prep-tab="route">' +
+      "My route</button></div>" + (extra || "") + "</div>";
+    return h;
+  }
+
   function examLabel(e){ return e && e.fam === e.stage ? e.fam : (e ? e.fam + " " + e.stage : ""); }
   function examById(id){ return EXAMS.filter(function(e){ return e.id === id; })[0] || null; }
   function examsInFamily(fam){ return EXAMS.filter(function(e){ return e.fam === fam; }); }
@@ -3383,7 +3612,7 @@ a.nudge:hover{text-decoration:underline}
                 "Endocrinology", "Neurology", "Haematology", "Infectious disease"];
 
   VIEWS.exams = {
-    title:"Exam prep", sub:"Every stage you could sit, and a hub for each one you are working on.",
+    title:"Exam prep", sub:"Every stage you could sit, a hub for each one, and the order they come in.",
     render:function(){
       var open = S.examOpen ? examById(S.examOpen) : null;
       return open ? examHub(open) : examCatalogue();
@@ -3400,27 +3629,37 @@ a.nudge:hover{text-decoration:underline}
 
   function examCatalogue(){
     var shelf = examShelf();
-    var rec = recommendedExams(), recIds = rec.map(function(r){ return r.exam.id; });
-    var h = prepFilters(shelf, "exams");
     var vis = shelf.filter(function(o){ return prepMatches(o) && prepInGroup(o); });
+    var h = prepTabs("exam", shelf.length);
 
-    if (!vis.length){
-      return h + '<p class="empty"><b>Nothing matches.</b>Try a college, a specialty, or part of the exam name.</p>';
+    if (S.prepTab === "route"){
+      return h + '<div id="prepPanel" role="tabpanel" tabindex="-1">' + routePanel() + "</div>";
     }
 
+    h += '<div id="prepPanel" role="tabpanel" tabindex="-1">' + prepFilters(shelf, "exams");
+    if (!vis.length){
+      return h + '<p class="empty"><b>Nothing matches.</b>Try a college, a specialty, or part of the ' +
+        "exam name.</p></div>";
+    }
+
+    var rec = recommendedExams();
     var shown = {}, out = "";
+    /* one grid per section. The section label carries the meaning, so the card
+       never has to explain twice why it is where it is. */
     function section(label, items, lead){
       if (!items.length) return;
       out += '<p class="sec-label">' + esc(label) + "</p>";
-      out += items.map(function(o, i){ shown[o.id] = 1; return examCard(o.e, o.why || "", lead && i === 0); }).join("");
+      out += '<div class="pgrid">' + items.map(function(o, i){
+        shown[o.id] = 1;
+        return examCard(o.e, o.why || "", lead && i === 0);
+      }).join("") + "</div>";
     }
 
     /* only worth recommending when the doctor has not filtered away from
        their own route */
     var recVis = rec.filter(function(r){
       return vis.some(function(o){ return o.id === r.exam.id; });
-    }).map(function(r){ var o = vis.filter(function(x){ return x.id === r.exam.id; })[0];
-      return {id:r.exam.id, e:r.exam, why:r.why}; });
+    }).map(function(r){ return {id:r.exam.id, e:r.exam, why:r.why}; });
     section("Recommended for you", recVis, true);
     if (!recVis.length && !S.specialty && !S.prepQuery && !S.prepGroup){
       out += ctx("No specialty set, so nothing is recommended yet. Everything below is still here to browse, " +
@@ -3434,49 +3673,70 @@ a.nudge:hover{text-decoration:underline}
 
     var rest = vis.filter(function(o){ return !shown[o.id]; });
     if (rest.length){
-      out += '<p class="sec-label">Everything else</p>';
-      var bodies = prepGroups(rest);
-      bodies.forEach(function(g){
-        var items = rest.filter(function(o){ return o.grp === g; });
+      out += '<p class="sec-label">Browse other routes</p>';
+      prepGroups(rest).forEach(function(g){
         out += '<p class="group-h">' + esc(g) + "</p>";
-        out += items.map(function(o){ return examCard(o.e, "", false); }).join("");
+        out += '<div class="pgrid">' + rest.filter(function(o){ return o.grp === g; })
+          .map(function(o){ return examCard(o.e, "", false); }).join("") + "</div>";
       });
     }
     h += out;
     h += ctxFoot("Unlocking records that you want a prep. Nothing here charges anybody and no billing is wired " +
       "up in this prototype. Stage names, formats and structures are illustrative and are each college's to " +
       "set: confirm the current structure before planning around it.");
-    return h;
+    return h + "</div>";
   }
 
+  /* One exam stage as a course card. The colour band says exam, the kind line
+     says it again in words, and the progress bar only appears when there is
+     something real to draw: an empty bar reads as nought out of a hundred. */
   function examCard(e, why, lead){
     var held = stageHeld(e.id), wk = weeksTo(e), pred = predictedFor(e.id);
     var inc = examIncluded(e.id), open = prepOpen(e.id, inc);
-    var h = '<div class="card' + (lead ? " lead" : "") + (open ? "" : " locked") + '" style="margin-bottom:10px">' +
-      '<div class="card-head"><h2>' + esc(examLabel(e)) + "</h2>" +
-      '<span class="r" style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-      '<span class="chip mute">' + esc(e.grp) + "</span>" +
-      '<span class="chip mute">' + esc(e.body) + "</span>" +
-      (inc ? '<span class="chip good">' + ico(I.tick, 12) + "Included</span>"
-           : open ? '<span class="chip good">' + ico(I.tick, 12) + "Unlocked</span>"
-           : '<span class="chip lock">' + ico(I.shield, 12) + "Locked</span>") +
-      (held ? '<span class="chip good">' + ico(I.tick, 12) + "Held</span>" : "") +
-      (pred !== null ? '<span class="chip mute">' + pred + "% predicted</span>" : "") +
-      (wk !== null ? chip({k: wk <= 4 ? "crit" : wk <= 10 ? "warn" : "mute", icon:I.clock,
-                           label:wk + (wk === 1 ? " week" : " weeks")}) : "") + "</span></div>" +
-      '<p class="lede" style="max-width:66ch">' + (why ? "<b>" + esc(why) + "</b><br>" : "") +
-      esc(e.fmt) + ". " + esc(e.d) + "</p>";
-    /* what is inside, before paying for it */
-    if (!open) h += prepFeatures(gymFor(e));
-    h += '<div style="margin-top:' + (open ? "13px" : "2px") + ';display:flex;gap:8px;flex-wrap:wrap">' +
+    var topics = topicsFor(e.id), covered = Object.keys(topics).filter(function(k){ return topics[k]; }).length;
+
+    var state = held ? "held" : inc ? "included in your route" : open ? "unlocked" : "locked";
+    var h = '<div class="pc' + (lead ? " lead" : "") + (open ? "" : " lock") + '">' +
+      '<div class="pc-band ' + (open ? "ex" : "lock") + '" aria-hidden="true"></div><div class="pc-b">' +
+      '<p class="pc-k">Exam \u00b7 ' + esc(e.body) + " \u00b7 " + esc(state) + "</p>" +
+      "<h2>" + esc(examLabel(e)) + "</h2>" +
+      '<p class="pc-sub">' + esc(e.fmt) + " \u00b7 " + esc(WHEN_LABEL[e.when]) + "</p>" +
+      (why ? '<p class="pc-why">' + esc(why) + "</p>" : '<p class="pc-d">' + esc(e.d) + "</p>");
+
+    if (held){
+      var on = (S.examStageDone || {})[e.id];
+      h += '<div class="pc-prog"><div class="pr"><span>Held</span><span>' +
+        (typeof on === "string" && /^\d{4}-/.test(on) ? esc(fmt(on)) : "On your ladder") +
+        '</span></div><div class="pc-bar"><i style="width:100%"></i></div></div>';
+    } else if (pred !== null){
+      h += '<div class="pc-prog"><div class="pr"><span>' + pred + " % predicted</span><span>" +
+        mocksFor(e.id).length + " mock" + (mocksFor(e.id).length === 1 ? "" : "s") +
+        '</span></div><div class="pc-bar"><i style="width:' + pred + '%"></i></div></div>';
+    } else if (covered){
+      h += '<div class="pc-prog"><div class="pr"><span>' + covered + " of " + TOPICS.length +
+        " topics covered</span><span>No mock yet</span></div><div class=\"pc-bar\"><i style=\"width:" +
+        Math.round(covered / TOPICS.length * 100) + '%"></i></div></div>';
+    } else if (!open){
+      h += '<p class="pc-sub" style="margin-top:10px">' + gymFor(e).length +
+        " surfaces inside. Look inside to see them before unlocking.</p>";
+    }
+
+    h += '<div class="pc-f">' +
       (open
-        ? '<button class="btn btn-sm btn-primary" data-exam-open="' + e.id + '">Open the hub</button>'
-        : '<button class="btn btn-sm btn-primary" data-unlock="' + e.id + '">Unlock this prep</button>' +
-          '<button class="btn btn-sm btn-ghost" data-exam-open="' + e.id + '">Look inside</button>') +
-      (held ? "" : '<button class="btn btn-sm btn-ghost" data-exam-held="' + e.id + '">Mark as held</button>') +
-      "</div></div>";
-    return h;
+        ? '<button class="btn btn-sm btn-primary" data-exam-open="' + esc(e.id) + '">Open the hub</button>'
+        : '<button class="btn btn-sm btn-primary" data-unlock="' + esc(e.id) + '">Get access</button>' +
+          '<button class="btn btn-sm btn-ghost" data-exam-open="' + esc(e.id) + '">Look inside</button>') +
+      (held ? '<span class="pc-st held">Held</span>'
+            : wk !== null ? '<span class="pc-wk ' + (wk <= 4 ? "crit" : wk <= 10 ? "warn" : "") + '">' +
+                wk + (wk === 1 ? " wk" : " wks") + "</span>" : "") +
+      "</div>";
+    /* recording a stage is book-keeping on your own route, not a shelf action:
+       on all nineteen cards it was nineteen buttons of noise */
+    if (!held && open) h += '<div class="pc-f" style="padding-top:8px">' +
+      '<button class="btn btn-sm btn-ghost" data-exam-held="' + esc(e.id) + '">Mark as held</button></div>';
+    return h + "</div></div>";
   }
+
 
   var WHEN_LABEL = {entry:"Usually needed to apply", membership:"Sat during training", exit:"Sat to complete training"};
 
@@ -3746,7 +4006,7 @@ a.nudge:hover{text-decoration:underline}
   ];
 
   VIEWS.interviews = {
-    title:"Interview prep", sub:"Every interview you are heading for, and a hub for each one.",
+    title:"Interview prep", sub:"Every panel you could face, a hub for each one, and the order they come in.",
     render:function(){
       var open = S.ivOpen ? allInterviews().filter(function(x){ return x.id === S.ivOpen; })[0] : null;
       return open ? ivHub(open) : ivCatalogue();
@@ -3762,40 +4022,54 @@ a.nudge:hover{text-decoration:underline}
 
   function ivCatalogue(){
     var shelf = ivShelf();
-    var h = prepFilters(shelf, "interviews");
     var vis = shelf.filter(function(o){ return prepMatches(o) && prepInGroup(o); });
+    var h = prepTabs("interview", shelf.length);
+
+    /* the route tab is the same object the exams page shows. Separate pages,
+       one order. */
+    if (S.prepTab === "route"){
+      return h + '<div id="prepPanel" role="tabpanel" tabindex="-1">' + routePanel() + "</div>";
+    }
+
+    h += '<div id="prepPanel" role="tabpanel" tabindex="-1">' + prepFilters(shelf, "interviews");
     if (!vis.length){
-      return h + '<p class="empty"><b>Nothing matches.</b>Try a college, a specialty, or part of the interview name.</p>';
+      return h + '<p class="empty"><b>Nothing matches.</b>Try a college, a specialty, or part of the ' +
+        "interview name.</p></div>";
     }
 
     var shown = {}, out = "";
+    function section(label, items, lead){
+      if (!items.length) return;
+      out += '<p class="sec-label">' + esc(label) + "</p>";
+      out += '<div class="pgrid">' + items.map(function(o, i){
+        shown[o.id] = 1;
+        return ivCard(o.iv, lead && i === 0);
+      }).join("") + "</div>";
+    }
+
     var inc = vis.filter(function(o){ return ivIncluded(o.id); });
-    if (inc.length){
-      out += '<p class="sec-label">' + (inc.length > 1 ? "Included with your routes" : "Included with your route") + "</p>";
-      out += inc.map(function(o, i){ shown[o.id] = 1; return ivCard(o.iv, i === 0); }).join("");
-    } else if (!S.specialty && !S.prepQuery && !S.prepGroup){
+    section(inc.length > 1 ? "Included with your routes" : "Included with your route", inc, true);
+    if (!inc.length && !S.specialty && !S.prepQuery && !S.prepGroup){
       out += ctx("No target specialty set, so nothing is included yet. Everything below is still here to browse, " +
         "and setting a route on your profile includes that interview automatically.");
     }
-    var un = vis.filter(function(o){ return !shown[o.id] && prepUnlocked(o.id); });
-    if (un.length){
-      out += '<p class="sec-label">You have unlocked</p>';
-      out += un.map(function(o){ shown[o.id] = 1; return ivCard(o.iv, false); }).join("");
-    }
+    section("You have unlocked", vis.filter(function(o){
+      return !shown[o.id] && prepUnlocked(o.id); }), false);
+
     var rest = vis.filter(function(o){ return !shown[o.id]; });
     if (rest.length){
-      out += '<p class="sec-label">Everything else</p>';
+      out += '<p class="sec-label">Browse other routes</p>';
       prepGroups(rest).forEach(function(g){
         out += '<p class="group-h">' + esc(g) + "</p>";
-        out += rest.filter(function(o){ return o.grp === g; })
-          .map(function(o){ return ivCard(o.iv, false); }).join("");
+        out += '<div class="pgrid">' + rest.filter(function(o){ return o.grp === g; })
+          .map(function(o){ return ivCard(o.iv, false); }).join("") + "</div>";
       });
     }
     h += out;
     h += ctxFoot("Unlocking records that you want a prep. Nothing here charges anybody and no billing is wired " +
       "up in this prototype. Interview formats and the domains they score are illustrative: each college sets " +
       "what it actually assesses.");
-    return h;
+    return h + "</div>";
   }
 
   /* looking inside a locked prep. It shows the header, everything that is in
@@ -3825,29 +4099,43 @@ a.nudge:hover{text-decoration:underline}
     return h;
   }
 
+  /* One interview prep as a course card, in the same language as an exam card
+     and a different colour, because a shelf that reads the same for both is
+     how the two pages stay recognisably one product. */
   function ivCard(iv, lead){
     var d = iv.cycle ? until(iv.cycle.interview) : null, rd = ivReady(iv.id);
     var inc = ivIncluded(iv.id), open = prepOpen(iv.id, inc);
-    var h = '<div class="card' + (lead ? " lead" : "") + (open ? "" : " locked") + '" style="margin-bottom:10px">' +
-      '<div class="card-head"><h2>' + esc(iv.t) + "</h2>" +
-      '<span class="r" style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-      '<span class="chip mute">' + esc(iv.grp) + "</span>" +
-      '<span class="chip mute">' + esc(iv.body) + "</span>" +
-      (inc ? '<span class="chip good">' + ico(I.tick, 12) + "Included</span>"
-           : open ? '<span class="chip good">' + ico(I.tick, 12) + "Unlocked</span>"
-           : '<span class="chip lock">' + ico(I.shield, 12) + "Locked</span>") +
-      (rd !== null ? '<span class="chip ' + (rd >= 70 ? "good" : rd >= 50 ? "warn" : "crit") + '">' + rd + "% ready</span>" : "") +
-      (d !== null && inc ? chip({k: d < 0 ? "mute" : d <= 21 ? "crit" : d <= 60 ? "warn" : "mute", icon:I.clock,
-                                 label: d < 0 ? "Passed" : awayText(d)}) : "") + "</span></div>" +
-      '<p class="lede" style="max-width:66ch">' + (iv.target ? "For <b>" + esc(iv.target) + "</b>. " : "") +
-      esc(iv.fmt) + ". " + esc(iv.d) + "</p>";
-    if (!open) h += prepFeatures(IV_GYM);
-    h += '<div style="margin-top:' + (open ? "13px" : "2px") + ';display:flex;gap:8px;flex-wrap:wrap">' +
+    var mocks = ivMocks(iv.id).length;
+    var state = inc ? "included in your route" : open ? "unlocked" : "locked";
+
+    var h = '<div class="pc' + (open ? " iv" : " lock") + (lead ? " lead" : "") + '">' +
+      '<div class="pc-band ' + (open ? "iv" : "lock") + '" aria-hidden="true"></div><div class="pc-b">' +
+      '<p class="pc-k">Interview \u00b7 ' + esc(iv.body) + " \u00b7 " + esc(state) + "</p>" +
+      "<h2>" + esc(iv.t) + "</h2>" +
+      '<p class="pc-sub">' + esc(iv.fmt) + (iv.target ? " \u00b7 for " + esc(iv.target) : "") + "</p>" +
+      '<p class="pc-d">' + esc(iv.d) + "</p>";
+
+    if (rd !== null){
+      h += '<div class="pc-prog"><div class="pr"><span>' + rd + " % self-rated</span><span>" +
+        mocks + " mock" + (mocks === 1 ? "" : "s") + '</span></div><div class="pc-bar"><i style="width:' +
+        rd + '%"></i></div></div>';
+    } else if (!open){
+      h += '<p class="pc-sub" style="margin-top:10px">' + IV_GYM.length +
+        " surfaces inside. Look inside to see them before unlocking.</p>";
+    }
+
+    h += '<div class="pc-f">' +
       (open
         ? '<button class="btn btn-sm btn-primary" data-iv-open="' + esc(iv.id) + '">Open the hub</button>'
-        : '<button class="btn btn-sm btn-primary" data-unlock="' + esc(iv.id) + '">Unlock this prep</button>' +
+        : '<button class="btn btn-sm btn-primary" data-unlock="' + esc(iv.id) + '">Get access</button>' +
           '<button class="btn btn-sm btn-ghost" data-iv-open="' + esc(iv.id) + '">Look inside</button>') +
-      "</div></div>";
+      /* a countdown only where the doctor is actually applying into that
+         college's cycle. Every other card would be borrowing someone else's date. */
+      (d !== null && inc
+        ? '<span class="pc-wk ' + (d < 0 ? "" : d <= 21 ? "crit" : d <= 60 ? "warn" : "") + '">' +
+          (d < 0 ? "Passed" : esc(awayText(d))) + "</span>"
+        : "") +
+      "</div></div></div>";
     return h;
   }
 
@@ -4810,6 +5098,18 @@ a.nudge:hover{text-decoration:underline}
     }
     var pq = ev.target.closest("[data-prep-q]");
     if (pq){ ev.preventDefault(); S.prepQuery = ""; save(); render(); return; }
+    /* the list/route toggle. It is one key, not one per page, because the
+       route is the same object from both sides and a doctor who switched to it
+       on Exams means it on Interviews too. */
+    var pt = ev.target.closest("[data-prep-tab]");
+    if (pt){
+      ev.preventDefault();
+      S.prepTab = pt.getAttribute("data-prep-tab");
+      save(); render();
+      var panel = document.getElementById("prepPanel");
+      if (panel) panel.focus();
+      return;
+    }
     var ul = ev.target.closest("[data-unlock]");
     if (ul){
       ev.preventDefault();

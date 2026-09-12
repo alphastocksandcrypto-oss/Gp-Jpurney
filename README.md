@@ -869,6 +869,12 @@ inherited it, so the fix is applied in all six files.
   same: a defensible generic shape, not any college's published assessment.
   Confirm all of it before launch. `TOPICS` is an eight-item placeholder and is
   not any stage's syllabus.
+- Dashboard: the **My route** order is derived from that same `when` field
+  (`WHEN_ORDER` in `routeStops`), so it inherits its uncertainty. The principle
+  — entry stages before the application, membership and exit stages after — is
+  real. Which stage falls into which bucket for a given college is not verified,
+  and getting one wrong reorders a doctor's plan. Confirm the classification per
+  college at the same time as the registry itself.
 - Dashboard: `CHECKS` and `CHECKS_IMG` are the *shape* an Irish training
   application takes, not any college's published requirement list. The
   categories are safe (registration, CV, references, clearances, evidence, right
@@ -1116,6 +1122,117 @@ authored by doctors who have sat the stage. The mock records a score the doctor
 already has and feeds a **predicted** figure only — a mock is not a stage held
 and must never touch the shortlisting rubric, which a test asserts. Live tutor
 is named and left honest.
+
+## The prep listings, rebuilt as course cards
+
+The catalogues were card stacks: recommended, included, unlocked and
+everything-else all rendered as full-width `.card` blocks with four or five
+chips each. At nineteen exam stages and thirteen interview preps that is a very
+long column of near-identical rows, and nothing in it said *what order any of
+it comes in*. The rebuild takes the "course cards" direction: a grid of small
+cards, one colour band per kind, and a second tab carrying the order.
+
+### Separate pages, one shared route
+
+**Exams and interviews stay two pages.** A doctor arrives wanting one or the
+other, and a merged shelf made both harder to scan. `VIEWS.exams` and
+`VIEWS.interviews` are untouched as routes, keep their own nav entries, and
+each shelf contains only its own kind — a test asserts that every `.pc-k` on
+the exams page reads *Exam* and every one on the interviews page reads
+*Interview*.
+
+What the two share is the **order**, so each page carries the same two-tab
+header:
+
+```
+[ Exams 19 ] [ My route ]        [ Interviews 13 ] [ My route ]
+```
+
+`routePanel()` is built once and rendered identically from either side. The
+choice lives in one key, `S.prepTab`, not one per page: a doctor who switched
+to the route on Exams means it on Interviews too, and a test walks from one
+page to the other to confirm the tab stays selected.
+
+### The order is read off the registry, not invented
+
+`routeStops(specialty)` builds one line per target:
+
+```js
+var WHEN_ORDER = {entry:0, membership:2, exit:3};
+// the interview sits at 1, because the interview IS the application
+```
+
+`when` was already on every exam and already labelled illustrative. An *entry*
+stage is one a route asks for before you can apply; *membership* and *exit*
+stages are sat once you are in. So the interview slots between them, and
+nothing new had to be asserted about any college's timetable to place it.
+
+Three things fall out of that rather than being special-cased:
+
+- **General practice crosses two families.** `routeFamilies()` returns both
+  `entryFamilyFor(sp)` (ICGP entry: SJT, CPST) and `SPECIALTY_INFO[sp].exam`
+  (MICGP, the exit exam). One line, four stops, MICGP last.
+- **An IMG's language requirement comes before all of it**, at `ord:-1`, because
+  registration precedes every other stop.
+- **A dual-track doctor gets two labelled lines, not one merged one.** Merging
+  them would have put RCPI's dates on ICGP's exams — the cycle leak this file
+  has had at every view that showed two routes at once. A test asserts two
+  `.rte` lines with two headings naming two colleges.
+
+State per stop: an exam is *done* when `stageHeld()` says so; an interview is
+done only when the application it belongs to has an **outcome recorded**,
+because there is no other way to know you sat it. The first stop that is not
+done gets the `now` marker, and it is the only primary button on the line.
+
+For a cardiology SHO holding MRCPI Part 1, `now` lands on the **HST interview**,
+not on Part 2 Written — the entry stage is behind them, so applying is what is
+next, and Part 2 is sat during training. That is the ordering doing real work
+rather than decorating.
+
+### The card language
+
+One `.pc` card, two colours, and the colour is never the only carrier:
+
+| | Exam | Interview | Locked |
+|---|---|---|---|
+| band + border | mint | plum | grey |
+| kind line says | `EXAM · RCPI · INCLUDED IN YOUR ROUTE` | `INTERVIEW · ICGP · UNLOCKED` | `… · LOCKED` |
+
+Every state a colour carries is also written into `.pc-k`, which a test reads
+off every locked card. The progress bar only draws when there is something real
+behind it — a held stage, a predicted figure from mocks, topic coverage, or a
+self-rating. An empty bar reads as nought out of a hundred, which is a
+different claim from *not started*.
+
+Two things moved off the card in the rebuild:
+
+- **`prepFeatures()` left the shelf.** Six surface tiles inside a third-width
+  card is unreadable. Locked cards now say *"6 surfaces inside. Look inside to
+  see them before unlocking."* and **Look inside** goes to `prepLocked()`,
+  which still lists all six and still takes no payment. The property the user
+  asked for — see what you would get before paying — is intact, one click
+  further in, and a test checks both the sentence and the two buttons on every
+  locked card.
+- **Mark as held is gated on `open`.** It is book-keeping on your own route, not
+  a shelf action; on all nineteen cards it was nineteen buttons of noise.
+
+### Headings
+
+Card titles are `h2`, one step below the page `h1`. They were `h3` in the first
+cut and axe caught it on all four panels — `.sec-label` is a styled `<p>`, so
+an `h3` after an `h1` skips a level. Route stop titles are `h2` for the same
+reason.
+
+### What did not change
+
+`prepMatches()` (word-start search), `prepInGroup()`, `prepGroups()` and
+`prepFilters()` are untouched and now sit above a grid instead of a stack. The
+specialty pill row still lists **every** group rather than only groups present
+in the current result, so it does not reshuffle as you type — which is why a
+search test has to read card titles rather than the whole panel's `innerText`.
+
+Hubs, `prepLocked()`, the workspace shell and `S.unlocked` are all unchanged.
+Unlocking still writes one list covering both kinds, and still charges nobody.
 
 ## The alternate structure, `app/alt.html`
 
