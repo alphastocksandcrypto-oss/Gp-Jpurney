@@ -873,9 +873,7 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
        is the one this page matters most for, per the product owner: Garda
        vetting specifically renews every 3 years and is modelled as a date
        with a computed expiry, not a one-off tick. */
-    gardaVettingDate:"", hepBUpToDate:false, hepBCheckedAt:"", occClearance:false, occClearanceAt:"",
-    /* CPD runs on its own annual clock, independent of training milestones */
-    cpdPoints:0, cpdTarget:50, cpdTargetSet:false, cpdCycleEnd:new Date().getFullYear() + "-12-31", cpdLog:[],
+    gardaVettingDate:"", occClearance:false, occClearanceAt:"",
     cvUpdatedAt:"", rotations:[],
     /* the training year rolls in July. Whether a doctor is in a scheme, which
        one, and which year of it are the facts that go stale fastest, and none
@@ -915,7 +913,7 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
        which sat on a page whose milestones are now the ladder. */
     customChecks:[],
     /* which application and which phase of it the tracker is showing */
-    trackPhase:"",
+    trackPhase:"", lastProg:"",
     /* THE GYM. Keyed by exam stage id throughout, because a stage is the unit
        a doctor prepares for: MRCPI Part 1 and Part 2 Clinical share a family
        and nothing else. examStageDone supersedes the examStages counter, which
@@ -1182,12 +1180,12 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
      d:"Renews on a cycle, so a current date matters as much as ever having had one",
      auto:function(){ var g = gardaStatus(); return g.k === "good"; },
      autoNote:function(){ return gardaStatus().label; },
-     act:["logGardaToday","Vetted today"], fix:["#/admin","Enter another date"]},
+     act:["logGardaToday","Vetted today"]},
     {id:"occ", p:"start", g:"Clearances", t:"Occupational health clearance", shared:true,
      d:"Required before starting, and commonly asked for at application",
      auto:function(){ return !!S.occClearance; },
      autoNote:function(){ return S.occClearance ? "Recorded" : "Not recorded"; },
-     act:["logOccToday","Cleared today"], fix:["#/admin","Enter another date"]},
+     act:["logOccToday","Cleared today"]},
     /* ---- evidence: the portfolio, which is scored elsewhere ---- */
     {id:"evidence", p:"apply", g:"Evidence", t:"Portfolio evidence dated and uploaded",
      d:"Everything scored has to be dated before the application closes",
@@ -1812,9 +1810,11 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
   }
 
   /* ================= PRACTICAL TRACKING =================
-     Garda vetting, occupational health and CPD. None of this is scored: it
-     never moves readiness or the shortlisting score, it is just administrative
-     state that has its own clock, separate from the training one. */
+     Garda vetting and occupational health. None of this is scored: it never
+     moves readiness or the shortlisting score, it is administrative state with
+     its own clock, separate from the training one. It had two pages of its own
+     and has neither now -- both are requirements on the application checklist,
+     which is where a doctor meets them. */
   function addDays(iso, n){ var d = day(iso); d.setDate(d.getDate() + n); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
   /* Garda vetting is not a one-off tick: it renews every 3 years, so the
      thing worth showing is not "done" but "days until it needs doing again". */
@@ -1828,11 +1828,8 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
     if (d <= 180) return {k:"warn", label:"Renew this year"};
     return {k:"good", label:"Current"};
   }
-  function cpdDaysLeft(){ return S.cpdCycleEnd ? until(S.cpdCycleEnd) : null; }
   /* the target follows the doctor's regime until they set one themselves, at
      which point their own number wins and stops moving under them */
-  function cpdTarget(){ return S.cpdTargetSet ? S.cpdTarget : cpdRegime().target; }
-  function cpdPct(){ var t = cpdTarget(); return t > 0 ? Math.min(100, Math.round(S.cpdPoints / t * 100)) : 0; }
   /* who the admin page leads with. Nothing is hidden from anyone, this only
      changes which line opens the page: someone newly in the Irish system is
      the person this page matters most to, per the product owner. */
@@ -1881,9 +1878,6 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       others: others,
       newToIreland: newToIrishSystem(),
       isIMG: S.route === "coming" || S.origin === "noneu" || S.origin === "eu",
-      /* whether they hold a training post drives the CPD regime, which is the
-         clearest single case of one number being wrong for half the users */
-      inTrainingPost: tier === "bst" || tier === "hst",
       cycle: cyc,
       applyDays: applyDays,
       /* where in the annual cycle they are sitting right now */
@@ -2053,18 +2047,6 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       targetCycle: ty + " to " + (ty + 1),
       targetStart: startIso
     };
-  }
-
-  /* CPD is the worked example of why situation() exists. The Medical Council's
-     professional competence scheme and the HSE CPD support scheme for NCHDs
-     outside training posts are two different regimes with two different
-     numbers, so a single hardcoded target is wrong for one group or the other.
-     Both figures below are ILLUSTRATIVE and unverified, see README. */
-  function cpdRegime(){
-    var sit = situation();
-    return sit.inTrainingPost
-      ? {target:50, label:"Medical Council professional competence scheme", note:"Applies while you hold a training post."}
-      : {target:20, label:"HSE CPD support scheme for NCHDs outside training", note:"Applies to NCHDs not in a training post."};
   }
 
   /* ================= LADDER ================= */
@@ -3384,6 +3366,9 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
          back button works. */
       var openProg = currentArg() ? progById(currentArg()) : null;
       if (!openProg || !progTracked(openProg.id)) return trackFront(progs);
+      /* remember it, so the nav comes back HERE rather than to the index. A
+         doctor working one application should not re-pick it every session. */
+      if (S.lastProg !== openProg.id){ S.lastProg = openProg.id; save(); }
 
       /* which stage sticks, so a doctor who came back to chase a reference is
          not returned to the top each time */
@@ -3734,87 +3719,6 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       }).join("") + "</div>";
       h += '<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">' +
         '<a class="btn btn-sm btn-ghost" href="../opportunities/index.html">Browse everything ' + ico(I.out, 12) + "</a></div>";
-      return h;
-    }
-  };
-
-  VIEWS.admin = {
-    title:"Occupational health and admin", sub:"Nothing here is scored. It is administrative, and it has its own clock.",
-    render:function(){
-      var h = "";
-      h += newToIrishSystem()
-        ? ctx("This page usually matters most for someone newly in the Irish system, which is where your answers put you. Everyone sees it either way, since Garda vetting renews for anyone already working here too.")
-        : ctx("Garda vetting renews every 3 years for everyone working here, whatever stage you are at. Log the date once and this page tracks the renewal for you.");
-
-      var gs = gardaStatus(), exp = gardaExpiry();
-      h += '<div class="card"><div class="card-head"><h2>Garda vetting</h2>' + chip(
-        gs.k === "good" ? {k:"good", icon:I.tick, label:gs.label} :
-        gs.k === "warn" ? {k:"warn", icon:I.clock, label:gs.label} : {k:"crit", icon:I.warn, label:gs.label}
-      ) + "</div>";
-      h += '<p class="lede">Renews every 3 years. Not a one-off check: log the date it was last done and MedNav tracks when it is due again.</p>';
-      if (S.gardaVettingDate){
-        h += '<div class="row"><span class="t">Last done<small>' + fmtLong(S.gardaVettingDate) + "</small></span>" +
-          '<span class="r"><span class="lede">Renews ' + fmtLong(exp) + ", " + awayText(until(exp)) + "</span></span></div>";
-      }
-      h += '<div class="field" style="margin-top:12px"><label for="fGarda">Date last vetted</label>' +
-        '<input id="fGarda" type="date" value="' + esc(S.gardaVettingDate) + '"></div>' +
-        '<button class="btn btn-sm btn-primary" data-act="logGarda">Save vetting date</button></div>';
-
-      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Hepatitis B and immunisation</h2>' +
-        chip(S.hepBUpToDate ? {k:"good", icon:I.tick, label:"Up to date"} : {k:"warn", icon:I.warn, label:"Not confirmed"}) + "</div>";
-      h += '<label style="display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:10px;min-height:24px;padding:2px 0">' +
-        '<input type="checkbox" id="fHepB" style="width:auto"' + (S.hepBUpToDate ? " checked" : "") + '> Immunisation status confirmed up to date</label>';
-      h += '<div class="field"><label for="fHepBAt">Last checked</label><input id="fHepBAt" type="date" value="' + esc(S.hepBCheckedAt) + '"></div>' +
-        '<button class="btn btn-sm btn-primary" data-act="logHepB">Save</button></div>';
-
-      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Occupational health clearance</h2>' +
-        chip(S.occClearance ? {k:"good", icon:I.tick, label:"Cleared"} : {k:"warn", icon:I.warn, label:"Not confirmed"}) + "</div>";
-      h += '<label style="display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:10px;min-height:24px;padding:2px 0">' +
-        '<input type="checkbox" id="fOcc" style="width:auto"' + (S.occClearance ? " checked" : "") + '> Cleared to start by occupational health</label>';
-      h += '<div class="field"><label for="fOccAt">Date cleared</label><input id="fOccAt" type="date" value="' + esc(S.occClearanceAt) + '"></div>' +
-        '<button class="btn btn-sm btn-primary" data-act="logOcc">Save</button></div>';
-      return h;
-    }
-  };
-
-  VIEWS.cpd = {
-    title:"CPD tracker", sub:"Runs on its own annual clock, separate from your training milestones.",
-    render:function(){
-      var pct = cpdPct(), left = cpdDaysLeft(), reg = cpdRegime(), tgt = cpdTarget();
-      var h = ctx("Both figures below are illustrative in this prototype and unverified. " +
-        "Use whatever your own scheme actually publishes, and change the target below to match.", true);
-      /* which regime applies is derived, not assumed: a doctor in a training
-         post and an NCHD outside one are held to different numbers, and a
-         single hardcoded target is simply wrong for one of them */
-      h += '<div class="card"><div class="card-head"><h2>Your CPD regime</h2>' +
-        (S.cpdTargetSet ? '<span class="aside">Overridden by you</span>' : "") + "</div>" +
-        '<div class="row"><span class="t">' + esc(reg.label) + "<small>" + esc(reg.note) + "</small></span>" +
-        '<span class="r">' + chip({k:"mute", icon:I.grad, label:reg.target + " points a year"}) + "</span></div>" +
-        (S.cpdTargetSet && S.cpdTarget !== reg.target
-          ? '<p class="lede" style="margin-top:10px">You are tracking against ' + S.cpdTarget +
-            ' rather than the ' + reg.target + ' your regime suggests. ' +
-            '<button class="btn-link" data-act="useRegimeTarget">Use ' + reg.target + " instead</button></p>"
-          : "") + "</div>";
-      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>' + pct + '% of this cycle logged</h2>' +
-        '<span class="aside num">' + S.cpdPoints + " of " + tgt + " points</span></div>" + bar(pct) +
-        (left !== null ? '<p class="lede" style="margin-top:10px">Cycle ends ' + fmtLong(S.cpdCycleEnd) + ", " + awayText(left) + ".</p>" : "") + "</div>";
-
-      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Log points</h2></div>' +
-        '<div class="field"><label for="fCpdAdd">Points to add</label><input id="fCpdAdd" type="number" min="1" max="50" value="1"></div>' +
-        '<button class="btn btn-sm btn-primary" data-act="logCpd">Add points</button></div>';
-
-      h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Target and cycle</h2></div>' +
-        '<div class="grid g2"><div class="field"><label for="fCpdTarget">Annual target, points</label>' +
-        '<input id="fCpdTarget" type="number" min="1" max="200" value="' + tgt + '"></div>' +
-        '<div class="field"><label for="fCpdEnd">Cycle end date</label><input id="fCpdEnd" type="date" value="' + esc(S.cpdCycleEnd) + '"></div></div>' +
-        '<button class="btn btn-sm btn-ghost" data-act="saveCpdTarget">Save target and cycle</button></div>';
-
-      if ((S.cpdLog || []).length){
-        h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>Recent entries</h2></div>';
-        h += S.cpdLog.slice(0, 10).map(function(e){
-          return '<div class="row"><span class="t">+' + e.pts + " points</span><span class=\"r\"><span class=\"lede\">" + fmtLong(e.at) + "</span></span></div>";
-        }).join("") + "</div>";
-      }
       return h;
     }
   };
@@ -4981,8 +4885,8 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
   };
 
   /* CV freshness and rotation history: identity and history facts rather than
-     active trackers, so they live here on profile rather than getting their
-     own nav item the way the admin and CPD pages did. */
+     active trackers, so they live here on profile rather than getting a nav
+     item of their own. */
   function cvRotationCard(){
     var stale = S.cvUpdatedAt ? Math.round((Date.now() - day(S.cvUpdatedAt)) / 2592000000) : null;
     var h = '<div class="card" style="margin-top:14px"><div class="card-head"><h2>CV and rotation history</h2></div>';
@@ -5049,7 +4953,11 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
        active  the normal case
        ahead   real, just not yet, with the date it starts mattering
        aside   not on your route, with the reason in plain words          */
-  var ZONES = ["Overview", "Your pathway", "Your applications", "Preparation", "Practical", "Account"];
+  /* "Practical" held the CPD tracker and the Occupational health page and
+     holds nothing now. renderNav skips an empty zone, so leaving it would
+     have been invisible rather than broken -- and a heading waiting for
+     pages that were deliberately removed. */
+  var ZONES = ["Overview", "Your pathway", "Your applications", "Preparation", "Account"];
 
   /* the scored application apparatus, which a consultant has finished with */
   function applyingOnly(sit){
@@ -5076,8 +4984,6 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       if (sit.phase === "far" && sit.cycle) return {k:"ahead", why:"Interviews are " + fmtLong(sit.cycle.interview) + ". Worth opening once applications close."};
       return null;
     }},
-    {id:"admin",         t:"Occupational health and admin",  ic:I.shield, zone:"Practical"},
-    {id:"cpd",           t:"CPD tracker",                    ic:I.grad,   zone:"Practical"},
     {id:"profile",       t:"Your profile",                   ic:I.user,   zone:"Account"}
   ];
 
@@ -5168,11 +5074,19 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       var u = datesGrouped(allDates().filter(function(d){ return d.days >= 0 && d.days <= 21; })).length;
       return u ? {n:u, alert:true} : null;
     }
-    if (id === "admin"){
-      var gs = gardaStatus();
-      return gs.k === "crit" ? {n:"!", alert:true} : null;
-    }
     return null;
+  }
+
+  /* Where a nav item actually goes. For the tracker that is the application
+     you had open last, because someone working one application should not have
+     to re-pick it every time they come back; #/progress stays the index, so
+     "All programmes" goes there and STAYS there rather than bouncing. A
+     redirect on #/progress itself would have made the way back unreachable. */
+  function navHref(id){
+    if (id === "progress" && S.lastProg && progTracked(S.lastProg)){
+      return "#/progress/" + encodeURIComponent(S.lastProg);
+    }
+    return "#/" + id;
   }
 
   function renderNav(active){
@@ -5188,7 +5102,7 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
         /* a module that does not apply still renders, still routes, still
            reachable by keyboard. It just stops competing for attention. */
         var cls = "nav-item" + (n.id === active ? " on" : "") + (r ? " rel-" + r.k : "");
-        return '<a class="' + cls + '" href="#/' + n.id + '"' +
+        return '<a class="' + cls + '" href="' + navHref(n.id) + '"' +
           (n.id === active ? ' aria-current="page"' : "") +
           (r ? ' title="' + esc(r.why) + '"' : "") + ">" + ico(n.ic, 17) + esc(n.t) +
           (r ? '<span class="pill quiet">' + (r.k === "ahead" ? "later" : "n/a") + "</span>"
@@ -5299,10 +5213,6 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
     },
     addResearch: function(){ S.research = Math.min(2, S.research + 1); return "Research output recorded"; },
     toggleDual: function(){ S.showDual = !S.showDual; return null; },
-    useRegimeTarget: function(){
-      S.cpdTargetSet = false;
-      return "Tracking against the " + cpdRegime().target + "-point target for your regime";
-    },
     passExam: function(){
       var nx = examsInFamily(entryFamilyFor(S.specialty)).filter(function(e){ return !stageHeld(e.id); })[0];
       if (!nx) return null;
@@ -5353,37 +5263,6 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       S.otherTargets = S.dualTrack === "single" ? [] :
         Array.prototype.slice.call(document.querySelectorAll("[data-other-box]:checked")).map(function(el){ return el.value; });
       return "Location and other applications saved";
-    },
-    logGarda: function(){
-      var v = document.getElementById("fGarda").value;
-      if (!v) { toast("Pick a date first."); return null; }
-      S.gardaVettingDate = v;
-      return "Garda vetting date saved, renews " + fmtLong(gardaExpiry());
-    },
-    logHepB: function(){
-      S.hepBUpToDate = document.getElementById("fHepB").checked;
-      S.hepBCheckedAt = document.getElementById("fHepBAt").value;
-      return "Immunisation status saved";
-    },
-    logOcc: function(){
-      S.occClearance = document.getElementById("fOcc").checked;
-      S.occClearanceAt = document.getElementById("fOccAt").value;
-      return "Occupational health status saved";
-    },
-    logCpd: function(){
-      var n = parseInt(document.getElementById("fCpdAdd").value, 10);
-      if (!n || n <= 0) { toast("Enter a number of points first."); return null; }
-      S.cpdPoints += n;
-      S.cpdLog = S.cpdLog || [];
-      S.cpdLog.unshift({pts:n, at:Date.now() ? new Date().toISOString().slice(0, 10) : ""});
-      return n + " CPD points logged, " + S.cpdPoints + " of " + cpdTarget() + " so far this cycle";
-    },
-    saveCpdTarget: function(){
-      var t = parseInt(document.getElementById("fCpdTarget").value, 10);
-      if (t > 0){ S.cpdTarget = t; S.cpdTargetSet = true; }
-      var end = document.getElementById("fCpdEnd").value;
-      if (end) S.cpdCycleEnd = end;
-      return "CPD target and cycle saved";
     },
     /* a mock result belongs to the stage it was sat for, and moves the
        predicted figure only: a mock is not a stage held and must never touch

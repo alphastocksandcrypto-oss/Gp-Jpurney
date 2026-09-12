@@ -1507,6 +1507,68 @@ counts `zone:"` occurrences — the field only `MODULES` entries carry — and
 asserts every declared module renders, whatever the count is. The first attempt
 matched 24 because the regex also caught the `GYM` and `IV_GYM` surface lists.
 
+## The tracker remembers which application you were in
+
+A doctor tracking one programme should not re-pick it every session. The nav
+item for the tracker points at the application you last had open:
+
+```js
+function navHref(id){
+  if (id === "progress" && S.lastProg && progTracked(S.lastProg)){
+    return "#/progress/" + encodeURIComponent(S.lastProg);
+  }
+  return "#/" + id;
+}
+```
+
+**The memory is on the link, not on the route.** Redirecting `#/progress` to
+the remembered application would have made the index unreachable: "All
+programmes" would go there and bounce straight back. Putting it on the nav href
+leaves `#/progress` as the index it is, so the way back works, bookmarks to the
+index still give the index, and `#/deadlines` and `#/programmes` still land
+where they mean to. A test asserts the back link reaches the index *and stays
+there*.
+
+It falls back on its own: an id that is no longer tracked — because the doctor
+stopped tracking it — stops being pointed at, without needing to be cleared.
+
+## The CPD tracker and the Occupational health page are gone
+
+Two nav items removed, with no replacement for now. What each one held:
+
+| Was on the page | Where it is now |
+|---|---|
+| Garda vetting, occupational health clearance | Requirements on the application checklist, with their "Vetted today" / "Cleared today" actions |
+| Garda vetting **date picker** (an arbitrary past date) | Gone — only "today" remains |
+| Hepatitis B / immunisation status and date | Gone |
+| CPD points, target, cycle end, points log | Gone |
+
+Removing the views left a closed cluster of dead code behind them, which went
+too: `cpdPct`, `cpdTarget`, `cpdDaysLeft`, `cpdRegime`, six action handlers, the
+`hepBUpToDate` / `hepBCheckedAt` / `cpd*` record fields, and
+`situation().inTrainingPost` — which existed for exactly one reason, to pick
+between the Medical Council and HSE CPD regimes, and had no other reader.
+
+`gardaStatus()`, `gardaExpiry()` and `gardaDaysLeft()` stay: the checklist row
+still derives from them, so vetting is still shown as *days until it renews*
+rather than a tick.
+
+The `Practical` zone held both and holds nothing now. `renderNav` skips an empty
+zone, so leaving it would have been invisible rather than broken — a heading
+waiting for pages that were deliberately removed — so the zone went too.
+
+`test_app_practical` was almost entirely about those two pages. It was not
+deleted: it now checks that removing them left the app coherent — no nav items,
+no empty zone, **no link anywhere to a route that no longer exists**, the two
+clearances still on the checklist with their one-click actions, and vetting
+three years old still reading *expired* rather than *done*.
+
+### The record keeps its placeholders
+
+`gardaVettingDate`, `occClearance` and `occClearanceAt` stay in the record
+because the checklist reads them. Everything the removed pages alone wrote is
+out of `DEFAULTS`, so a fresh record no longer carries fields nothing can set.
+
 ## Programmes became the tracker's front
 
 Programmes and the Application tracker were **one module at two levels**. The
