@@ -1019,6 +1019,61 @@ Self-ratings are one to five per domain, they drive the readiness figure, and
 Analytics ranks the weakest first. Clicking a rating you already hold clears it,
 so a doctor can undo without picking a number they do not mean.
 
+### Locked, and you can see what you would get
+
+A prep is **locked** until it is unlocked. The doctor's own route comes
+unlocked with the account; everything else is taken on deliberately.
+
+Crucially, a locked card lists **what is inside before unlocking** — the six
+surfaces, each with what it does and what it feeds back into the record. Nobody
+should have to pay to find out what they are paying for. Looking inside a locked
+prep gives a preview with the same feature list and one unlock control, and it
+does **not** swap the shell: browsing is not entering, so the doctor can still
+see where they are in the app. Unlocking from there drops them straight into the
+hub they just unlocked, which is the point of paying.
+
+`S.unlocked` is one list covering both kinds, so exams and interviews cannot
+drift apart. **Nothing charges anybody**, no billing is wired up, and every
+surface that mentions it says so.
+
+### Interview preps are products, not a per-college derivation
+
+A doctor applying to BST General Internal Medicine is preparing for a different
+interview to one applying to HST Cardiology, even though both go through RCPI,
+and the old per-college lookup could not say so. `INTERVIEWS` is now a list of
+thirteen products carrying a college **and a tier**, and `interviewFor()` picks
+the one matching the tier the doctor is actually applying at — an intern is not
+shown an HST panel.
+
+### Search and specialty groups
+
+Both catalogues carry the same search box and the same specialty filter row,
+rendered by one `prepFilters()` so they cannot diverge. Groups are **specialties**
+— Medicine, Surgery, General Practice, Psychiatry and the rest — rather than
+colleges, because that is how a doctor thinks about what they are looking for.
+
+Search matches **word starts, not substrings**: a plain `indexOf` had "BST"
+matching "o*bst*etrics", which is the kind of result that makes a search box feel
+broken. Every typed term has to start some word in the name, college, specialty
+or format. Typing is live, and the caret position is restored after the rerender
+— a search box that loses focus on the second keystroke is worse than none.
+
+### A countdown belongs to a cycle you are in
+
+`weeksTo()` read `situation().cycle`, which is always the primary route's, so an
+RCSI stage a cardiologist had merely unlocked showed RCPI's closing date. It now
+requires the stage's college to be one the doctor is actually applying through.
+Same leak as the roadmap's and the tracker's, third instance of the pattern.
+
+### A stale definition that shadowed a new one
+
+Worth recording because it cost real time: rewriting `examCatalogue` replaced
+the function and its card renderer, but a second `examCard` lived further down
+the file and, being declared later, silently won. Every card rendered through
+the old path — no lock state, no specialty chip — while the new code looked
+correct. There is now a check for duplicate top-level declarations, and it
+should be run after any block replacement.
+
 ### A prep product takes over the shell
 
 A prep product is opened daily for six to eight weeks. The dashboard around it
