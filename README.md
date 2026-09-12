@@ -869,6 +869,11 @@ inherited it, so the fix is applied in all six files.
   same: a defensible generic shape, not any college's published assessment.
   Confirm all of it before launch. `TOPICS` is an eight-item placeholder and is
   not any stage's syllabus.
+- Dashboard: `ENTRY_PROGRAMMES` — the six basic-training trunks, and the
+  `feeds[]` list saying which specialties each one leads to — is the shape Irish
+  training takes, not any college's published prospectus. `RUN_THROUGH` is the
+  same. Getting a `feeds[]` entry wrong sends a doctor to the wrong trunk, which
+  is a worse error than a wrong date: confirm the full map before launch.
 - Dashboard: the **My route** order is derived from that same `when` field
   (`WHEN_ORDER` in `routeStops`), so it inherits its uncertainty. The principle
   — entry stages before the application, membership and exit stages after — is
@@ -1360,6 +1365,90 @@ search test has to read card titles rather than the whole panel's `innerText`.
 
 Hubs, `prepLocked()`, the workspace shell and `S.unlocked` are all unchanged.
 Unlocking still writes one list covering both kinds, and still charges nobody.
+
+## Programmes, the thing you actually apply to
+
+Until now the product had no object for "a programme". Every target it could
+name was `HST something`, `GP training scheme`, or `X training` — **23 of them,
+none at BST.** Tier was *derived* from months post-internship and never chosen:
+
+```js
+var tier = months <= 0 ? "intern" : S.stage === "spr" ? "hst" : "bst";
+```
+
+Meanwhile `INTERVIEWS` already shipped three `tier:"bst"` products. **A doctor
+could buy BST General Internal Medicine interview prep for a programme the
+tracker could not track.** The two halves of the app disagreed about whether BST
+was a thing you apply to.
+
+### The entry layer is written; the higher layer is generated
+
+Irish basic specialist training is a handful of broad trunks, not one per
+specialty. **There is no BST Cardiology** — you do BST General Internal Medicine
+and then apply to HST Cardiology. So `ENTRY_PROGRAMMES` names six trunks, each
+with a `feeds[]` list, and the higher and run-through layer is generated from
+`SPECIALTY_INFO` so the two can never drift apart. `RUN_THROUGH` marks the
+specialties entered directly, which get one programme rather than two and would
+be wrong to call "higher".
+
+A test asserts the entry layer exists, and that **`BST Cardiology` does not**.
+
+### Additive, because fifty call sites read the old fields
+
+`S.specialty` has 33 readers and `S.otherTargets` 17. Rewriting all of them at
+once to gain nothing is how a working product gets broken, so `S.programmes` is
+the record and **the old fields are kept as a derived view of it**, rebuilt in
+`setProgrammes()` and nowhere else. New surfaces read programmes; everything
+else keeps working untouched. `progsTracked()` seeds from the old fields when
+`S.programmes` is empty, so a record made before today opens on its real
+programmes rather than an empty tracker.
+
+**You cannot remove the last one.** Every scored view needs a route to score
+against, and silently emptying it is exactly what the old dual-track dropdown
+did — `S.otherTargets = S.dualTrack === "single" ? [] : ...` wiped the second
+application *and*, because checklist ticks are keyed by target, every tick
+against it.
+
+### Recommended, and why
+
+`recommendProgrammes()` returns `{prog, why, rank}` and **composes every
+sentence from the record at render time**. The rules:
+
+| Rank | Recommended when | Sentence built from |
+|---|---|---|
+| 1 | You are at or before the trunk your specialty is entered from | tier, `routeTiming()`, `trunkFor()` |
+| 2 | The programme your specialty leads to | `S.specialty` |
+| 3 | Entered on an exam family you already hold stages of | `stagesHeld()`, `entryFamilyFor()` |
+| 4 | The `PIVOTS` move, and only that one | `situation().exam` |
+
+Nothing already tracked is recommended. The one stored string in the whole
+mechanism is the programme's own description.
+
+**Why this matters beyond this page:** it is the same mechanic "Matched to you"
+needs. That page hardcodes *"Closes your largest gap"* onto a QI course and says
+it to a surgeon with 33 of 35 points and nothing left in QI — measured, in three
+records. A composed `why` is the cure, and it now exists.
+
+### Reuse
+
+The picker is the prep catalogue again: `prepFilters()`, `prepMatches()`,
+`prepGroups()`, `groupHead()` and `specClass()` all work unchanged, so
+programmes wear the same specialty colours as exams and interviews. The only
+new filter is the tier row (`TIER_LABEL`).
+
+One bug caught in build: filtering only the browse grid left a doctor who typed
+"psychiatry" still looking at Cardiology at the top of the page. **One filtered
+set now feeds every section**, with a `shown{}` map so a recommended programme
+does not also render in the browse grid — a test asserts no programme renders
+twice.
+
+### A test that stopped hardcoding a number
+
+`test_personas` asserted `navCount === 11`. It had already been 13 before the
+Readiness/Score merge, and broke again the day Programmes was added. It now
+counts `zone:"` occurrences — the field only `MODULES` entries carry — and
+asserts every declared module renders, whatever the count is. The first attempt
+matched 24 because the regex also caught the `GYM` and `IV_GYM` surface lists.
 
 ## The alternate structure, `app/alt.html`
 

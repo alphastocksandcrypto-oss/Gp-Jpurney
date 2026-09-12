@@ -871,6 +871,9 @@ a.nudge:hover{text-decoration:underline}
        doctor's own route comes unlocked with the account, and nothing here
        charges anybody: billing is a real surface, not something to fake. */
     unlocked:[], prepQuery:"", prepGroup:"", prepTab:"list",
+    /* the programmes this doctor applies to. The source of truth; S.specialty
+       and S.otherTargets are kept in sync from it by setProgrammes(). */
+    programmes:[], progQuery:"", progGroup:"", progTier:"",
     activity:[]
   };
   var KEY = "mednav.demo.v1";
@@ -1450,6 +1453,177 @@ a.nudge:hover{text-decoration:underline}
   };
   /* the resolved list, excluding whatever is already the primary target and
      anything we have no record for, so a stray or malformed name never renders */
+  /* ================= THE PROGRAMME REGISTRY =================
+     A PROGRAMME is the thing a doctor actually applies to: it has a tier, a
+     college, a cycle, an entry exam, an interview and a checklist. Until now
+     the product had no such object. Every target it could name was HST
+     something or a named scheme, tier was DERIVED from months post-internship
+     and never chosen, and yet INTERVIEWS already shipped three tier:"bst"
+     products. A doctor could buy BST General Internal Medicine interview prep
+     for a programme the tracker could not track.
+
+     The entry layer is written out because it does not follow from anything we
+     already hold: Irish basic specialist training is a handful of broad
+     schemes, not one per specialty. There is no BST Cardiology — you do BST
+     General Internal Medicine and then apply to HST Cardiology, which is what
+     feeds[] records. The higher layer IS derivable, so it is generated from
+     SPECIALTY_INFO rather than typed twice and left to drift.
+
+     ILLUSTRATIVE, like everything else of this kind here. The scheme names and
+     which specialties each one feeds are the shape Irish training takes, not
+     any college's published prospectus. See the README placeholders list. */
+  var ENTRY_PROGRAMMES = [
+    {id:"bst-gim",   t:"BST General Internal Medicine", grp:"Medicine", body:"RCPI",
+     fam:"MRCPI", iv:"bst-gim",
+     d:"The medicine trunk. Most RCPI higher specialties are entered from it rather than directly.",
+     feeds:["General Internal Medicine","Cardiology","Respiratory Medicine","Gastroenterology",
+            "Nephrology","Geriatric Medicine","Neurology"]},
+    {id:"cst",       t:"Core surgical training", grp:"Surgery", body:"RCSI",
+     fam:"MRCS", iv:"bst-surg",
+     d:"The surgical trunk, entered before any of the higher surgical specialties.",
+     feeds:["General Surgery","Trauma and Orthopaedics","Urology","Otolaryngology, ENT","Plastic Surgery"]},
+    {id:"bst-paeds", t:"BST Paediatrics", grp:"Paediatrics", body:"RCPI",
+     fam:"MRCPI Paediatrics", iv:"paeds-sel",
+     d:"Basic specialist training in paediatrics.", feeds:["Paediatrics"]},
+    {id:"bst-og",    t:"BST Obstetrics and Gynaecology", grp:"Obstetrics and Gynaecology", body:"RCPI",
+     fam:"MRCPI O and G", iv:"og-sel",
+     d:"Basic specialist training in obstetrics and gynaecology.", feeds:["Obstetrics and Gynaecology"]},
+    {id:"bst-psych", t:"BST Psychiatry", grp:"Psychiatry", body:"College of Psychiatrists",
+     fam:"MRCPsych", iv:"psych-sel",
+     d:"Basic specialist training in psychiatry.", feeds:["Psychiatry"]},
+    {id:"bst-em",    t:"BST Emergency Medicine", grp:"Emergency Medicine", body:"RCSI",
+     fam:"MRCEM", iv:"em-sel",
+     d:"Basic specialist training in emergency medicine.", feeds:["Emergency Medicine"]}
+  ];
+
+  /* specialties entered directly rather than through a trunk. These have one
+     programme, not two, and calling it "higher" would be wrong. */
+  var RUN_THROUGH = ["General Practice", "Anaesthesiology", "Radiology", "Histopathology",
+                     "Ophthalmology", "Public Health Medicine"];
+
+  function programmes(){
+    var out = ENTRY_PROGRAMMES.map(function(e){
+      return {id:e.id, t:e.t, tier:"bst", grp:e.grp, body:e.body, fam:e.fam, iv:e.iv,
+              d:e.d, feeds:e.feeds, specialty:e.feeds[0]};
+    });
+    /* the higher and run-through layer, generated so it can never disagree
+       with the table the rest of the app scores against */
+    Object.keys(SPECIALTY_INFO).forEach(function(sp){
+      var info = SPECIALTY_INFO[sp], run = RUN_THROUGH.indexOf(sp) > -1;
+      out.push({
+        id: "p-" + sp.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+        t: info.target, tier: run ? "run" : "hst", grp: examGroupFor(sp), body: info.body,
+        fam: entryFamilyFor(sp), iv: (interviewFor(sp) || {}).id || "",
+        d: run ? "Entered directly rather than through a basic training trunk."
+               : "Higher specialist training, entered after a basic training trunk.",
+        feeds: [], specialty: sp
+      });
+    });
+    return out;
+  }
+  function progById(id){ return programmes().filter(function(p){ return p.id === id; })[0] || null; }
+  /* the trunk a higher programme is entered from, which is the question a
+     doctor at BST actually has: what do I apply to FIRST to end up here */
+  function trunkFor(specialty){
+    return ENTRY_PROGRAMMES.filter(function(e){ return e.feeds.indexOf(specialty) > -1; })[0] || null;
+  }
+  /* the specialty group a programme belongs to, so the picker can wear the
+     same colours the prep shelves do */
+  function examGroupFor(sp){
+    var fam = entryFamilyFor(sp);
+    var e = EXAMS.filter(function(x){ return x.fam === fam; })[0];
+    return e ? e.grp : "Other specialties";
+  }
+
+  /* ---- which programmes this doctor tracks ----
+     S.programmes is the record. S.specialty and S.otherTargets stay as a
+     DERIVED view of it, because fifty call sites across the app read them and
+     rewriting all of them at once to gain nothing is how a working product
+     gets broken. New surfaces read programmes; everything else keeps working. */
+  function progsTracked(){
+    var all = programmes(), ids = S.programmes || [];
+    var out = ids.map(progById).filter(Boolean);
+    if (!out.length){
+      /* a record made before programmes existed. Seed from what it does hold,
+         rather than showing a doctor mid-application an empty tracker. */
+      [S.specialty].concat(S.otherTargets || []).filter(Boolean).forEach(function(sp){
+        var p = all.filter(function(x){ return x.specialty === sp && x.tier !== "bst"; })[0];
+        if (p && out.indexOf(p) === -1) out.push(p);
+      });
+    }
+    return out;
+  }
+  function progTracked(id){ return progsTracked().some(function(p){ return p.id === id; }); }
+
+  /* writing back. The derived view is rebuilt here and nowhere else. */
+  function setProgrammes(ids){
+    S.programmes = ids.filter(function(id, i, a){ return id && a.indexOf(id) === i; });
+    var list = S.programmes.map(progById).filter(Boolean);
+    if (list.length){
+      var first = list[0];
+      if (SPECIALTY_INFO[first.specialty]){
+        S.specialty = first.specialty;
+        S.target = SPECIALTY_INFO[first.specialty].target;
+        S.body   = SPECIALTY_INFO[first.specialty].body;
+        S.exam   = SPECIALTY_INFO[first.specialty].exam;
+      }
+      S.otherTargets = list.slice(1).map(function(p){ return p.specialty; })
+        .filter(function(sp){ return sp && sp !== S.specialty; });
+      S.dualTrack = S.otherTargets.length ? "multi" : "single";
+    }
+    save();
+  }
+
+  /* ---- recommended, and why ----
+     One rule per reason, and the sentence is COMPOSED from the record at
+     render time. The moment a why is stored as a literal it starts lying to
+     somebody: "Matched to you" hardcodes "closes your largest gap" onto a QI
+     course and says it to a surgeon who has none left. */
+  function recommendProgrammes(){
+    var sit = situation(), t = routeTiming(), out = [], seen = {};
+    var all = programmes();
+    function add(p, why, rank){
+      if (!p || seen[p.id] || progTracked(p.id)) return;
+      seen[p.id] = 1; out.push({prog:p, why:why, rank:rank});
+    }
+    if (!sit.hasTarget || !sit.stillApplying) return out;
+
+    var mine = S.specialty;
+    var trunk = trunkFor(mine);
+    var atTrunk = sit.isStudent || sit.isIntern ||
+                  (sit.tier === "bst" && t.stageYear < STAGE_YEARS.bst) || t.holding;
+
+    /* the one a doctor at this stage actually applies to next */
+    if (trunk && atTrunk){
+      /* "0 years post-internship" is not a sentence anybody says to an intern */
+      var where = sit.isStudent ? "You are still a student"
+        : sit.isIntern ? "You are in your intern year"
+        : t.holding ? "You are " + t.yearsIn + " years post-internship and outside a scheme"
+        : "You are " + t.yearsIn + " years post-internship";
+      add(all.filter(function(p){ return p.id === trunk.id; })[0],
+        where + ", and " + trunk.t + " is the trunk " + mine + " is entered from.", 1);
+    }
+    var own = all.filter(function(p){ return p.specialty === mine && p.tier !== "bst"; })[0];
+    add(own, "It is the programme your specialty leads to.", trunk && atTrunk ? 2 : 1);
+
+    /* anything entered on an exam already held. A fact about our own registry,
+       not a claim about entry rules. */
+    var held = stagesHeld(mine);
+    if (held > 0){
+      all.filter(function(p){ return p.fam === entryFamilyFor(mine) && p.specialty !== mine; })
+        .slice(0, 4).forEach(function(p){
+          add(p, "Entered on " + entryFamilyFor(mine) + ", which you already hold " +
+            held + " stage" + (held === 1 ? "" : "s") + " of.", 3);
+        });
+    }
+    /* the sideways move the product owner named, and only that one */
+    (PIVOTS[sit.exam] || []).forEach(function(sp){
+      var p = all.filter(function(x){ return x.specialty === sp && x.tier !== "hst"; })[0];
+      add(p, "A different exam, but hospital training is commonly credited towards it.", 4);
+    });
+    return out.sort(function(a, b){ return a.rank - b.rank; });
+  }
+
   function otherTargetsInfo(){
     return (S.otherTargets || []).filter(function(n){ return n && n !== S.specialty; })
       .map(function(n){ return {name:n, exam:(SPECIALTY_INFO[n] || {}).exam, body:(SPECIALTY_INFO[n] || {}).body}; })
@@ -3106,6 +3280,114 @@ a.nudge:hover{text-decoration:underline}
     return h + "</div>";
   }
 
+  /* ================= PROGRAMMES =================
+     The shelf that was missing. Same shape as the prep catalogues on purpose:
+     a doctor who has browsed exams already knows how to read this, and
+     prepFilters, prepGroups and specClass all work here unchanged. */
+  VIEWS.programmes = {
+    title:"Programmes", sub:"What you are applying to, and everything else you could.",
+    render:function(){
+      var sit = situation();
+      var all = programmes(), tracked = progsTracked();
+
+      var shelf = all.map(function(p){
+        return {id:p.id, p:p, label:p.t, grp:p.grp, body:p.body,
+                meta:TIER_LABEL[p.tier] + " \u00b7 " + (p.fam || ""), d:p.d};
+      });
+      /* one filtered set, read by every section. Filtering only the browse
+         grid leaves a doctor who typed "psychiatry" still looking at
+         Cardiology at the top of the page, which reads as a broken search. */
+      var filtering = !!(S.prepQuery || S.prepGroup || S.progTier);
+      var vis = shelf.filter(function(o){
+        return prepMatches(o) && prepInGroup(o) && (!S.progTier || o.p.tier === S.progTier);
+      });
+      var visIds = vis.map(function(o){ return o.id; });
+      var shown = {}, h = "";
+
+      function section(label, items, lead){
+        if (!items.length) return;
+        h += '<p class="sec-label">' + esc(label) + "</p>";
+        h += '<div class="pgrid">' + items.map(function(x, i){
+          shown[x.p.id] = 1;
+          return progCard(x.p, x.why || "", lead && i === 0);
+        }).join("") + "</div>";
+      }
+
+      var mine = tracked.filter(function(p){ return visIds.indexOf(p.id) > -1; })
+        .map(function(p){ return {p:p}; });
+      section("Tracking now \u00b7 " + tracked.length, mine, true);
+      if (!tracked.length && !filtering){
+        h += '<p class="sec-label">Tracking now</p>' +
+          '<p class="empty"><b>Nothing tracked yet.</b>Pick a programme below and it gets its own ' +
+          "checklist, its own dates and its own interview.</p>";
+      }
+
+      var rec = recommendProgrammes().filter(function(r){
+        return visIds.indexOf(r.prog.id) > -1 && !shown[r.prog.id];
+      }).slice(0, 6).map(function(r){ return {p:r.prog, why:r.why}; });
+      section("Recommended for you", rec, true);
+      if (!rec.length && !sit.hasTarget && !filtering){
+        h += ctx("No specialty set, so nothing is recommended yet. Everything below is still here to browse, " +
+          "and setting a route on your profile turns this into a shortlist.");
+      }
+
+      h += '<p class="sec-label">Everything you could apply to</p>';
+      h += prepFilters(shelf, "programmes");
+      h += '<div class="picks" style="margin-bottom:16px">' +
+        '<button class="pick pick-b' + (!S.progTier ? " on" : "") + '" data-prog-tier="">Any stage</button>' +
+        Object.keys(TIER_LABEL).map(function(t){
+          return '<button class="pick pick-b' + (S.progTier === t ? " on" : "") + '" data-prog-tier="' +
+            t + '">' + esc(TIER_LABEL[t]) + "</button>";
+        }).join("") + "</div>";
+
+      var rest = vis.filter(function(o){ return !shown[o.id]; });
+      if (!vis.length){
+        h += '<p class="empty"><b>Nothing matches.</b>Try a college, a specialty, or part of the ' +
+          "programme name.</p>";
+      } else if (rest.length){
+        prepGroups(rest).forEach(function(g){
+          h += groupHead(g, true);
+          h += '<div class="pgrid">' + rest.filter(function(o){ return specGroup(o.grp) === g; })
+            .map(function(o){ return progCard(o.p, "", false); }).join("") + "</div>";
+        });
+      } else {
+        h += '<p class="empty">Everything that matches is already above.</p>';
+      }
+      h += ctxFoot("Scheme names, and which specialties each basic training trunk feeds, are the shape Irish " +
+        "training takes rather than any college's published prospectus. Entry rules and dates are illustrative " +
+        "in this prototype: confirm both with the college before planning around them.");
+      return h;
+    }
+  };
+  var TIER_LABEL = {bst:"Entry to training", hst:"Higher training", run:"Direct entry"};
+
+  function progCard(p, why, lead){
+    var on = progTracked(p.id), cyc = CYCLE[p.body] || null;
+    var d = cyc ? until(cyc.apply) : null;
+    var trunk = p.tier === "hst" ? trunkFor(p.specialty) : null;
+    var h = '<div class="pc ' + specClass(p.grp) + (lead ? " lead" : "") + (on ? "" : " lock") + '">' +
+      '<div class="pc-band" aria-hidden="true"></div><div class="pc-b">' +
+      '<p class="pc-k">' + esc(p.grp) + " \u00b7 " + esc(p.body) + " \u00b7 " +
+        esc(TIER_LABEL[p.tier]) + "</p>" +
+      "<h2>" + esc(p.t) + "</h2>" +
+      '<p class="pc-sub">' + esc(p.fam || "No entry exam recorded") +
+        (d !== null && d >= 0 ? " \u00b7 closes " + esc(fmt(cyc.apply)) : "") + "</p>" +
+      (why ? '<p class="pc-why">' + esc(why) + "</p>" : '<p class="pc-d">' + esc(p.d) + "</p>");
+
+    /* the question a doctor at BST actually has: what do I apply to first */
+    if (trunk && !progTracked(trunk.id)){
+      h += '<p class="pc-sub" style="margin-top:9px">Entered from <b>' + esc(trunk.t) + "</b>.</p>";
+    }
+    h += '<div class="pc-f">' +
+      (on ? '<button class="btn btn-sm btn-ghost" data-prog-off="' + esc(p.id) + '">Stop tracking</button>'
+          : '<button class="btn btn-sm btn-primary" data-prog-on="' + esc(p.id) + '">Track this</button>') +
+      (on ? '<span class="pc-st held">Tracking</span>'
+          : d !== null && d >= 0 ? '<span class="pc-wk ' + (d <= 21 ? "crit" : d <= 60 ? "warn" : "") + '">' +
+              esc(awayText(d)) + "</span>" : "") +
+      "</div></div></div>";
+    return h;
+  }
+
   VIEWS.opportunities = {
     title:"Matched to you", sub:"Posts, shifts and courses that fit your route and close your gaps.",
     render:function(){
@@ -4471,6 +4753,7 @@ a.nudge:hover{text-decoration:underline}
   var MODULES = [
     {id:"today",         t:"Today",                          ic:I.home,   zone:"Overview"},
     {id:"roadmap",       t:"My roadmap",                     ic:I.map,    zone:"Your pathway"},
+    {id:"programmes",    t:"Programmes",                     ic:I.target, zone:"Your applications", rel:applyingOnly},
     {id:"progress",      t:"Application tracker",            ic:I.clip,   zone:"Your applications", rel:applyingOnly},
     /* one entry, because it is one table. Readiness and Shortlisting score
        still resolve as routes, they just no longer occupy the nav with two
@@ -5190,6 +5473,37 @@ a.nudge:hover{text-decoration:underline}
     }
     var pq = ev.target.closest("[data-prep-q]");
     if (pq){ ev.preventDefault(); S.prepQuery = ""; save(); render(); return; }
+    /* tracking a programme, and untracking one. setProgrammes rebuilds the
+       derived view so the fifty places still reading S.specialty keep working. */
+    var pon = ev.target.closest("[data-prog-on]");
+    if (pon){
+      ev.preventDefault();
+      var onid = pon.getAttribute("data-prog-on"), onp = progById(onid);
+      setProgrammes(progsTracked().map(function(x){ return x.id; }).concat([onid]));
+      if (onp) logActivity("Started tracking " + onp.t, onp.body);
+      render();
+      toast("Now tracking <em>" + esc(onp ? onp.t : "it") + "</em>."); return;
+    }
+    var poff = ev.target.closest("[data-prog-off]");
+    if (poff){
+      ev.preventDefault();
+      var offid = poff.getAttribute("data-prog-off"), offp = progById(offid);
+      var left = progsTracked().filter(function(x){ return x.id !== offid; });
+      /* the last one is not removable: every scored view in the app needs a
+         route to score against, and silently emptying it is how the old
+         dual-track dropdown wiped a doctor's second application */
+      if (!left.length){ toast("Keep at least one programme, or the rest of the dashboard has nothing to work from."); return; }
+      setProgrammes(left.map(function(x){ return x.id; }));
+      render();
+      toast("Stopped tracking <em>" + esc(offp ? offp.t : "it") + "</em>."); return;
+    }
+    var ptier = ev.target.closest("[data-prog-tier]");
+    if (ptier){
+      ev.preventDefault();
+      var tv = ptier.getAttribute("data-prog-tier");
+      S.progTier = S.progTier === tv ? "" : tv;
+      save(); render(); return;
+    }
     /* the list/route toggle. It is one key, not one per page, because the
        route is the same object from both sides and a doctor who switched to it
        on Exams means it on Interviews too. */
