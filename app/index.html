@@ -517,15 +517,29 @@ button.pick-b.on{background:var(--deep);border-color:var(--deep);color:#fff}
 .sp-paed {--sp:#daa50b; --sp-t:#9b6900}
 .sp-og   {--sp:#4d920c; --sp-t:#418200}
 .sp-any  {--sp:#64767c; --sp-t:#4a585d}
+/* a specialty with no slot. Eight hues is what this palette can carry and be
+   told apart; the interview registry names eleven specialties, so the four with
+   no exam beside them get the neutral rather than a ninth hue nobody validated.
+   Measured, not assumed — see the README. */
+.sp-none {--sp:#8a9a9f; --sp-t:#4a585d}
 
 .pc{background:#fff;border:1.5px solid var(--sp);border-radius:18px;overflow:hidden;
     box-shadow:4px 4px 0 rgba(11,46,54,.12);display:flex;flex-direction:column;min-width:0}
-.pc.iv{--sp:var(--plum); --sp-t:var(--plum-text); box-shadow:4px 4px 0 rgba(107,92,165,.14)}
+.pc.iv{box-shadow:4px 4px 0 rgba(11,46,54,.12)}
 /* locked overrides the hue on the BORDER only: the band keeps its specialty,
    because which specialty a prep belongs to does not change with who owns it */
 .pc.lock{border-color:var(--line);box-shadow:4px 4px 0 rgba(11,46,54,.05)}
 .pc.lead{border-width:2.5px}
+/* The hue says which specialty on both shelves now, so it can no longer also
+   say exam-or-interview. That moves to a second channel: an exam band is
+   solid, an interview band is hatched, and the eyebrow carries the matching
+   nav icon. Texture is also what makes a colourblind reader's job possible at
+   eleven hues — see the README on why this palette is faceted and labelled
+   rather than relying on separation alone. */
 .pc-band{height:8px;background:var(--sp)}
+.pc.iv .pc-band{background:repeating-linear-gradient(115deg,
+   var(--sp) 0 5px, rgba(255,255,255,.55) 5px 10px)}
+.pc-k svg{vertical-align:-2px;margin-right:5px}
 /* the swatch that makes a group heading its own legend */
 .spdot{display:inline-block;width:10px;height:10px;border-radius:3px;
     background:var(--sp,var(--txt-mute));margin-right:8px;vertical-align:-1px}
@@ -566,8 +580,9 @@ button.pick-b.on{background:var(--deep);border-color:var(--deep);color:#fff}
 .rstop.done .rnode{background:var(--sp);border-color:var(--sp);color:#fff}
 .rstop.now .rnode{background:var(--deep);border-color:var(--deep);color:#fff;box-shadow:0 0 0 5px rgba(20,179,148,.22)}
 .rstop:not(.done):not(.now) .rnode{border-color:var(--sp);color:var(--sp-t)}
-.rstop.iv{--sp:var(--plum); --sp-t:var(--plum-text)}
-.rstop.iv.now .rnode{background:var(--plum);border-color:var(--plum);box-shadow:0 0 0 5px rgba(107,92,165,.2)}
+/* an interview stop is hollow where an exam stop is filled, so the two kinds
+   stay apart on a line where both now wear the same specialty hue */
+.rstop.iv.done .rnode{background:#fff;color:var(--sp-t);box-shadow:inset 0 0 0 3px var(--sp)}
 .rcard{background:#fff;border:1.5px solid var(--sp);border-radius:15px;padding:13px 15px;
        box-shadow:3px 3px 0 rgba(11,46,54,.1)}
 .rstop.iv .rcard{box-shadow:3px 3px 0 rgba(107,92,165,.12)}
@@ -3327,7 +3342,8 @@ a.nudge:hover{text-decoration:underline}
     "Psychiatry":"sp-psy", "Emergency Medicine":"sp-em", "Paediatrics":"sp-paed",
     "Obstetrics and Gynaecology":"sp-og", "Any specialty":"sp-any"
   };
-  function specClass(grp){ return SPEC_CLASS[grp] || "sp-any"; }
+  function specClass(grp){ return SPEC_CLASS[grp] || "sp-none"; }
+  function specColoured(grp){ return !!SPEC_CLASS[grp]; }
   /* a group heading is the legend for its own grid */
   function groupHead(grp, coloured){
     return '<p class="group-h ' + (coloured ? esc(specClass(grp)) : "") + '">' +
@@ -3428,7 +3444,7 @@ a.nudge:hover{text-decoration:underline}
   }
 
   function routeStopCard(x, n){
-    var cls = "rstop " + (x.kind === "iv" ? "iv" : specClass(x.e.grp)) +
+    var cls = "rstop " + (x.kind === "iv" ? "iv " + specClass(x.iv.grp) : specClass(x.e.grp)) +
       (x.done ? " done" : x.now ? " now" : " todo");
     var node = x.done ? ico(I.tick, 14) : x.now ? "●" : String(n);
     var h = '<div class="' + cls + '"><span class="rnode" aria-hidden="true">' + node + "</span>";
@@ -3440,7 +3456,7 @@ a.nudge:hover{text-decoration:underline}
         (x.done ? "outcome recorded" : x.now ? "next" : "later") + "</p>" +
         "<h2>" + esc(iv.t) + "</h2><p>" + esc(iv.fmt) + ". " + esc(iv.d) + "</p>" +
         '<div class="rmeta">' +
-        '<span class="rm plum">' + esc(iv.body) + "</span>" +
+        '<span class="rm mute">' + esc(iv.body) + "</span>" +
         (d === null ? '<span class="rm mute">No date held</span>'
          : d < 0 ? '<span class="rm mute">That date has passed</span>'
          : '<span class="rm ' + (d <= 21 ? "warn" : "mute") + '">' + esc(awayText(d)) + "</span>") +
@@ -3747,7 +3763,8 @@ a.nudge:hover{text-decoration:underline}
        the band above it is never a hue with nothing to read it against */
     var h = '<div class="pc ' + specClass(e.grp) + (lead ? " lead" : "") + (open ? "" : " lock") + '">' +
       '<div class="pc-band" aria-hidden="true"></div><div class="pc-b">' +
-      '<p class="pc-k">' + esc(e.grp) + " \u00b7 " + esc(e.body) + " \u00b7 " + esc(state) + "</p>" +
+      '<p class="pc-k">' + ico(I.book, 11) + esc(e.grp) + " \u00b7 " + esc(e.body) +
+        " \u00b7 " + esc(state) + "</p>" +
       "<h2>" + esc(examLabel(e)) + "</h2>" +
       '<p class="pc-sub">' + esc(e.fmt) + " \u00b7 " + esc(WHEN_LABEL[e.when]) + "</p>" +
       (why ? '<p class="pc-why">' + esc(why) + "</p>" : '<p class="pc-d">' + esc(e.d) + "</p>");
@@ -4108,8 +4125,15 @@ a.nudge:hover{text-decoration:underline}
     var rest = vis.filter(function(o){ return !shown[o.id]; });
     if (rest.length){
       out += '<p class="sec-label">Browse other routes</p>';
+      var saidNeutral = false;
       prepGroups(rest).forEach(function(g){
-        out += groupHead(g, false);
+        if (!specColoured(g) && !saidNeutral){
+          saidNeutral = true;
+          out += ctxFoot("The specialties below have no exam on the other shelf and no colour of their own: " +
+            "eight hues is what this palette can carry and still have them told apart. They are named rather " +
+            "than coloured.");
+        }
+        out += groupHead(g, true);
         out += '<div class="pgrid">' + rest.filter(function(o){ return o.grp === g; })
           .map(function(o){ return ivCard(o.iv, false); }).join("") + "</div>";
       });
@@ -4157,12 +4181,13 @@ a.nudge:hover{text-decoration:underline}
     var mocks = ivMocks(iv.id).length;
     var state = inc ? "included" : open ? "unlocked" : "locked";
 
-    /* interviews stay one colour. They are one product family rather than a
-       shelf spanning every specialty, and a second full palette would leave
-       nothing carrying the exam/interview distinction at all. */
-    var h = '<div class="pc iv' + (open ? "" : " lock") + (lead ? " lead" : "") + '">' +
+    /* the same specialty hue an exam in this specialty wears, so a doctor's
+       route is one colour across both shelves. What separates the two kinds is
+       the hatched band and the icon, not the hue. */
+    var h = '<div class="pc iv ' + specClass(iv.grp) + (open ? "" : " lock") + (lead ? " lead" : "") + '">' +
       '<div class="pc-band" aria-hidden="true"></div><div class="pc-b">' +
-      '<p class="pc-k">' + esc(iv.grp) + " \u00b7 " + esc(iv.body) + " \u00b7 " + esc(state) + "</p>" +
+      '<p class="pc-k">' + ico(I.mic, 11) + esc(iv.grp) + " \u00b7 " + esc(iv.body) +
+      " \u00b7 " + esc(state) + "</p>" +
       "<h2>" + esc(iv.t) + "</h2>" +
       '<p class="pc-sub">' + esc(iv.fmt) + (iv.target ? " \u00b7 for " + esc(iv.target) : "") + "</p>" +
       '<p class="pc-d">' + esc(iv.d) + "</p>";

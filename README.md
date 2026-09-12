@@ -1224,11 +1224,47 @@ A shelf of nineteen stages stops being one undifferentiated block, and a route
 reads as **one colour with the interview cutting across it** — an RCPI line is
 blue with a plum interview, a GP line teal with a plum interview.
 
-**Interviews stay one colour.** They are one product family rather than a shelf
-spanning every specialty, and giving them a second full palette would leave
-nothing at all carrying the exam/interview distinction. Their four extra groups
-(Anaesthesiology, Radiology, Pathology, Public Health) also have no slot — see
-the fixed-order rule below.
+**Interviews wear the same hues.** A Medicine interview is the same blue as a
+Medicine exam, so a doctor's route is one colour across both shelves — a test
+asserts all seven shared specialties resolve to the identical `--sp` on both
+pages.
+
+That consumes the hue channel, so **the exam/interview distinction moved to two
+other channels**: an exam band is solid and an interview band is hatched, and
+each eyebrow carries its own nav icon (book / mic). On the route, an interview
+stop's node is hollow where an exam stop's is filled. None of it depends on
+colour.
+
+### Why four specialties have no colour
+
+The interview registry names **eleven** specialties; the palette carries eight.
+Four searches were run before accepting that, not one:
+
+| Attempt | Optimised for | Worst-pair CVD ΔE | Worst-pair normal-vision ΔE |
+|---|---|---|---|
+| 11 hues, 7 fixed | all pairs | 7.2 | 14.6 |
+| 11 hues, 7 fixed, longer | all pairs | 7.7 | 14.7 |
+| 11 hues, shelf order | adjacent pairs | 10.7 | 21.0 |
+| 11 hues + hue-family constraint | all pairs | 7.2 | 13.4 |
+| four muted second-tier hues | all pairs | 1.5 | 6.9 |
+| **8 hues (shipped)** | **all pairs** | **9.2** | **17.7** |
+
+Floors are CVD ≥ 8 and normal-vision ≥ 15. Only eight clears them.
+
+The third row is the instructive one: optimising the *adjacent* pairlist scored
+well by parking two near-identical magentas in blocks far apart on the page.
+That satisfies the metric and fails the reader, which is why the shipped set is
+validated on all pairs. The fifth row kills the obvious escape hatch — muting
+the four extra hues makes them *less* separable, not more, because low chroma
+compresses the space they had to fit into.
+
+So the four specialties with **no exam on the other shelf** — Anaesthesiology,
+Radiology, Pathology, Public Health — take `sp-none`, a neutral. They are the
+right four to drop precisely because they have no exam counterpart, so no
+cross-shelf coherence is lost. The shelf says so once, above the first of them,
+rather than leaving four grey blocks reading as a rendering fault.
+
+Adding a ninth hue later means removing one, not appending.
 
 | Slot | Specialty | Block `--sp` | Label `--sp-t` |
 |---|---|---|---|
@@ -1240,6 +1276,7 @@ the fixed-order rule below.
 | 6 | Paediatrics | `#daa50b` | `#9b6900` |
 | 7 | Obstetrics and Gynaecology | `#4d920c` | `#418200` |
 | 8 | Any specialty | `#64767c` | `#4a585d` |
+| — | no slot (`sp-none`) | `#8a9a9f` | `#4a585d` |
 
 **Two steps per specialty, because one cannot do both jobs.** `--sp` is the
 block colour — an 8px band, a 7px bar, a 2.5px border, a 31px node. `--sp-t` is
