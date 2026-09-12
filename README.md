@@ -1507,6 +1507,65 @@ counts `zone:"` occurrences — the field only `MODULES` entries carry — and
 asserts every declared module renders, whatever the count is. The first attempt
 matched 24 because the regex also caught the `GYM` and `IV_GYM` surface lists.
 
+## Gap analysis scores one application
+
+The scoring layer was **programme-blind by construction**. `scorePts()`,
+`scoreMax()`, `readiness()` and `losingDomains()` took no target at all, and
+`DOMAINS` was one global rubric. That was correct while a doctor had one route
+and silently wrong the moment they had two:
+
+| | Closing date | Exam |
+|---|---|---|
+| Tracker, HST Cardiology | 8 Nov 2026 | MRCPI |
+| Tracker, GP training scheme | 5 Dec 2026 | ICGP entry |
+| **Gap analysis, before** | **8 Nov 2026 always** | **MRCPI always** |
+
+A doctor tracking GP alongside Cardiology was scored on MRCPI stages for both,
+against the RCPI closing date, on a page that never said which application it
+meant. The old footnote admitted it in words — *"do not read this figure as
+covering both"* — which is an apology, not a fix.
+
+### Five domains are the doctor's, one is the application's
+
+The useful finding once the rubric was read closely: **months worked, audits
+finished, sessions taught, papers out, a course done are facts about the
+doctor** and count for every application, exactly like a CV or Garda vetting on
+the checklist. Only *Exams and membership* is a fact about the application —
+an RCPI route wants MRCPI, a GP scheme wants ICGP entry, and holding a stage of
+one says nothing about the other.
+
+So `shared:true` marks the five, every scorer takes the programme it is scoring
+for, and each row carries **Counts for both** or **This application only** in
+the row itself rather than in a footnote. A test asserts that switching
+application moves the exams row and nothing else.
+
+### One notion of "the application you are working on"
+
+`gapProg()` resolves it: a route segment first (`#/gaps/bst-gim` is linkable),
+then the one last opened in the tracker, then the main route — and never a
+programme that is no longer tracked, so stopping one cannot strand either page.
+Choosing an application to score also sets what the tracker opens, so the two
+pages can never disagree about who they are talking about.
+
+### What rendering caught that the assertions did not
+
+Text assertions passed while the page still said this:
+
+```
+Exams and membership        0 of 2 ICGP entry stages held
+[ MRCPI prep ]  [ Sitting dates ]
+```
+
+The row had been fixed and its own button had not — `gapActions()` still read
+`situation().exam`. The same leak sat in *"These score again at interview"*,
+which read `deadlines()` — the primary route's list — and showed a GP applicant
+the RCPI interview date. Both now take the programme; a test asserts two
+colleges produce two different interview countdowns (128 vs 151 days).
+
+The lesson is the one this file keeps recording: **the cycle-leak pattern hides
+in the places that are one level away from the thing being fixed** — an action
+under a corrected row, a date in a card beside a corrected figure.
+
 ## The tracker remembers which application you were in
 
 A doctor tracking one programme should not re-pick it every session. The nav

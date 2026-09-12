@@ -476,11 +476,12 @@ button.pick-b.on{background:var(--deep);border-color:var(--deep);color:#fff}
    colour is never the only thing carrying that: every card says it in words. */
 .seg{display:inline-flex;background:var(--paper);border:1.5px solid var(--deep);
      border-radius:999px;padding:3px;gap:2px;max-width:100%;flex-wrap:wrap}
-.seg button{font-family:var(--fd);font-size:12.5px;font-weight:800;border:0;border-radius:999px;
+.seg button, .seg a{font-family:var(--fd);font-size:12.5px;font-weight:800;border:0;border-radius:999px;
+     text-decoration:none;display:inline-flex;align-items:center;justify-content:center;
      padding:8px 17px;min-height:34px;color:var(--txt-soft);background:transparent;cursor:pointer}
-.seg button:hover{color:var(--deep)}
-.seg button[aria-selected="true"]{background:var(--deep);color:#fff}
-.seg button .n{opacity:.7;font-weight:700;margin-left:5px}
+.seg button:hover, .seg a:hover{color:var(--deep)}
+.seg button[aria-selected="true"], .seg a[aria-selected="true"]{background:var(--deep);color:#fff}
+.seg button .n, .seg a .n{opacity:.7;font-weight:700;margin-left:5px}
 .prep-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
 
 .pgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
@@ -1033,56 +1034,94 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
      how it would actually score, and colleges score in bands, so a half
      finished project is worth nothing until it is finished. That gap is the
      single most useful thing this dashboard can show a doctor. */
+  /* ============ THE RUBRIC ============
+     Five of these six are facts about the DOCTOR -- months worked, audits
+     finished, sessions taught, papers out, a course done -- and count for every
+     application, the same way a CV or Garda vetting does on the checklist. One
+     is a fact about the APPLICATION: which exam family it wants and how many of
+     its stages you hold. MRCPI for an RCPI route, ICGP entry for a GP scheme.
+
+     So every scorer takes the programme it is scoring FOR. Before this the
+     whole layer was programme-blind, which was right when a doctor had one
+     route and silently wrong the moment they had two: a doctor tracking GP
+     alongside Cardiology was scored on MRCPI stages for both, against the RCPI
+     closing date, with the page never saying which application it meant.
+
+     Passing no programme means "the one they are working on" -- see gapProg(). */
   var DOMAINS = [
-    {id:"clinical", name:"Clinical experience", weight:20, maxPts:5,
+    {id:"clinical", name:"Clinical experience", weight:20, maxPts:5, shared:true,
      ready:function(){ return Math.min(100, Math.round(S.clinicalMonths / 28 * 100)); },
      pts:function(){ return S.clinicalMonths >= 24 ? 5 : (S.clinicalMonths >= 12 ? 3 : 0); },
      bands:"12 months scores 3, 24 months scores 5",
      note:function(){ return S.clinicalMonths + " months post-internship, target 28 by application"; }},
+    /* the one domain that is the APPLICATION's rather than the doctor's: an
+       RCPI route wants MRCPI stages, a GP scheme wants ICGP entry, and holding
+       one says nothing about the other */
     {id:"exams", name:"Exams and membership", weight:15, maxPts:8,
-     ready:function(){ return Math.round(stagesHeld() / stagesTotal() * 100); },
-     pts:function(){ var n = stagesHeld(), t = stagesTotal();
+     ready:function(prog){ return Math.round(stagesHeld(domSpec(prog)) / stagesTotal(domSpec(prog)) * 100); },
+     pts:function(prog){ var sp = domSpec(prog), n = stagesHeld(sp), t = stagesTotal(sp);
        return n >= t ? 8 : (n >= 1 ? 3 : 0); },
      bands:"Part 1 scores 3, full membership scores 8",
-     note:function(){
-       var ex = situation().exam || "membership";
-       var n = stagesHeld(), t = stagesTotal();
+     note:function(prog){
+       var sp = domSpec(prog);
+       var ex = entryFamilyFor(sp) || (situation().exam || "membership");
+       var n = stagesHeld(sp), t = stagesTotal(sp);
        return n >= t ? "Full " + ex + " membership held" : n + " of " + t + " " + ex + " stages held";
      }},
-    {id:"auditqi", name:"Audit and QI", weight:25, maxPts:10,
+    {id:"auditqi", name:"Audit and QI", weight:25, maxPts:10, shared:true,
      ready:function(){ return Math.round(((S.auditComplete + S.qiPct/100) / 2) * 100); },
      pts:function(){ return S.auditComplete >= 2 ? 10 : (S.auditComplete >= 1 ? 5 : 0); },
      bands:"1 completed project scores 5, 2 score 10",
      note:function(){ return S.auditComplete + " complete, 1 in progress at " + S.qiPct + "%"; }},
-    {id:"teaching", name:"Teaching", weight:20, maxPts:5,
+    {id:"teaching", name:"Teaching", weight:20, maxPts:5, shared:true,
      ready:function(){ return Math.round(S.teachingDone / S.teachingTarget * 100); },
      pts:function(){ return S.teachingDone >= 4 ? 5 : (S.teachingDone >= 2 ? 2 : 0); },
      bands:"2 sessions score 2, 4 score 5",
      note:function(){ return S.teachingDone + " of " + S.teachingTarget + " sessions logged"; }},
-    {id:"research", name:"Research and publications", weight:15, maxPts:5,
+    {id:"research", name:"Research and publications", weight:15, maxPts:5, shared:true,
      ready:function(){ return Math.min(100, Math.round(S.research / 2 * 100)); },
      pts:function(){ return S.research >= 2 ? 5 : (S.research >= 1 ? 2 : 0); },
      bands:"1 output scores 2, 2 score 5",
      note:function(){ return S.research + " of 2 outputs recorded"; }},
-    {id:"leadership", name:"Leadership and management", weight:5, maxPts:2,
+    {id:"leadership", name:"Leadership and management", weight:5, maxPts:2, shared:true,
      ready:function(){ return S.leadership ? 100 : 0; },
      pts:function(){ return S.leadership ? 2 : 0; },
      bands:"A recognised course scores 2",
      note:function(){ return S.leadership ? "Course complete" : "No course recorded, optional"; }}
   ];
 
-  function readiness(){
+  /* THE application the doctor is working on, shared by the tracker and the
+     gap analysis so the two never disagree about who they are talking about.
+     A route segment wins (#/gaps/bst-gim is linkable), then the one they last
+     opened in the tracker, then their main route. A programme they no longer
+     track never wins, so stopping one cannot strand either page. */
+  function gapProg(){
+    var list = progsTracked();
+    if (!list.length) return null;
+    var arg = currentArg();
+    return list.filter(function(p){ return p.id === arg; })[0]
+        || list.filter(function(p){ return p.id === S.lastProg; })[0]
+        || list[0];
+  }
+
+  /* which specialty a domain scores against: the programme's, not the record's
+     primary one. This is the join that was missing. */
+  function domSpec(prog){
+    var p = prog === undefined ? gapProg() : prog;
+    return p ? p.specialty : S.specialty;
+  }
+  function readiness(prog){
     var t = 0;
-    DOMAINS.forEach(function(d){ t += d.ready() * d.weight; });
+    DOMAINS.forEach(function(d){ t += d.ready(prog) * d.weight; });
     return Math.round(t / 100);
   }
-  function scorePts(){ var t = 0; DOMAINS.forEach(function(d){ t += d.pts(); }); return t; }
+  function scorePts(prog){ var t = 0; DOMAINS.forEach(function(d){ t += d.pts(prog); }); return t; }
   function scoreMax(){ var t = 0; DOMAINS.forEach(function(d){ t += d.maxPts; }); return t; }
-  function losingDomains(){
-    return DOMAINS.filter(function(d){ return d.maxPts - d.pts() > 0; }).length;
+  function losingDomains(prog){
+    return DOMAINS.filter(function(d){ return d.maxPts - d.pts(prog) > 0; }).length;
   }
-  function domainStatus(d){
-    var r = d.ready();
+  function domainStatus(d, prog){
+    var r = d.ready(prog);
     if (r >= 85) return {k:"good", icon:I.tick, label:"Met"};
     if (r >= 45) return {k:"warn", icon:I.clock, label:"In progress"};
     return {k:"crit", icon:I.warn, label:"Behind"};
@@ -2949,9 +2988,24 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
      The fix is structural. Nothing here hand-lists domains: it iterates
      DOMAINS and orders by points at stake, so a domain cannot be dropped
      again, and the page finally does what its subtitle always promised. */
-  function domOrder(){
+  /* Which application the gap analysis is scoring. Links rather than buttons,
+     for the same reason the tracker's cards are: this is navigation, and it
+     should be linkable and survive the back button. Selecting one also sets
+     what the tracker opens, so the two pages never disagree about which
+     application the doctor is working on. */
+  function gapSwitch(progs, cur){
+    if (!progs.length || progs.length < 2 || !cur) return "";
+    return '<div class="prep-head"><div class="seg" role="tablist" aria-label="Application scored">' +
+      progs.map(function(x){
+        var on = x.id === cur.id;
+        return '<a role="tab" aria-selected="' + on + '" href="#/gaps/' + encodeURIComponent(x.id) + '">' +
+          esc(x.t) + "</a>";
+      }).join("") + "</div></div>";
+  }
+
+  function domOrder(prog){
     return DOMAINS.slice().sort(function(a, b){
-      var d = (b.maxPts - b.pts()) - (a.maxPts - a.pts());
+      var d = (b.maxPts - b.pts(prog)) - (a.maxPts - a.pts(prog));
       return d !== 0 ? d : b.weight - a.weight;
     });
   }
@@ -2980,8 +3034,15 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
   VIEWS.gaps = {
     title:"Gap analysis", sub:"What is missing, what it costs you, and what closes it.",
     render:function(){
-      var gsit = situation(), gstep = nextStep(), gc = gsit.cycle;
-      var pts = scorePts(), max = scoreMax(), ready = readiness();
+      var gsit = situation(), gstep = nextStep();
+      /* WHICH application this scores. The page used to answer for the record's
+         primary route whatever else the doctor tracked, against that route's
+         closing date, without ever saying so -- a doctor tracking a GP scheme
+         beside Cardiology was scored on MRCPI stages for both. */
+      var gp = gapProg(), gprogs = progsTracked();
+      var gc = gp ? cycleForProg(gp) : gsit.cycle;
+      var gcollege = gp ? gp.body : gsit.college;
+      var pts = scorePts(gp), max = scoreMax(), ready = readiness(gp);
       var owed = max - pts, scoredPct = Math.round(pts / max * 100);
       var elig = cycleEligibility();
       var tr = scoreTrend();
@@ -2992,8 +3053,12 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
             "A low figure this far out is what building looks like, not a result.")
         : "";
 
+      /* ---- which application, when there is more than one ---- */
+      h += gapSwitch(gprogs, gp);
+
       /* ---- the two measures, which have never been in one viewport ---- */
-      h += '<p class="sec-label">Where you stand</p>';
+      h += '<p class="sec-label">Where you stand' +
+        (gp ? ' <span class="g-count">\u00b7 ' + esc(gp.t) + "</span>" : "") + "</p>";
       h += '<div class="heads">';
       h += '<div class="card"><div class="ring-wrap">' + ring(ready, "assembled") +
         '<div><h2 style="font-size:16px;color:var(--deep)">' + ready + "% assembled</h2>" +
@@ -3013,8 +3078,8 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       h += "</div>";
 
       /* ---- the card that could not exist while these were two pages ---- */
-      var worst = domOrder().filter(function(d){
-        return d.maxPts - d.pts() > 0 && d.ready() - Math.round(d.pts() / d.maxPts * 100) >= 15;
+      var worst = domOrder(gp).filter(function(d){
+        return d.maxPts - d.pts(gp) > 0 && d.ready(gp) - Math.round(d.pts(gp) / d.maxPts * 100) >= 15;
       })[0];
       if (owed > 0){
         h += '<div class="card lead" style="margin-top:14px"><div class="card-head">' +
@@ -3023,7 +3088,7 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
         h += '<p class="lede" style="max-width:70ch">You read as ' + ready + "% assembled and score " +
           scoredPct + "%" + (worst
             ? ", and the difference is work that is started but not finished. <b>" + esc(worst.name) +
-              "</b> is the clearest case: " + worst.ready() + "% assembled, " + worst.pts() + " of " +
+              "</b> is the clearest case: " + worst.ready(gp) + "% assembled, " + worst.pts(gp) + " of " +
               worst.maxPts + " scored, because " + esc(worst.bands.toLowerCase()) + "."
             : ".") + "</p>";
         var lv = levers()[0];
@@ -3050,45 +3115,58 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
           '<p class="lede" style="max-width:66ch">Anything dated after that will not appear on this ' +
           "application, however good it is. That is the deadline for every row below, whatever else each " +
           "of them needs.</p>" +
-          ctxFoot("This closing date is illustrative in this prototype. Confirm it against " + gsit.college +
+          ctxFoot("This closing date is illustrative in this prototype. Confirm it against " + gcollege +
             "'s published date before you plan around it.") + "</div>";
       }
 
       /* ---- domain by domain ---- */
       h += '<p class="sec-label">Domain by domain</p>';
-      h += domOrder().map(function(d){ return domainRow(d); }).join("");
+      h += domOrder(gp).map(function(d){ return domainRow(d, gp); }).join("");
 
-      /* ---- one rubric, and a dual-tracking doctor must know which ---- */
-      if ((S.otherTargets || []).length){
-        h += ctxFoot("This score is the " + gsit.college + " rubric for " + gsit.target + ". The other " +
-          "route" + (S.otherTargets.length > 1 ? "s you are tracking weight" : " you are tracking weights") +
-          " these domains differently and " + (S.otherTargets.length > 1 ? "are" : "is") +
-          " not modelled here, so do not read this figure as covering both.");
+      /* This used to be an apology: "do not read this figure as covering both".
+         The figure IS one application's now, so the note says what carries
+         across instead -- five of six domains are facts about the doctor and
+         count everywhere, and the sixth is the one that does not. */
+      if (gprogs.length > 1 && gp){
+        var shared = DOMAINS.filter(function(d){ return d.shared; }).length;
+        h += ctxFoot("Scored for " + gp.t + " via " + gcollege + ". " + shared + " of " + DOMAINS.length +
+          " domains are facts about you and count for every application you track; exams and membership " +
+          "is the exception, because " + gp.t + " asks for " +
+          (entryFamilyFor(gp.specialty) || "its own exam") + " and holding a stage of one says nothing " +
+          "about the other. Weights and bands are the same model for both and are illustrative either way.");
       }
 
-      var ivd = deadlines().filter(function(x){ return x.id === "iview"; })[0] || null;
-      if (ivd && gstep && gstep.usesCycle){
+      /* this application's interview, not the primary route's. deadlines() is
+         the primary route's list, so reading iview from it showed a GP
+         applicant the RCPI interview date on a page scoring GP. */
+      var ivIso = gc ? gc.interview : null, ivDays = ivIso ? until(ivIso) : null;
+      if (ivIso && ivDays >= 0 && gstep && gstep.usesCycle){
         h += '<div class="card" style="margin-top:14px"><div class="card-head"><h2>These score again at interview</h2>' +
-          '<span class="aside">' + awayText(ivd.days) + "</span></div>" +
+          '<span class="aside">' + awayText(ivDays) + "</span></div>" +
           '<p class="lede" style="max-width:66ch">The interview scores the same domains as the portfolio, so ' +
           "nothing you close now is wasted on it.</p>" +
           '<div style="margin-top:12px"><a class="btn btn-sm btn-ghost" href="#/interviews">Open interview prep</a></div></div>';
       }
 
       h += ctxFoot("Domain weights and scoring bands are illustrative in this prototype and are not " +
-        gsit.college + "'s published criteria. Confirm them before you plan around them.");
+        gcollege + "'s published criteria. Confirm them before you plan around them.");
       return h;
     }
   };
 
   /* one row, both measures, and the reason they disagree where they do */
-  function domainRow(d){
-    var got = d.pts(), owed = d.maxPts - got, rd = d.ready();
+  function domainRow(d, prog){
+    var got = d.pts(prog), owed = d.maxPts - got, rd = d.ready(prog);
     var scoredPct = Math.round(got / d.maxPts * 100), drift = rd - scoredPct;
     var due = dueForDomain(d.id);
     var note = (S.domainNotes || {})[d.id] || "";
 
+    /* a doctor tracking two applications needs to know which rows carry across
+       and which do not, in the row itself rather than in a footnote */
+    var many = progsTracked().length > 1;
     var h = '<div class="dom' + (owed === 0 ? " clear" : "") + '"><div class="dom-h"><b>' + esc(d.name) + "</b>" +
+      (many ? '<span class="chip sm ' + (d.shared ? "mute" : "good") + '">' +
+        (d.shared ? "Counts for both" : "This application only") + "</span>" : "") +
       '<span class="dom-w">weight ' + d.weight + "%</span>" +
       (due ? chip({k: due.days <= 21 ? "crit" : "warn", icon:I.clock,
                    label:"Due " + fmt(due.iso) + ", " + awayText(due.days)}) : "") +
@@ -3103,7 +3181,7 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       '<span class="bl">Scores</span><div class="bar sm band"><i style="width:' + scoredPct + '%"></i></div>' +
       '<span class="bv num">' + got + "/" + d.maxPts + "</span></div>";
 
-    h += '<p class="dom-n">' + esc(d.note()) + ' <span class="muted">· ' + esc(d.bands) + "</span></p>";
+    h += '<p class="dom-n">' + esc(d.note(prog)) + ' <span class="muted">· ' + esc(d.bands) + "</span></p>";
 
     /* the explanation earns its space only where the two measures actually
        disagree. Printed on every row it would be wallpaper. */
@@ -3118,7 +3196,7 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
         '<button class="btn-link" data-note-clear="' + d.id + '">Clear</button></p>';
     }
 
-    h += '<div class="dom-a">' + gapActions(d.id) +
+    h += '<div class="dom-a">' + gapActions(d.id, prog) +
       (note ? "" : '<button class="btn btn-sm btn-ghost" data-note="' + d.id + '">Add a note</button>') +
       "</div></div>";
     return h;
@@ -3127,9 +3205,12 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
   /* the two removed pages keep working as routes. Links live all over the app
      and in whatever a doctor has bookmarked, and a merge is not a reason to
      break either. */
-  function gapActions(id){
+  function gapActions(id, prog){
     if (id === "exams"){
-      var gx = situation().exam || "membership";
+      /* the exam this APPLICATION wants. Reading situation().exam here put an
+         "MRCPI prep" button directly under the words "0 of 2 ICGP entry stages
+         held" -- the row had been fixed and its own action had not. */
+      var gx = (prog && entryFamilyFor(prog.specialty)) || situation().exam || "membership";
       return '<a class="btn btn-sm btn-primary" href="#/exams">' + esc(gx) + " prep</a>" +
         '<a class="btn btn-sm btn-ghost" href="#/deadlines">Sitting dates</a>';
     }
@@ -5139,6 +5220,12 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
        link means "show me the list", so each lands on the tab it meant */
     if (id === "deadlines" && S.trackTab !== "dates"){ S.trackTab = "dates"; save(); }
     if (id === "programmes" && S.trackTab !== "app"){ S.trackTab = "app"; save(); }
+    /* picking an application to score is picking the one you are working on, so
+       the tracker follows it. One notion, two pages, never disagreeing. */
+    if (moduleFor(id) === "gaps" && currentArg()){
+      var ga = currentArg();
+      if (S.lastProg !== ga && progTracked(ga)){ S.lastProg = ga; save(); }
+    }
     var wsT = activeWorkspace();
     /* one application open inside the tracker names itself in the header. The
        detail level is about ONE programme and the page has to say which: the
