@@ -1507,6 +1507,108 @@ counts `zone:"` occurrences — the field only `MODULES` entries carry — and
 asserts every declared module renders, whatever the count is. The first attempt
 matched 24 because the regex also caught the `GYM` and `IV_GYM` surface lists.
 
+## Programmes became the tracker's front
+
+Programmes and the Application tracker were **one module at two levels**. The
+page listed what you could apply to; the tracker held one application's
+checklist and dates; and after the picker landed, *both rendered the same
+programme cards*. That is the same duplication that let Deadlines and the
+tracker drift apart, reintroduced within a day of writing it up.
+
+One module now, two levels:
+
+```
+#/progress            the index    what you track, and everything you could
+#/progress/bst-gim    one          that application's checklist and its dates
+```
+
+### The url carries which one
+
+`S.trackTarget` is gone. A saved field could say which application the switcher
+had last selected; a url says the same thing and is **linkable, reloadable,
+back-buttonable, and something a doctor can return to** — which is what the
+detail level is for. `routeParts()` splits the hash into segments instead of
+stripping `#/`, and `trackProg()` reads the second one, falling back to the
+main route when nothing is open. An id that is unknown, or names a programme
+the doctor does not track, falls back to the index rather than erroring.
+
+The tracked cards are anchors, not tabs: they *open* an application rather than
+switching a panel, so they behave like navigation — middle-click, back button,
+copy link.
+
+### The dates tab is index-level
+
+`allDates()` spans every programme, so its header has to as well. `trackStats()`
+answers for one application and would have been quietly wrong above a list of
+all of them; `trackAllStats()` sits beside it and totals across what you track.
+
+### Both old routes survive
+
+`#/deadlines` lands on the dates tab and `#/programmes` on the index — each on
+the tab it meant. The nav entry for Programmes is gone; the module count drops
+by one again.
+
+### Two things moved with the levels
+
+**Stop tracking** was on the programme card. The card became a single link, and
+a button cannot nest inside an anchor, so the control was silently lost — you
+could add a programme and never remove one. It is on the application's own page
+now, which is the better place anyway: you open it, see what it wants, and
+decide. It is withheld entirely when only one programme is tracked, rather than
+offered and then refused, and dropping the application you are looking at
+returns you to the index instead of rendering a page for something you no
+longer track.
+
+**Recent activity** was inside the tracker, which after the split meant inside
+*one application* — so the same entries would render again under the next one.
+It is a record of the doctor, not of an application, so it sits on the index.
+
+### What the tests had to be told
+
+Eight suites failed on the restructure, and each one was a navigation fact
+rather than a bug — except two, which were real:
+
+- `data-prog-off` had no target anywhere: the Stop tracking regression above.
+- `prog.mjs` section 4 claimed to prove "removing the last one is refused" but,
+  after a naive fix, asserted it without clicking anything. It now tracks two,
+  drops one, checks the page it was on was left for the index, and only then
+  checks the last one offers no control at all.
+
+`test_personas` is worth calling out. It sweeps every view for cross-specialty
+leaks — a GP trainee must never see "MRCS" — and excluded `#/exams` as a
+browsable catalogue by design. `#/programmes` was never in its list, so the
+programme catalogue had never been swept; the moment it became `#/progress` it
+leaked ten assertions at once. The fix is not to exclude the tracker: it is to
+exclude the **catalogue half** and sweep the **personalised half** instead, so
+the rule still bites where it should. The suite now opens an application and
+holds its checklist to the leak rule.
+
+Several tests were also pinned to `#/progress` showing a checklist, and to ids
+like `p-cardiology` that are wrong for a record whose specialty is General
+Internal Medicine. They now click the first tracked card rather than guessing
+an id — asserting the property, not a spelling.
+
+### The detail level names itself
+
+The header said "Application tracker" on both levels, and the programme's name
+appeared only in a sentence under a progress bar. On the detail level the
+header is the programme — *BST General Internal Medicine · RCPI · Entry to
+training* — because that level is about one application and the page has to say
+which.
+
+## The nudge strip is gone
+
+Today opened with a row of pills: *Garda vetting not logged · Confirm where you
+are this year · Also tracking General Internal Medicine · 2 of 4 teaching
+sessions*. Every one of them **restated status the rest of the app already
+showed**, and together they pushed the next move down the page. Today is now
+greeting, ladder, next move.
+
+This does not leave time-critical things homeless. A Garda renewal and a CPD
+cycle end are **dates**, and dates live in the calendar with a countdown
+already coloured by proximity — which is a better home for a reminder than a
+pill that reads the same on the day it is logged and the day it expires.
+
 ## Deadlines merged into the Application tracker
 
 They were one thing rendered twice. `phaseMilestones()` already called
