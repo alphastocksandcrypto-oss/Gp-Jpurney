@@ -1513,13 +1513,29 @@ a.nudge:hover{text-decoration:underline}
       out.push({
         id: "p-" + sp.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
         t: info.target, tier: run ? "run" : "hst", grp: examGroupFor(sp), body: info.body,
-        fam: entryFamilyFor(sp), iv: (interviewFor(sp) || {}).id || "",
+        /* no iv here: it is resolved by ivForProgramme() from the PROGRAMME's
+           own tier. Reading interviewFor(sp) would resolve it from the
+           doctor's derived tier, which is exactly the bug below. */
+        fam: entryFamilyFor(sp), iv: "",
         d: run ? "Entered directly rather than through a basic training trunk."
                : "Higher specialist training, entered after a basic training trunk.",
         feeds: [], specialty: sp
       });
     });
     return out;
+  }
+  /* The interview a PROGRAMME runs, resolved from that programme's tier rather
+     than the doctor's. situation().tier holds one value for the whole doctor,
+     so a doctor tracking a trunk and the thing it feeds — which is the normal
+     case, not an edge case — collapsed to a single interview and was shown the
+     HST panel for an application that is two years away, while the BST panel
+     they are actually sitting went missing. */
+  function ivForProgramme(p){
+    if (!p) return null;
+    if (p.iv) return interviewById(p.iv);
+    var pool = INTERVIEWS.filter(function(x){ return x.body === p.body; });
+    var want = p.tier === "hst" ? "hst" : p.tier === "bst" ? "bst" : null;
+    return (want && pool.filter(function(x){ return x.tier === want; })[0]) || pool[0] || null;
   }
   function progById(id){ return programmes().filter(function(p){ return p.id === id; })[0] || null; }
   /* the trunk a higher programme is entered from, which is the question a
@@ -3875,11 +3891,16 @@ a.nudge:hover{text-decoration:underline}
      first stage they do not hold in the family their route needs, plus the
      same for any second route they are tracking. */
   function recommendedExams(){
-    var out = [], sit = situation();
-    var fams = [entryFamilyFor(S.specialty)].concat((S.otherTargets || []).map(entryFamilyFor));
-    fams.filter(function(f, i, a){ return f && a.indexOf(f) === i; }).forEach(function(f){
-      var next = examsInFamily(f).filter(function(e){ return !stageHeld(e.id); })[0];
-      if (next) out.push({exam:next, why:"Your route needs " + f + ", and this is the next stage you do not hold."});
+    var out = [], sit = situation(), seen = {};
+    /* driven by the programmes tracked rather than by the specialty, so the
+       sentence can name the application that actually asks for the stage */
+    progsTracked().forEach(function(p){
+      if (!p.fam) return;
+      var next = examsInFamily(p.fam).filter(function(e){ return !stageHeld(e.id); })[0];
+      if (!next || seen[next.id]) return;
+      seen[next.id] = 1;
+      out.push({exam:next, why:p.t + " asks for " + p.fam + ", and " + examLabel(next) +
+        " is the next stage you do not hold."});
     });
     if (sit.isIMG || sit.newToIreland){
       var lang = examById("ielts");
@@ -3928,8 +3949,7 @@ a.nudge:hover{text-decoration:underline}
   function examIncluded(id){
     var e = examById(id);
     if (!e) return false;
-    var fams = [entryFamilyFor(S.specialty)].concat((S.otherTargets || []).map(entryFamilyFor));
-    return fams.indexOf(e.fam) > -1;
+    return progsTracked().some(function(p){ return p.fam === e.fam; });
   }
   /* examActive holds what the doctor ADDED. Opening a stage to look inside is
      not adding it: browsing a shelf is not buying from it. */
@@ -3959,9 +3979,7 @@ a.nudge:hover{text-decoration:underline}
   function weeksTo(e){
     if (!e || e.when !== "entry") return null;
     var sit = situation();
-    var bodies = [sit.college].concat((S.otherTargets || []).map(function(sp){
-      return (SPECIALTY_INFO[sp] || {}).body;
-    }));
+    var bodies = progsTracked().map(function(p){ return p.body; });
     if (bodies.indexOf(e.body) === -1) return null;
     var c = CYCLE[e.body];
     if (!c) return null;
@@ -4317,12 +4335,20 @@ a.nudge:hover{text-decoration:underline}
     return iv ? {id:iv.id, grp:iv.grp, body:iv.body, tier:iv.tier, t:iv.t, fmt:iv.fmt, d:iv.d,
                  target:info.target || specialty, cycle:CYCLE[iv.body] || null} : null;
   }
+  /* The interviews this doctor is heading for: one per PROGRAMME they track,
+     each at that programme's own tier. This used to walk specialties and let
+     interviewFor() guess the tier from situation(), so tracking a trunk and
+     the higher programme it feeds produced one interview instead of two. */
   function myInterviews(){
     var out = [], seen = [];
-    [S.specialty].concat(S.otherTargets || []).forEach(function(sp){
-      if (!sp) return;
-      var iv = interviewFor(sp);
-      if (iv && seen.indexOf(iv.id) === -1){ seen.push(iv.id); out.push(iv); }
+    progsTracked().forEach(function(p){
+      var iv = ivForProgramme(p);
+      if (!iv || seen.indexOf(iv.id) > -1) return;
+      seen.push(iv.id);
+      out.push({id:iv.id, grp:iv.grp, body:iv.body, tier:iv.tier, t:iv.t, fmt:iv.fmt, d:iv.d,
+                /* the programme, not the specialty: "BST General Internal
+                   Medicine" is what the doctor is sitting this panel for */
+                target:p.t, cycle:CYCLE[iv.body] || null});
     });
     return out;
   }

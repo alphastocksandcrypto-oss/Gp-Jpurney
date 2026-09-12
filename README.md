@@ -1442,6 +1442,52 @@ set now feeds every section**, with a `shown{}` map so a recommended programme
 does not also render in the browse grid — a test asserts no programme renders
 twice.
 
+### All three shelves recommend off one source
+
+Programmes, exams and interviews now all read `progsTracked()`. They used to
+read `S.specialty` plus `S.otherTargets`, and a specialty is not a programme.
+
+**The bug that made this urgent.** `myInterviews()` walked specialties and let
+`interviewFor()` guess the tier from `situation()` — and `situation().tier`
+holds **one value for the whole doctor**. So an SHO tracking BST General
+Internal Medicine *and* HST Cardiology — a trunk and the thing it feeds, which
+is the normal case rather than an edge case — got:
+
+```
+TRACKING  : HST Cardiology  +  BST General Internal Medicine
+INTERVIEWS: "Included with your route" -> HST selection interview
+```
+
+One interview for two applications, and the missing one was the panel they sit
+**first**. Tier is a property of the programme, not of the doctor: you can be
+applying at BST and HST in the same year. Now:
+
+```
+INTERVIEWS: "Included with your routes" -> HST selection interview
+                                         + BST General Internal Medicine interview
+```
+
+`ivForProgramme(p)` resolves from the programme's own tier, and a test asserts
+an **intern** tracking only HST Cardiology still gets the HST panel — if the
+tier were still being read off the doctor, an intern would get the BST one.
+
+**The registry had the same bug.** `programmes()` generated each higher
+programme with `iv: (interviewFor(sp) || {}).id`, resolving through the doctor's
+derived tier at construction time. Generated entries now carry `iv:""` and go
+through the resolver like everything else.
+
+Three smaller moves in the same pass, all from specialty to programme:
+
+| | Reads |
+|---|---|
+| `recommendedExams()` | each tracked programme's `fam`, and the *why* names it: *"HST Cardiology asks for MRCPI, and MRCPI Part 2 Written is the next stage you do not hold"* rather than *"Your route needs MRCPI"* |
+| `examIncluded()` | whether any tracked programme shares the stage's family — so tracking Core surgical training includes MRCS, tested |
+| `weeksTo()` | the colleges of tracked programmes, closing the last specialty-shaped read that could put one college's closing date on another's exam |
+
+The exam half was not a live bug — exam family follows specialty, so the answer
+usually came out right. It changes for one source and a sharper sentence. The
+interview half was.
+
 ### A test that stopped hardcoding a number
 
 `test_personas` asserted `navCount === 11`. It had already been 13 before the
