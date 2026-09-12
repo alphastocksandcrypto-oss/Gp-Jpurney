@@ -1019,6 +1019,40 @@ Self-ratings are one to five per domain, they drive the readiness figure, and
 Analytics ranks the weakest first. Clicking a rating you already hold clears it,
 so a doctor can undo without picking a number they do not mean.
 
+### A prep product takes over the shell
+
+A prep product is opened daily for six to eight weeks. The dashboard around it
+is built for a monthly visit, and making someone climb back out to a card grid
+every time they want the next surface is the wrong shape for that.
+
+So entering one swaps the shell. The sidebar becomes that product's own nav —
+Overview, then each surface — the scope box says which product you are in rather
+than which consultant post you are years from, and the topbar names the product.
+Same app, same record, different chrome. `activeWorkspace()` derives it from the
+route plus whichever stage or interview is open, so there is no extra state to
+keep in sync.
+
+**Two levels out, and they are different places.** The in-page control goes up
+to the catalogue; the first nav item leaves the product entirely for Today.
+Having both land on the catalogue was two controls for one action.
+
+The workspace nav is buttons rather than links, because these change a surface
+inside the product rather than navigating the app. Both exits are reachable and
+operable from the keyboard, which is asserted rather than assumed: the failure
+mode of every product that takes over the screen is being unable to find the way
+out.
+
+### The catalogue is a shelf, not your shelf
+
+Interview prep lists **every** interview that exists, not only the ones a
+doctor's route implies. Someone switching specialty, or hedging late, needs to
+see what is there before committing. Their own routes are marked *Included*;
+anything else can be added, and added ones get their own section.
+
+`ivSubscribed` records that a doctor wants a prep. **Nothing charges anybody**
+and no billing is wired up — the page says so rather than implying a
+transaction happened.
+
 ### What is deliberately not built
 
 No questions, no teaching text, no model answers. The knowledge base and

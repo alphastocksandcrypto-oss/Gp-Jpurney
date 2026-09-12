@@ -123,6 +123,15 @@ h1,h2,h3,h4{font-family:var(--fd);letter-spacing:-.01em}
 .view{position:relative;padding:22px 26px 64px;max-width:1180px}
 @keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .view.enter{animation:viewIn .34s cubic-bezier(.2,.7,.2,1)}
+/* a workspace nav item is a button, not a link, because it changes a surface
+   inside the product rather than navigating the app */
+button.nav-item{width:100%;text-align:left;font-family:inherit;cursor:pointer}
+.nav-item.nav-back{color:#8fb5ac;margin-bottom:2px}
+.nav-item.nav-back:hover{color:#fff}
+.nav-item.nav-back svg{transform:rotate(180deg)}
+/* inside a workspace the topbar names the product, so the scope box carries
+   the product too and should read as part of it */
+body.in-ws .side-scope::before{background:var(--amber)}
 /* ============ PRIMITIVES ============ */
 .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px;border-radius:11px;padding:9px 16px;border:1.5px solid transparent;transition:transform .2s,background .2s,color .2s,border-color .2s;white-space:nowrap}
 .btn svg{flex:none}
@@ -709,6 +718,11 @@ a.nudge:hover{text-decoration:underline}
     mocks:{}, topicsDone:{},
     /* interview prep, keyed by college the way the exam hub is keyed by stage */
     ivOpen:"", ivRatings:{}, ivMocks:{},
+    /* which prep products the doctor holds. Their own route's interview comes
+       with the account; anything else is taken on deliberately. Nothing here
+       charges anybody: this records intent, and billing is a real surface
+       rather than something to fake in a prototype. */
+    ivSubscribed:[],
     activity:[]
   };
   var KEY = "mednav.demo.v1";
@@ -3528,6 +3542,21 @@ a.nudge:hover{text-decoration:underline}
     });
     return out;
   }
+  /* every prep that exists, not only the ones a doctor's route implies. A
+     product people browse has to show its shelf: someone switching specialty,
+     or hedging late, needs to see what is there before they commit to it. */
+  function allInterviews(){
+    var mine = myInterviews(), mineIds = mine.map(function(x){ return x.id; });
+    var rest = Object.keys(INTERVIEWS).filter(function(bd){ return mineIds.indexOf(bd) === -1; })
+      .map(function(bd){
+        var iv = INTERVIEWS[bd];
+        return {id:bd, body:bd, t:iv.t, fmt:iv.fmt, d:iv.d, target:"", cycle:CYCLE[bd] || null};
+      });
+    return mine.concat(rest);
+  }
+  /* the doctor's own routes come with the account; anything else is taken on */
+  function ivIncluded(id){ return myInterviews().some(function(x){ return x.id === id; }); }
+  function ivHas(id){ return ivIncluded(id) || (S.ivSubscribed || []).indexOf(id) > -1; }
   function ivRatings(id){ return (S.ivRatings || {})[id] || {}; }
   function ivMocks(id){ return (S.ivMocks || {})[id] || []; }
   function ivReady(id){
@@ -3561,37 +3590,65 @@ a.nudge:hover{text-decoration:underline}
   VIEWS.interviews = {
     title:"Interview prep", sub:"Every interview you are heading for, and a hub for each one.",
     render:function(){
-      var open = S.ivOpen ? myInterviews().filter(function(x){ return x.id === S.ivOpen; })[0] : null;
+      var open = S.ivOpen ? allInterviews().filter(function(x){ return x.id === S.ivOpen; })[0] : null;
       return open ? ivHub(open) : ivCatalogue();
     }
   };
 
   function ivCatalogue(){
-    var mine = myInterviews();
-    if (!mine.length){
-      return '<div class="card"><div class="card-head"><h2>No interview to prepare for yet</h2></div>' +
-        '<p class="lede">Set a target specialty and this fills in with the interview that route runs, its format, ' +
-        "and how long you have.</p>" +
-        '<div style="margin-top:12px"><a class="btn btn-sm btn-primary" href="#/profile">Edit profile</a></div></div>';
+    var mine = myInterviews(), all = allInterviews();
+    var h = "";
+
+    if (mine.length){
+      h += '<p class="sec-label">' + (mine.length > 1 ? "Included with your routes" : "Included with your route") + "</p>";
+      h += mine.map(function(iv, i){ return ivCard(iv, i === 0); }).join("");
+    } else {
+      h += ctx("No target specialty set, so nothing is included yet. Everything below is still here to browse, " +
+        "and setting a route on your profile includes that interview automatically.");
     }
-    var h = '<p class="sec-label">' + (mine.length > 1 ? "Your interviews" : "Your interview") + "</p>";
-    h += mine.map(function(iv, i){
-      var d = iv.cycle ? until(iv.cycle.interview) : null;
-      var rd = ivReady(iv.id);
-      return '<div class="card' + (i === 0 ? " lead" : "") + '" style="margin-bottom:10px">' +
-        '<div class="card-head"><h2>' + esc(iv.t) + "</h2>" +
-        '<span class="r" style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-        '<span class="chip mute">' + esc(iv.body) + "</span>" +
-        (rd !== null ? '<span class="chip ' + (rd >= 70 ? "good" : rd >= 50 ? "warn" : "crit") + '">' + rd + "% ready</span>" : "") +
-        (d !== null ? chip({k: d < 0 ? "mute" : d <= 21 ? "crit" : d <= 60 ? "warn" : "mute", icon:I.clock,
-                            label: d < 0 ? "Passed" : awayText(d)}) : "") + "</span></div>" +
-        '<p class="lede" style="max-width:66ch">For <b>' + esc(iv.target) + "</b>. " + esc(iv.fmt) + ". " + esc(iv.d) + "</p>" +
-        '<div style="margin-top:13px"><button class="btn btn-sm btn-primary" data-iv-open="' + esc(iv.id) +
-        '">Open the hub</button></div></div>';
-    }).join("");
-    h += ctxFoot("Interview formats and the domains they score are illustrative in this prototype. Each college " +
-      "sets what it actually assesses, and that is the list that counts.");
+
+    var extra = (S.ivSubscribed || []).map(function(id){
+      return all.filter(function(x){ return x.id === id; })[0];
+    }).filter(function(x){ return x && !ivIncluded(x.id); });
+    if (extra.length){
+      h += '<p class="sec-label">You have added</p>';
+      h += extra.map(function(iv){ return ivCard(iv, false); }).join("");
+    }
+
+    var rest = all.filter(function(iv){ return !ivHas(iv.id); });
+    if (rest.length){
+      h += '<p class="sec-label">Everything else</p>';
+      h += '<div class="card" style="padding:6px 18px">' + rest.map(function(iv){
+        return '<div class="row"><span class="t">' + esc(iv.t) + "<small>" + esc(iv.body) + " · " + esc(iv.fmt) +
+          "</small></span>" +
+          '<span class="r"><button class="btn btn-sm btn-ghost" data-iv-sub="' + esc(iv.id) + '">Add</button>' +
+          '<button class="btn btn-sm btn-ghost" data-iv-open="' + esc(iv.id) + '">Look inside</button></span></div>';
+      }).join("") + "</div>";
+    }
+
+    h += ctxFoot("Adding a prep records that you want it. Nothing here charges anybody and no billing is wired " +
+      "up in this prototype. Interview formats and the domains they score are illustrative: each college sets " +
+      "what it actually assesses.");
     return h;
+  }
+
+  function ivCard(iv, lead){
+    var d = iv.cycle ? until(iv.cycle.interview) : null, rd = ivReady(iv.id);
+    return '<div class="card' + (lead ? " lead" : "") + '" style="margin-bottom:10px">' +
+      '<div class="card-head"><h2>' + esc(iv.t) + "</h2>" +
+      '<span class="r" style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+      '<span class="chip mute">' + esc(iv.body) + "</span>" +
+      (ivIncluded(iv.id) ? '<span class="chip good">' + ico(I.tick, 12) + "Included</span>" : "") +
+      (rd !== null ? '<span class="chip ' + (rd >= 70 ? "good" : rd >= 50 ? "warn" : "crit") + '">' + rd + "% ready</span>" : "") +
+      (d !== null ? chip({k: d < 0 ? "mute" : d <= 21 ? "crit" : d <= 60 ? "warn" : "mute", icon:I.clock,
+                          label: d < 0 ? "Passed" : awayText(d)}) : "") + "</span></div>" +
+      '<p class="lede" style="max-width:66ch">' + (iv.target ? "For <b>" + esc(iv.target) + "</b>. " : "") +
+      esc(iv.fmt) + ". " + esc(iv.d) + "</p>" +
+      '<div style="margin-top:13px;display:flex;gap:8px;flex-wrap:wrap">' +
+      '<button class="btn btn-sm btn-primary" data-iv-open="' + esc(iv.id) + '">Open the hub</button>' +
+      (ivHas(iv.id) || ivIncluded(iv.id) ? ""
+        : '<button class="btn btn-sm btn-ghost" data-iv-sub="' + esc(iv.id) + '">Add it</button>') +
+      "</div></div>";
   }
 
   function ivHub(iv){
@@ -3859,6 +3916,47 @@ a.nudge:hover{text-decoration:underline}
      S.stageLabel, a string written once at onboarding, so a consultant was
      still told they were "working towards HST Cardiology, SHO 2 years
      post-intern" no matter what the rest of the record said. */
+  /* ================= PREP WORKSPACES =================
+     A prep product is opened daily for six to eight weeks. The dashboard
+     around it is built for a monthly visit, and making someone climb back out
+     to a card grid every time they want the next surface is the wrong shape.
+
+     So entering one swaps the shell: the sidebar becomes that product's own
+     nav, the scope box says which product you are in rather than which
+     consultant post you are years from, and one item at the top gets you out.
+     Same app, same record, different chrome. */
+  function activeWorkspace(){
+    var id = currentId();
+    if (id === "exams" && S.examOpen){
+      var e = examById(S.examOpen);
+      if (e) return {kind:"exam", id:e.id, name:e.fam + " " + e.stage, sub:e.body,
+                     surfaces:gymFor(e), backTo:"exams"};
+    }
+    if (id === "interviews" && S.ivOpen){
+      var iv = allInterviews().filter(function(x){ return x.id === S.ivOpen; })[0];
+      if (iv) return {kind:"interview", id:iv.id, name:iv.t, sub:iv.body,
+                      surfaces:IV_GYM, backTo:"interviews"};
+    }
+    return null;
+  }
+
+  function renderWorkspaceNav(ws){
+    var cur = S.gymSurface || "";
+    var html = '<p class="nav-group">' + esc(ws.kind === "exam" ? "Exam prep" : "Interview prep") + "</p>";
+    /* the way out, first, because being unable to find it is the failure mode
+       of every product that takes over the screen */
+    html += '<button class="nav-item nav-back" data-ws-exit="1">' + ico(I.arrow, 16) +
+      "All of MedNav</button>";
+    html += '<p class="nav-group">' + esc(ws.name) + "</p>";
+    html += '<button class="nav-item' + (cur === "" ? " on" : "") + '" data-gym="">' +
+      ico(I.home, 17) + "Overview</button>";
+    html += ws.surfaces.map(function(g){
+      return '<button class="nav-item' + (cur === g.id ? " on" : "") + '" data-gym="' + g.id + '">' +
+        ico(g.ic, 17) + esc(g.t) + "</button>";
+    }).join("");
+    document.getElementById("nav").innerHTML = html;
+  }
+
   function scopeBox(){
     var sit = situation();
     var yrs = (S.clinicalMonths / 12).toFixed(1).replace(/\.0$/, "");
@@ -3932,8 +4030,11 @@ a.nudge:hover{text-decoration:underline}
   function moduleFor(id){ return ROUTE_ALIAS[id] || id; }
   function render(){
     var id = currentId(), v = VIEWS[id];
-    document.getElementById("viewTitle").textContent = v.title;
-    document.getElementById("viewSub").textContent = v.sub;
+    var wsT = activeWorkspace();
+    document.getElementById("viewTitle").textContent = wsT ? wsT.name : v.title;
+    document.getElementById("viewSub").textContent = wsT
+      ? wsT.sub + " · " + (wsT.kind === "exam" ? "Exam preparation" : "Interview preparation")
+      : v.sub;
     var host = document.getElementById("view");
     /* if a module is dimmed in the nav, landing on it must say why in the same
        words, rather than leaving the doctor to guess why it looked greyed out */
@@ -3943,11 +4044,20 @@ a.nudge:hover{text-decoration:underline}
     void host.offsetWidth;
     if (!reduced) host.classList.add("enter");
     animateAll();
-    renderNav(moduleFor(id));
-    var sc = scopeBox();
-    document.getElementById("scopeLabel").textContent = sc.label;
-    document.getElementById("scopeTarget").textContent = sc.target;
-    document.getElementById("scopeStage").textContent = sc.stage;
+    var ws = activeWorkspace();
+    document.body.classList.toggle("in-ws", !!ws);
+    if (ws){
+      renderWorkspaceNav(ws);
+      document.getElementById("scopeLabel").textContent = ws.kind === "exam" ? "Preparing for" : "Interview";
+      document.getElementById("scopeTarget").textContent = ws.name;
+      document.getElementById("scopeStage").textContent = ws.sub;
+    } else {
+      renderNav(moduleFor(id));
+      var sc = scopeBox();
+      document.getElementById("scopeLabel").textContent = sc.label;
+      document.getElementById("scopeTarget").textContent = sc.target;
+      document.getElementById("scopeStage").textContent = sc.stage;
+    }
     document.getElementById("whoName").textContent = S.name;
     document.getElementById("avatar").textContent = initials(S.name);
     document.title = v.title + " · MedNav";
@@ -4509,6 +4619,19 @@ a.nudge:hover{text-decoration:underline}
       S.gymSurface = "";
       save(); render(); return;
     }
+    var isub = ev.target.closest("[data-iv-sub]");
+    if (isub){
+      ev.preventDefault();
+      var sid = isub.getAttribute("data-iv-sub");
+      S.ivSubscribed = S.ivSubscribed || [];
+      if (S.ivSubscribed.indexOf(sid) === -1){
+        S.ivSubscribed.push(sid);
+        logActivity("Added " + ((INTERVIEWS[sid] || {}).t || sid) + " prep", sid);
+      }
+      save(); render();
+      toast("<em>" + esc((INTERVIEWS[sid] || {}).t || sid) + "</em> added. Billing is not wired up in this demo.");
+      return;
+    }
     var ir = ev.target.closest("[data-iv-rate]");
     if (ir){
       ev.preventDefault();
@@ -4534,6 +4657,17 @@ a.nudge:hover{text-decoration:underline}
       logActivity("Mock interview logged, " + ivReady(mid) + "% self-rated", mid);
       save(); render();
       toast("Mock logged. <em>" + ivReady(mid) + "%</em> self-rated across " + rated + " domains."); return;
+    }
+    var wx = ev.target.closest("[data-ws-exit]");
+    if (wx){
+      ev.preventDefault();
+      /* two levels out, and they are different places: the in-page control
+         goes up to the catalogue, this one leaves the product entirely.
+         Making both land on the catalogue was two controls for one action. */
+      S.examOpen = ""; S.ivOpen = ""; S.gymSurface = "";
+      save();
+      if (location.hash === "#/today") render(); else location.hash = "#/today";
+      return;
     }
     var gs = ev.target.closest("[data-gym]");
     if (gs){
