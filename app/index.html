@@ -3726,11 +3726,11 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       h += '<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">' +
         '<button class="btn btn-sm btn-ghost" data-act="addMilestone">Add your own requirement</button></div>';
 
-      h += ctxFoot("This checklist is an illustrative model of what " + esc(body || "an Irish training application") +
-        " takes, built for this prototype and not " + esc(body || "the college") + "'s published list. The stage " +
-        "dates follow the same illustrative cycle as the rest of the dashboard and can change: treat every date " +
-        "here as a placeholder and confirm the real one on " + esc(body || "the college") + "'s own site before " +
-        "relying on it.");
+      h += ctxFoot("The requirement categories here are the shape " + esc(body || "an Irish training application") +
+        " takes, not " + esc(body || "the college") + "'s own published checklist. Dates are sourced from " +
+        esc(body || "the college") + "'s published cycle, but colleges update these without notice — don't " +
+        "rely on this page alone. Always confirm the current date and requirement list on " +
+        esc(body || "the college") + "'s own site before a deadline.");
       return h + "</div>";
     }
   };

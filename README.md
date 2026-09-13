@@ -2221,12 +2221,16 @@ scroll either way. `trackBack()` now takes an optional `action` argument,
 rendered flush right via `margin-left:auto` inside the existing `.trk-back`
 flex row, rather than adding new markup. "Print this stage" (bare
 `window.print()`, no print stylesheet, printed the dark sidebar) is gone —
-see the placeholder note above. And the closing disclaimer, which read as a
-confident claim ("RCPI sets what actually applies, and that list is the one
-that counts"), is reworded as what it actually is: a warning to treat every
-requirement and date on the page as an illustrative placeholder and confirm
-the real ones on RCPI's own site before relying on them, since colleges
-change their own dates and this prototype has no way to know when. The
+see the placeholder note above. The closing disclaimer went through two
+wordings. The first called every date on the page a placeholder outright,
+which stopped being accurate the moment it was pointed out that this
+product's actual plan is to source real dates from RCPI's own published
+cycle rather than invent them forever. The second, current wording says
+that instead: requirement *categories* are this product's own shape, not
+RCPI's published checklist, but the *dates* are sourced from RCPI — and
+still warns not to rely on the page alone, because a college can update its
+own published cycle without this app knowing, so the source of truth stays
+RCPI's own site regardless of how current this page's copy of it is. The
 now-removed "Requirements marked shared..." footer explained a mechanic
 (shared vs. per-application requirements) the checklist itself already shows
 via the `Shared` chip on each row, so cutting it lost no information, only a
