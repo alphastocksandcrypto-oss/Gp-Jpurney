@@ -3835,6 +3835,20 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
         }).join("") + "</div>";
       }
 
+      /* the filter controls sit right under the tabs and above every card, the
+         same order exam prep and interview prep already use (prepTabs() then
+         prepFilters() then the cards). They used to sit below Tracking now
+         and Recommended, which put a doctor's own applications underneath a
+         search box that had nothing to do with finding them -- the tracked
+         and recommended cards are not something to filter your way down to. */
+      h += prepFilters(shelf, "programmes");
+      h += '<div class="picks" style="margin-bottom:16px">' +
+        '<button class="pick pick-b' + (!S.progTier ? " on" : "") + '" data-prog-tier="">Any stage</button>' +
+        Object.keys(TIER_LABEL).map(function(t){
+          return '<button class="pick pick-b' + (S.progTier === t ? " on" : "") + '" data-prog-tier="' +
+            t + '">' + esc(TIER_LABEL[t]) + "</button>";
+        }).join("") + "</div>";
+
       /* the tracked ones are the way IN to an application, not just entries in
          a catalogue, so they are the switcher cards and each opens its own
          checklist rather than offering "track this" on something already
@@ -3863,14 +3877,6 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       }
 
       h += '<p class="sec-label">Everything you could apply to</p>';
-      h += prepFilters(shelf, "programmes");
-      h += '<div class="picks" style="margin-bottom:16px">' +
-        '<button class="pick pick-b' + (!S.progTier ? " on" : "") + '" data-prog-tier="">Any stage</button>' +
-        Object.keys(TIER_LABEL).map(function(t){
-          return '<button class="pick pick-b' + (S.progTier === t ? " on" : "") + '" data-prog-tier="' +
-            t + '">' + esc(TIER_LABEL[t]) + "</button>";
-        }).join("") + "</div>";
-
       var rest = vis.filter(function(o){ return !shown[o.id]; });
       if (!vis.length){
         h += '<p class="empty"><b>Nothing matches.</b>Try a college, a specialty, or part of the ' +
