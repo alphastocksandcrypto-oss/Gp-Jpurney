@@ -2180,6 +2180,39 @@ graded-result states the base surface scan does not reach on its own. Both
 are in the permanent sweep, alongside a one-line fix to `ev2.mjs`'s stale
 assertion for the old "What is assessed" surface name.
 
+## Stopping tracking an application had no path when it was your only one
+
+Asked how to remove an application from tracking. `data-prog-off` ("Stop
+tracking this") already existed on the application's detail page, but was
+gated behind `progs.length > 1` with no explanation when hidden, and the
+index page's switcher cards (`trackCard`) never carried the control at all
+— by design, so the index card stays a single link rather than a link
+wrapping a nested button. With exactly one application tracked, there was
+no control anywhere in the app to remove it: confirmed by counting
+`[data-prog-off]` on both the index and the detail page with a one-programme
+persona (zero, both places).
+
+The gate itself is correct, not a bug: `progsTracked()` falls back to
+`S.specialty`/`S.otherTargets` whenever `S.programmes` is empty, so dropping
+your only tracked application would not stay dropped — the very next
+`render()` would reseed the same one straight back from your profile's
+target specialty. A visible "Stop tracking this" that silently un-did
+itself on click would be worse than no button. What was missing was telling
+the doctor that, and pointing at the lever that actually works: changing
+the target specialty on the profile, or tracking a second application first
+so there is something to fall back to.
+
+Fixed by replacing the silent `: ""` with an explanation and a link to
+`#/profile` ("Change your target instead") whenever `progs.length <= 1`,
+plus a line saying why: *"This is your only tracked application, so there
+is nothing to fall back to if you stop tracking it here — track a second
+application first, or change your target specialty on your profile."* Once
+a second application is tracked, `data-prog-off` behaves exactly as before
+and the drop sticks (confirmed against `localStorage` directly: dropping
+Cardiology from a two-programme record leaves `["bst-gim"]`, not
+`["p-cardiology", "bst-gim"]` reseeded back). New suite `untrack.mjs`, in
+the permanent sweep, covers both states.
+
 ## Noted for later, deliberately not built
 
 - **The Application tracker is unfinished and parked.** What is built works —
