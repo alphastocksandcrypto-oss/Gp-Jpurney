@@ -1566,6 +1566,127 @@ The lesson is the one this file keeps recording: **the cycle-leak pattern hides
 in the places that are one level away from the thing being fixed** — an action
 under a corrected row, a date in a card beside a corrected figure.
 
+## Gap analysis answers "what should I do", not just "where do I stand"
+
+A structured review of the page (not from us — read closely, checked against
+the code line by line, and largely right) named the actual product weakness:
+the page explained the two scores well and left turning that into a plan to
+the doctor. The proposal it made was bigger than we took — a full priority
+score of impact × feasibility × urgency × dependency, and a week-by-week
+closure plan. Both need effort and time estimates nothing in the record can
+honestly produce, and the closure plan is a date-based verdict of exactly the
+kind this file has already ruled out once, on this same page: *"telling a
+doctor to give up on points they could still earn is the wrong way to be
+wrong."* The estimate would be fabricated in a way the illustrative weights are
+not — a weight is a real scoring system's shape, waiting on the real number;
+an effort estimate has no such number to wait on. What we built instead is the
+part that is honestly derivable from the record: rank what actually gains the
+most, surface it, and stop duplicating it in two places that can drift.
+
+### One real bug, found by reading the code rather than the page
+
+`levers()` was a hand-written function, independent of `DOMAINS`, that
+re-derived its own view of four fields (`S.auditComplete`, `S.teachingDone`,
+`S.research`, `S.leadership`) and never mentioned **exams** at all. A doctor
+could hold 0 of 8 exam points — often the single biggest gap on the page — and
+be recommended a leadership course instead, because the row and the
+recommendation were two truths that happened to agree by nobody ever checking.
+
+The fix moves the recommendation onto the domain it belongs to. Each domain
+that has something to click now owns a `next(prog)` function, next to the
+`pts()`/`ready()`/`bands` it has to stay consistent with:
+
+```js
+{id:"exams", ...,
+ next:function(prog){
+   var sp = domSpec(prog), n = stagesHeld(sp), t = stagesTotal(sp);
+   if (n >= t) return null;
+   var ex = entryFamilyFor(sp) || (situation().exam || "membership");
+   return {t:"Sit your next " + ex + " stage", pts:8 - (n >= 1 ? 3 : 0),
+     why: n === 0 ? "Holding one stage moves this domain onto the scoreboard"
+                   : "Full membership takes this domain to its full 8 points",
+     href:"#/exams", cta:"Open " + ex + " prep"};
+ }}
+```
+
+`levers()` is now a loop over `DOMAINS` collecting whatever each `next()`
+returns; a domain with no `next` (clinical accrues with time — nothing to
+click) is silently skipped rather than special-cased in a second place. Exams
+can now win the top spot on its own numbers, and did, on the very next
+screenshot taken to check the change: *"Sit your next MRCPI stage · +8
+points"* led both Today's "Your next move" and the gap page's priority list,
+something the old function could never produce whatever the record said.
+
+### Your best next moves
+
+A ranked list, capped at three, sits between the diagnosis card and the
+domain-by-domain detail — the thing the page used to bury as a single button
+one level down. Each entry names the domain it belongs to
+(`data-domain="..."` on both the list item and the matching row, so the two
+can be matched in code, not just by eye) and its own call to action: a button
+for a one-click event, a link where the next step happens outside this record
+entirely (sitting an exam is not a checkbox).
+
+### Domains at maximum collapse out of the way
+
+Six cards of near-equal visual weight forced a doctor to do their own triage
+on every visit. `domOrder(gp)` already sorted by points owed; the only new
+work is drawing a line at zero and putting everything past it behind *"Show N
+domains already at maximum"* — nothing is dropped, a test clicks the toggle
+and checks all six are still there, only collapsed by default when there is
+at least one open domain worth the room.
+
+### Eligibility, before scoring
+
+A weak portfolio scores badly; a missing eligibility item — registration, the
+minimum months, an exam stage, the language requirement — stops the
+application outright, whatever the portfolio looks like. Those are different
+failures and had never been said apart on this page. `eligibilityBlockers(gp)`
+reads the same **Eligibility** group the application checklist already
+tracks, so the count can never disagree with the checklist itself, for the
+cost of one line: *"2 eligibility issues · View on the application tracker"*
+or *"No application blockers"*.
+
+### The bug that line exposed
+
+Wiring the checklist into gaps for the first time surfaced a real divergence
+that no earlier feature had ever been in a position to notice.
+`trackProg()` — which decides which application the tracker is showing — read
+the url segment and, failing that, fell straight to the main route. `gapProg()`
+had a longer chain: url segment, then `S.lastProg` (the one last worked on),
+then the main route. The two were supposed to be one notion of "the
+application I'm working on" and were not: on the bare `#/gaps` index (no
+segment), the two functions could name different applications.
+
+It stayed invisible because nothing had read a per-application `auto()` check
+from outside the tracker's own detail page before. The one that does —
+*"Exam stage held"* — calls `trackTarget()`, which calls `trackProg()`. A
+doctor viewing the GP scheme's gap analysis, having last worked on it in the
+tracker, would silently have that one eligibility item scored against
+whichever application the record happened to track *first*, not the one the
+page said it was scoring. Concretely: holding one Cardiology stage made the
+count read one issue lower on GP's own gap page than GP's own checklist row
+said — *"0 of 2 ICGP entry stages held"* right there on the same screen,
+contradicted by a number one card above it.
+
+The fix gives `trackProg()` the same fallback chain `gapProg()` already had:
+
+```js
+function trackProg(){
+  var list = progsTracked();
+  if (!list.length) return null;
+  var open = currentArg();
+  return list.filter(function(p){ return p.id === open; })[0]
+      || list.filter(function(p){ return p.id === S.lastProg; })[0]
+      || list[0];
+}
+```
+
+A test pins the exact scenario: track two applications, hold a stage in the
+first, open the second in the tracker (setting `S.lastProg`), then visit bare
+`#/gaps` and check the eligibility count against what the application's own
+checklist row says, not what the record's main route would say.
+
 ## The tracker remembers which application you were in
 
 A doctor tracking one programme should not re-pick it every session. The nav

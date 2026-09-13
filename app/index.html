@@ -1049,6 +1049,8 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
 
      Passing no programme means "the one they are working on" -- see gapProg(). */
   var DOMAINS = [
+    /* clinical carries no `next`: it accrues with time in post, so there is
+       nothing to click, and it must never be offered as a recommended action */
     {id:"clinical", name:"Clinical experience", weight:20, maxPts:5, shared:true,
      ready:function(){ return Math.min(100, Math.round(S.clinicalMonths / 28 * 100)); },
      pts:function(){ return S.clinicalMonths >= 24 ? 5 : (S.clinicalMonths >= 12 ? 3 : 0); },
@@ -1067,27 +1069,79 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
        var ex = entryFamilyFor(sp) || (situation().exam || "membership");
        var n = stagesHeld(sp), t = stagesTotal(sp);
        return n >= t ? "Full " + ex + " membership held" : n + " of " + t + " " + ex + " stages held";
+     },
+     /* the recommended-action list used to be a hand-written function
+        elsewhere in the file that never mentioned exams at all, so this
+        domain could read "0 of 2 stages held" -- the biggest gap on the page
+        -- while the recommended action above it suggested a leadership
+        course instead. Living here, next to pts()/ready(), it cannot drift
+        from what the row itself says, and it is a link rather than a button
+        because sitting an exam is not a one-click event in this record. */
+     next:function(prog){
+       var sp = domSpec(prog), n = stagesHeld(sp), t = stagesTotal(sp);
+       if (n >= t) return null;
+       var ex = entryFamilyFor(sp) || (situation().exam || "membership");
+       return {t:"Sit your next " + ex + " stage", pts:8 - (n >= 1 ? 3 : 0),
+         why: n === 0 ? "Holding one stage moves this domain onto the scoreboard"
+                       : "Full membership takes this domain to its full 8 points",
+         href:"#/exams", cta:"Open " + ex + " prep"};
      }},
     {id:"auditqi", name:"Audit and QI", weight:25, maxPts:10, shared:true,
      ready:function(){ return Math.round(((S.auditComplete + S.qiPct/100) / 2) * 100); },
      pts:function(){ return S.auditComplete >= 2 ? 10 : (S.auditComplete >= 1 ? 5 : 0); },
      bands:"1 completed project scores 5, 2 score 10",
-     note:function(){ return S.auditComplete + " complete, 1 in progress at " + S.qiPct + "%"; }},
+     note:function(){ return S.auditComplete + " complete, 1 in progress at " + S.qiPct + "%"; },
+     next:function(){
+       if (S.auditComplete < 1) return S.qiPct > 0
+         ? {t:"Finish the QI project you started", pts:5,
+            why:"It is " + S.qiPct + "% done and scores nothing until it is complete",
+            act:"finishQI", cta:"Mark complete"}
+         : {t:"Start an audit or QI project", pts:5,
+            why:"Nothing logged yet, and a completed project is the single biggest scoring move you have",
+            act:"finishQI", cta:"Log one complete"};
+       if (S.auditComplete === 1) return S.qiPct > 0
+         ? {t:"Finish the second audit or QI project", pts:5,
+            why:"It is " + S.qiPct + "% done, and a second completed project takes this domain to its full 10 points",
+            act:"finishQI", cta:"Mark complete"}
+         : {t:"Start a second audit or QI project", pts:5,
+            why:"A second completed project takes this domain to its full 10 points",
+            act:"secondQI", cta:"Start project"};
+       return null;
+     }},
     {id:"teaching", name:"Teaching", weight:20, maxPts:5, shared:true,
      ready:function(){ return Math.round(S.teachingDone / S.teachingTarget * 100); },
      pts:function(){ return S.teachingDone >= 4 ? 5 : (S.teachingDone >= 2 ? 2 : 0); },
      bands:"2 sessions score 2, 4 score 5",
-     note:function(){ return S.teachingDone + " of " + S.teachingTarget + " sessions logged"; }},
+     note:function(){ return S.teachingDone + " of " + S.teachingTarget + " sessions logged"; },
+     next:function(){
+       if (S.teachingDone >= 4) return null;
+       var n = 4 - S.teachingDone;
+       return {t:"Log " + n + " more teaching " + (n === 1 ? "session" : "sessions"),
+         pts:5 - (S.teachingDone >= 2 ? 2 : 0),
+         why:"Four sessions moves this domain from " + (S.teachingDone >= 2 ? "2" : "0") + " points to 5",
+         act:"logTeaching", cta:"Log a session"};
+     }},
     {id:"research", name:"Research and publications", weight:15, maxPts:5, shared:true,
      ready:function(){ return Math.min(100, Math.round(S.research / 2 * 100)); },
      pts:function(){ return S.research >= 2 ? 5 : (S.research >= 1 ? 2 : 0); },
      bands:"1 output scores 2, 2 score 5",
-     note:function(){ return S.research + " of 2 outputs recorded"; }},
+     note:function(){ return S.research + " of 2 outputs recorded"; },
+     next:function(){
+       if (S.research >= 2) return null;
+       return {t:"Record a second research output", pts:5 - (S.research >= 1 ? 2 : 0),
+         why:"A second output moves this domain from " + (S.research >= 1 ? "2" : "0") + " points to 5",
+         act:"addResearch", cta:"Record output"};
+     }},
     {id:"leadership", name:"Leadership and management", weight:5, maxPts:2, shared:true,
      ready:function(){ return S.leadership ? 100 : 0; },
      pts:function(){ return S.leadership ? 2 : 0; },
      bands:"A recognised course scores 2",
-     note:function(){ return S.leadership ? "Course complete" : "No course recorded, optional"; }}
+     note:function(){ return S.leadership ? "Course complete" : "No course recorded, optional"; },
+     next:function(){
+       if (S.leadership) return null;
+       return {t:"Complete a leadership course", pts:2,
+         why:"Optional, and the smallest gain on the page", act:"doLeadership", cta:"Mark course complete"};
+     }}
   ];
 
   /* THE application the doctor is working on, shared by the tracker and the
@@ -1127,38 +1181,38 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
     return {k:"crit", icon:I.warn, label:"Behind"};
   }
 
-  /* the ranked "what would move you most" list, by points actually gained */
-  function levers(){
+  /* the ranked "what would move you most" list, by points actually gained.
+
+     This used to be a hand-written function that re-derived its own view of
+     S.auditComplete, S.teachingDone, S.research and S.leadership independently
+     of DOMAINS -- a second, parallel truth. It never mentioned exams at all,
+     so a doctor could hold 0 of 2 stages, the single biggest gap on the page,
+     and be recommended a leadership course instead, because the two lists
+     were never required to agree. Now there is one list: each domain owns its
+     own `next()`, right beside the pts()/ready() it has to stay consistent
+     with, and this function only collects what they return. A domain with no
+     `next` (clinical: it accrues with time, nothing to click) is silently
+     skipped rather than special-cased here. */
+  function levers(prog){
     var out = [];
-    /* "finish the project you started" is only true if one is actually part
-       done. Onboarding sends qiPct 0 for anyone who ticked nothing, so this
-       used to tell every new doctor to finish a project at 0% that they had
-       never begun, under a button reading "Mark complete". */
-    if (S.auditComplete < 1) out.push(S.qiPct > 0
-      ? {t:"Finish the QI project you started",
-         why:"It is " + S.qiPct + "% done and scores nothing until it is complete",
-         pts:5, act:"finishQI", cta:"Mark complete"}
-      : {t:"Start an audit or QI project",
-         why:"Nothing logged yet, and a completed project is the single biggest scoring move you have",
-         pts:5, act:"finishQI", cta:"Log one complete"});
-    if (S.teachingDone < 4) out.push({t:"Log " + (4 - S.teachingDone) + " more teaching " + (4 - S.teachingDone === 1 ? "session" : "sessions"),
-      why:"Four sessions moves this domain from 2 points to 5",
-      pts:3, act:"logTeaching", cta:"Log a session"});
-    if (S.research < 2) out.push({t:"Record a second research output",
-      why:"A second output moves this domain from 2 points to 5",
-      pts:S.research >= 1 ? 3 : 2, act:"addResearch", cta:"Record output"});
-    if (!S.leadership) out.push({t:"Complete a leadership course",
-      why:"Optional, and the smallest gain of the four",
-      pts:2, act:"doLeadership", cta:"Mark complete"});
-    if (S.auditComplete === 1) out.push(S.qiPct > 0
-      ? {t:"Finish the second audit or QI project",
-         why:"It is " + S.qiPct + "% done, and a second completed project takes this domain to its full 10 points",
-         pts:5, act:"finishQI", cta:"Mark complete"}
-      : {t:"Start a second audit or QI project",
-         why:"A second completed project takes this domain to its full 10 points",
-         pts:5, act:"secondQI", cta:"Start project"});
-    out.sort(function(a,b){ return b.pts - a.pts; });
+    DOMAINS.forEach(function(d){
+      if (!d.next) return;
+      var lv = d.next(prog);
+      if (!lv) return;
+      lv.domain = d.id;
+      out.push(lv);
+    });
+    out.sort(function(a, b){ return b.pts - a.pts; });
     return out;
+  }
+  /* a lever's call to action: a button that dispatches an ACTIONS handler
+     when finishing it is a one-click event (mark a project complete, log a
+     session), or a plain link when it is not (sitting an exam happens outside
+     this record, so exams' lever points out rather than ticking a box). */
+  function leverBtn(lv, primary){
+    if (lv.href) return '<a class="btn btn-sm ' + (primary ? "btn-primary" : "btn-ghost") +
+      '" href="' + lv.href + '">' + esc(lv.cta) + "</a>";
+    return actBtn(lv.act, lv.cta, primary);
   }
 
   /* ================= APPLICATION CHECKLIST =================
@@ -1291,9 +1345,17 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
      the primary target's: reading it here showed a doctor viewing their GP
      application the RCPI stage dates. */
   /* WHICH application the tracker is showing. The url is the answer once one
-     is open -- #/progress/bst-gim -- and the main route otherwise. This used
-     to be S.trackTarget, a saved field written by the switcher; a url says the
-     same thing, survives a reload, and can be linked to and returned to.
+     is open -- #/progress/bst-gim -- and otherwise the one last worked on,
+     same as gapProg(). This used to fall straight to list[0] (the main route)
+     when the url carried no segment, which is a different answer to the same
+     question gapProg() was already answering with S.lastProg -- so an auto
+     check that reads trackTarget() (the "Exam stage held" eligibility item is
+     the one that does) could silently score against the main route while a
+     doctor sat on the gap analysis for their SECOND application. Bringing
+     gaps in to read the checklist surfaced it: the eligibility count changed
+     when it should not have, because the one auto check that varies per
+     application was quietly answering for a different one than the page
+     said it was scoring.
 
      It holds a PROGRAMME id, not a specialty: BST General Internal Medicine
      and HST General Internal Medicine share a specialty but are two different
@@ -1302,7 +1364,9 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
     var list = progsTracked();
     if (!list.length) return null;
     var open = currentArg();
-    return list.filter(function(p){ return p.id === open; })[0] || list[0];
+    return list.filter(function(p){ return p.id === open; })[0]
+        || list.filter(function(p){ return p.id === S.lastProg; })[0]
+        || list[0];
   }
   /* the specialty behind it, for the few checks that score against a
      specialty rather than against an application */
@@ -1453,6 +1517,21 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
     var list = checksFor(), done = 0;
     list.forEach(function(c){ if (checkState(c, target).done) done++; });
     return {done:done, total:list.length, pct: Math.round(done / list.length * 100)};
+  }
+
+  /* Gap analysis scores a portfolio; it has never known whether the
+     application itself is even one the doctor is allowed to submit. A weak
+     portfolio scores badly, but a missing eligibility requirement stops the
+     application outright, and those fail differently enough to deserve
+     different words. This reads the SAME "Eligibility" group the application
+     checklist already tracks -- registration, minimum experience, an exam
+     stage held, the language requirement where it applies -- so a blocker
+     shown here and a requirement shown on the tracker can never disagree. */
+  function eligibilityBlockers(prog){
+    if (!prog) return [];
+    return checksFor().filter(function(c){
+      return c.g === "Eligibility" && !checkState(c, prog.id).done;
+    });
   }
 
   /* ================= MILESTONES ================= */
@@ -2257,7 +2336,7 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
         '<div class="body"><p class="k">Your next move</p><h2>' + (top ? esc(top.t) : "Nothing outstanding") + "</h2>" +
         "<p>" + (top ? esc(top.why) + ". Worth " + top.pts + " points on your shortlisting score, the largest single gain available to you right now."
                      : "Every scored domain is at its maximum. Keep the evidence dated and current.") + "</p></div>" +
-        (top ? actBtn(top.act, top.cta, true) : "") + "</div>";
+        (top ? leverBtn(top, true) : "") + "</div>";
 
       /* 4. two figures, not four. Shortlisting score and milestones are each a
          whole page in the nav and neither is actionable from here. */
@@ -3056,6 +3135,26 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       /* ---- which application, when there is more than one ---- */
       h += gapSwitch(gprogs, gp);
 
+      /* ---- eligibility, before scoring. A weak portfolio scores badly; a
+         missing eligibility requirement stops the application whatever the
+         portfolio looks like, and those are different problems. This reads
+         the same checklist the application tracker does, so it can never
+         disagree with it, and it costs one line rather than a duplicated
+         page. */
+      var blockers = eligibilityBlockers(gp);
+      if (gp){
+        h += '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">' +
+          '<span class="chip ' + (blockers.length ? "warn" : "good") + '">' +
+          ico(blockers.length ? I.warn : I.tick, 12) +
+          (blockers.length
+            ? blockers.length + (blockers.length === 1 ? " eligibility issue" : " eligibility issues")
+            : "No application blockers") + "</span>" +
+          (blockers.length
+            ? '<a class="btn-link" style="display:inline-flex;align-items:center;min-height:24px" href="#/progress/' +
+              encodeURIComponent(gp.id) + '">View on the application tracker</a>'
+            : "") + "</div>";
+      }
+
       /* ---- the two measures, which have never been in one viewport ---- */
       h += '<p class="sec-label">Where you stand' +
         (gp ? ' <span class="g-count">\u00b7 ' + esc(gp.t) + "</span>" : "") + "</p>";
@@ -3090,20 +3189,37 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
             ? ", and the difference is work that is started but not finished. <b>" + esc(worst.name) +
               "</b> is the clearest case: " + worst.ready(gp) + "% assembled, " + worst.pts(gp) + " of " +
               worst.maxPts + " scored, because " + esc(worst.bands.toLowerCase()) + "."
-            : ".") + "</p>";
-        var lv = levers()[0];
-        if (lv){
-          h += '<div style="margin-top:13px;display:flex;gap:8px;flex-wrap:wrap">' +
-            actBtn(lv.act, lv.cta + " · +" + lv.pts + " points", true) +
-            '<a class="btn btn-sm btn-ghost" href="#/opportunities">Everything that closes a gap</a></div>';
-        }
-        h += "</div>";
+            : ".") + "</p></div>";
       } else {
         h += '<div class="card lead" style="margin-top:14px"><div class="card-head">' +
           "<h2>Nothing left on the table</h2>" +
           '<span class="chip good">' + ico(I.tick, 12) + "Maximum score</span></div>" +
           '<p class="lede">Every domain is at its maximum against the criteria modelled here. Keep the ' +
           "evidence dated and uploaded before the window closes.</p></div>";
+      }
+
+      /* ---- what to actually do, ranked. This is the answer the page used to
+         bury one level down: the card above explains WHY the two numbers
+         disagree, this says what closes the gap, in order of what gains the
+         most. Every entry comes from levers(), which now reads DOMAINS
+         directly, so a row here can never contradict the domain it belongs
+         to further down the page -- the exact drift that let this list
+         recommend a leadership course while the exams domain sat at 0 of 8,
+         untouched, because the two used to be written by hand in two places. */
+      var topLevers = levers(gp).slice(0, 3);
+      if (topLevers.length){
+        h += '<p class="sec-label">Your best next moves</p>';
+        h += topLevers.map(function(lv, i){
+          return '<div class="gap-item" data-domain="' + esc(lv.domain) + '"><div class="gap-top"><b>' +
+            (i + 1) + ". " + esc(lv.t) + "</b>" +
+            '<span class="r"><span class="chip ' + (i === 0 ? "warn" : "mute") + '">' + ico(I.bolt, 11) +
+              "+" + lv.pts + (lv.pts === 1 ? " point" : " points") + "</span></span></div>" +
+            '<p class="gap-meta">' + esc(lv.why) + ".</p>" +
+            '<div class="gap-acts">' + leverBtn(lv, i === 0) + "</div></div>";
+        }).join("");
+        h += '<p class="lede" style="margin:8px 0 0"><a class="btn-link" ' +
+          'style="display:inline-flex;align-items:center;min-height:24px" href="#/opportunities">' +
+          "Everything that closes a gap</a></p>";
       }
 
       /* ---- the rule the whole page is governed by ---- */
@@ -3119,9 +3235,27 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
             "'s published date before you plan around it.") + "</div>";
       }
 
-      /* ---- domain by domain ---- */
+      /* ---- domain by domain, open gaps first, maxed ones collapsed ----
+         Six cards of near-identical visual weight forced a doctor to do their
+         own triage every visit: which of these still needs me. Splitting on
+         the same owed-points test domOrder already sorts by means a domain at
+         its maximum never competes with one still open for the same amount
+         of space, and it costs nothing extra to compute -- domOrder(gp)
+         already puts them in this order, this just draws the line. */
+      var allDoms = domOrder(gp);
+      var openDoms = allDoms.filter(function(d){ return d.maxPts - d.pts(gp) > 0; });
+      var doneDoms = allDoms.filter(function(d){ return d.maxPts - d.pts(gp) === 0; });
       h += '<p class="sec-label">Domain by domain</p>';
-      h += domOrder(gp).map(function(d){ return domainRow(d, gp); }).join("");
+      if (openDoms.length && doneDoms.length){
+        h += openDoms.map(function(d){ return domainRow(d, gp); }).join("");
+        h += '<button class="btn-link" data-act="toggleDoneDomains" style="margin:12px 0 4px">' +
+          (S.showDoneDomains ? "Hide" : "Show") + " " + doneDoms.length +
+          (doneDoms.length === 1 ? " domain" : " domains") + " already at maximum " +
+          (S.showDoneDomains ? "▴" : "▾") + "</button>";
+        if (S.showDoneDomains) h += doneDoms.map(function(d){ return domainRow(d, gp); }).join("");
+      } else {
+        h += allDoms.map(function(d){ return domainRow(d, gp); }).join("");
+      }
 
       /* This used to be an apology: "do not read this figure as covering both".
          The figure IS one application's now, so the note says what carries
@@ -3164,7 +3298,8 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
     /* a doctor tracking two applications needs to know which rows carry across
        and which do not, in the row itself rather than in a footnote */
     var many = progsTracked().length > 1;
-    var h = '<div class="dom' + (owed === 0 ? " clear" : "") + '"><div class="dom-h"><b>' + esc(d.name) + "</b>" +
+    var h = '<div class="dom' + (owed === 0 ? " clear" : "") + '" data-domain="' + esc(d.id) +
+      '"><div class="dom-h"><b>' + esc(d.name) + "</b>" +
       (many ? '<span class="chip sm ' + (d.shared ? "mute" : "good") + '">' +
         (d.shared ? "Counts for both" : "This application only") + "</span>" : "") +
       '<span class="dom-w">weight ' + d.weight + "%</span>" +
@@ -5311,6 +5446,7 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
     },
     doLeadership: function(){ S.leadership = true; return "Leadership course recorded"; },
     togglePast: function(){ S.showPast = !S.showPast; return null; },
+    toggleDoneDomains: function(){ S.showDoneDomains = !S.showDoneDomains; return null; },
     reset: function(){
       try { window.localStorage.removeItem(KEY); } catch (e) {}
       S = load();
