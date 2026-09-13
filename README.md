@@ -939,6 +939,14 @@ inherited it, so the fix is applied in all six files.
 - Preparation pages: every fee, date, weight and station count is illustrative.
   Replace from the colleges' published documents, and mark anything not yet
   published rather than carrying last year's number forward.
+- Dashboard: interview prep's **Knowledge base** and **Practice questions**
+  surfaces are structure only. The generic answer-structure framing
+  (situation, role, outcome, what you would do differently) is a widely known
+  interview technique, not this product's claim about what any specific panel
+  wants; the domain-by-domain technique notes and the questions themselves are
+  both marked "content to be authored" and must be written by doctors who have
+  sat on these panels before launch, per the standing rule against generated
+  question banks.
 - Onboarding creates no account and sends no email. The magic-link step has an
   explicit demo control that says so rather than pretending to wait.
 - Milestones and the roadmap trail now derive from the record, so a doctor who
@@ -2043,6 +2051,94 @@ records a score the doctor already has rather than inventing one, and that score
 feeds a *predicted* figure only: a mock is not a stage held and must never touch
 the shortlisting rubric. Live tutor is named and left honest rather than mocked
 up.
+
+## Interview prep, expanded from six surfaces to nine
+
+Asked directly whether interview prep was "lacking anything" — with a request
+for "knowledge base, voice simulator, video simulator, mock with a live
+tutor, analytics, interview scoring criteria" — the honest answer split three
+ways. Some of it already existed and was genuinely good: **Your evidence**
+reads the Gap analysis domains straight off the portfolio
+(`evidenceFor(d)`), which nothing else in the market can do because nothing
+else holds both halves of a doctor's record. Some of it was requested under a
+name that would be dishonest to build literally: an actual "AI voice/video
+simulator" means either a fabricated judgment of someone's interview
+technique or quietly routing their answer through a model to grade it,
+neither of which this product does anywhere else and both of which the
+standing rule against generated content already rules out here. And some of
+it was a real, missing gap: there was a countdown plan for exam prep and none
+for interview prep, "practice questions" quietly conflated technique with
+content into one thin stub, and there was no actual practice *moment* on the
+page — just a rating entered after a mock happened somewhere else.
+
+`IV_GYM` grew from six surfaces to nine: **Countdown plan** and **Knowledge
+base** are new structural surfaces (paced off the doctor's own cycle dates
+and reviewed domain-by-domain, the same discipline exam prep already uses);
+**Practice questions** was restructured from one flat stub into a per-domain
+list with a practice-attempt counter; **What is assessed** gained a scoring-
+criteria framing paragraph and reads each domain's current self-rating back;
+**Mock interview** gained a mocks-history list; **Analytics** gained a trend
+line (`ivTrend()`, the same shape `trendFor()` already gives exam prep) and
+two coverage bars reading the new kb/practice state. **Your evidence** and
+**Mock with a tutor** are unchanged — the first was already the strongest
+part of the hub, the second is honestly left as a real booking surface rather
+than mocked up.
+
+### Record & review, not a simulator
+
+The "voice simulator/video simulator" request became a self-recording tool:
+answer a question out loud, on camera or audio-only, then watch or listen
+back before rating yourself. Nothing evaluates the recording — the doctor's
+own domain rating, the same 1-5 scale the mock surface already uses, is the
+only judgment involved. A recording is never uploaded and does not survive a
+reload; the page says so before anyone presses Start, not as a discovery
+after the fact.
+
+Two things had to be designed around deliberately:
+
+- **`render()` replaces `#view` wholesale on every state change.** A live
+  `MediaStream`/`MediaRecorder` cannot survive having its DOM torn out from
+  under it, so recorder state lives in a module-level `recState` variable
+  outside `S`, never touches `localStorage`, and `render()` itself carries a
+  guard at its very top — `if (recState && recState.recording) recAbort();`
+  — so every navigation path (switching gym tiles, opening a different
+  interview, the exit control, browser back, a bare hash change) is
+  guaranteed to stop the camera/mic rather than leaking it, because they all
+  funnel through that one function.
+- **Artifact-iframe permissions.** Camera/mic access can be blocked outright
+  when this app is viewed inside an embedded iframe rather than a normal
+  browser tab. The idle state, the "not supported" state and the error state
+  all name this specifically ("if this page is embedded, for example inside
+  a Claude Artifact...") rather than failing silently.
+
+**One real bug, found by testing the failure path rather than reading the
+code:** `recorder.start()` can throw synchronously (`NotSupportedError` when
+no encoder is available — confirmed by testing in a sandboxed headless
+browser with no video/audio encoder at all, which is an environment limit,
+not an app one). The original code called `recorder.start()` *after* the
+live `stream` had already moved into `recState`, so the promise's outer
+`.catch(function(err){...})` handled the rejection but had no reference to
+`stream` in scope to stop its tracks — the camera would have stayed lit
+behind an honest-looking error message. Fixed by wrapping `recorder.start()`
+in its own `try/catch` where `stream` is still a closure variable, so a
+failure there stops the tracks immediately rather than leaking them. Playwright
+confirmed both that the fix works (no live track remains attached to any
+media element after a forced failure) and that the underlying scenario is
+real (it reproduces with `--use-fake-device-for-media-stream` in this
+environment every time).
+
+### Testing
+
+A new suite (`ivprep.mjs`, 7 sections) covers the countdown plan, knowledge
+base toggle-and-undo, practice-question logging, the record surface's honest
+disclosures, the mock history list, and the analytics trend/coverage bars.
+A second suite (`a11y_ivsurfaces.mjs`) runs axe-core and a 24px touch-target
+check across all nine surfaces individually — the existing `a11y_ws.mjs` only
+ever scanned the hub overview, not each surface. Both are in the permanent
+sweep. The `ws.mjs` regression suite's nav-item count assertion
+(`overview plus six surfaces plus the way out: 8`) was a stale literal from
+when interview prep had six surfaces; updated to eleven rather than treated
+as a failure, since the count genuinely changed on purpose.
 
 ## Noted for later, deliberately not built
 

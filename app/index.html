@@ -452,6 +452,22 @@ button.chk-box:hover{border-color:var(--deep)}
   font-size:12px;font-weight:700;color:var(--txt-soft);cursor:pointer;transition:background .15s,color .15s,border-color .15s}
 .rt:hover{border-color:var(--deep)}
 .rt.on{background:var(--mint);border-color:var(--mint);color:#052a22}
+/* self-record and review: a live preview while recording, played back
+   through the same box once you stop. Nothing here is ever uploaded. */
+.rec-stage{background:#0b0e11;border-radius:14px;overflow:hidden;position:relative;aspect-ratio:16/9;
+  max-width:480px;display:flex;align-items:center;justify-content:center}
+.rec-stage video{width:100%;height:100%;object-fit:cover;display:block}
+.rec-stage.audio-only{aspect-ratio:auto;padding:14px}
+.rec-stage.audio-only audio{width:100%}
+.rec-badge{position:absolute;top:10px;left:10px;display:flex;align-items:center;gap:6px;
+  background:rgba(0,0,0,.55);color:#fff;border-radius:999px;padding:5px 11px;font-size:11.5px;font-weight:700;
+  font-family:var(--fd);letter-spacing:.03em}
+.rec-dot{width:8px;height:8px;border-radius:50%;background:#e0483e;animation:recPulse 1.1s ease-in-out infinite}
+@keyframes recPulse{0%,100%{opacity:1}50%{opacity:.25}}
+@media(prefers-reduced-motion:reduce){ .rec-dot{animation:none} }
+.rec-empty{color:#8b969d;font-size:12.5px;display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:22px;text-align:center;max-width:38ch;line-height:1.5}
+.rec-empty svg{color:#5b666c}
 /* ============ FINDING A PREP ============ */
 .prep-find{display:flex;gap:8px;align-items:center;margin-bottom:10px}
 .prep-find input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:12px;padding:10px 14px;
@@ -1025,7 +1041,8 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
     grad:'<path d="M2 9l10-4 10 4-10 4z"/><path d="M6 11v5c0 1.5 2.5 3 6 3s6-1.5 6-3v-5"/><path d="M22 9v6"/>',
     minus:'<path d="M5 12h14"/>',
     book:'<path d="M4 5a2 2 0 012-2h13v18H6a2 2 0 01-2-2z"/><path d="M8 7h7M8 11h7"/>',
-    mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/>'
+    mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/>',
+    video:'<rect x="2" y="6" width="14" height="12" rx="2.5"/><path d="M16 10.2l6-3.4v10.4l-6-3.4z"/>'
   };
 
   /* ================= MODEL =================
@@ -4779,18 +4796,233 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       return DOMAINS.filter(function(x){ return x.id === id; })[0];
     }).filter(Boolean);
   }
+  /* whether a domain's answer-structure notes have been marked read, and how
+     many practice attempts have been logged against it -- both trackable
+     without inventing the questions or the technique text themselves */
+  function ivKbDone(id){ return (S.ivKbDone || {})[id] || {}; }
+  function ivPracticed(id){ return (S.ivPractice || {})[id] || {}; }
+  function ivRecordings(id){ return (S.ivRecordings || {})[id] || []; }
+  /* the same shape trendFor() gives an exam stage, read off ivMocks instead */
+  function ivTrend(id){
+    var m = ivMocks(id);
+    if (m.length < 2) return null;
+    return {from:m[0].ready, to:m[m.length - 1].ready, delta:m[m.length - 1].ready - m[0].ready,
+            points:m.map(function(x){ return x.ready; })};
+  }
+  /* weeks to the interview itself, the same shape weeksTo() gives an exam
+     stage. Only ever paced against a cycle the doctor is actually in. */
+  function ivWeeksTo(iv){
+    if (!iv.cycle) return null;
+    var d = until(iv.cycle.interview);
+    return d < 0 ? null : Math.max(0, Math.round(d / 7));
+  }
 
+  /* ============ RECORD & REVIEW ============
+     A self-recording tool, not a simulator: nothing here is scored or judged
+     by anything but the doctor watching it back. There is no AI evaluation,
+     because there is no honest way to build one without either faking a
+     judgment or quietly asking a model to grade someone's interview technique,
+     both of which this product has ruled out.
+
+     State lives OUTSIDE S on purpose. render() replaces #view wholesale on
+     every change (see render() below), and a live MediaStream or an
+     in-progress MediaRecorder cannot survive having its DOM torn out from
+     under it. So this holds the live camera/mic state for exactly as long as
+     a recording is in progress, never touches localStorage, and render()
+     itself is the one place that guarantees it gets cleaned up if the doctor
+     navigates away mid-recording -- see the guard at the top of render(). */
+  var recState = null; // {kind, stream, recorder, chunks, startedAt, timerId}
+  var recPick = {kind:"video", domain:IV_DOMAINS[0].id};
+  function recSupported(){
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+  }
+  /* stops and discards without any review step -- the only path that runs
+     when the doctor leaves the surface mid-recording rather than pressing Stop */
+  function recAbort(){
+    if (!recState) return;
+    if (recState.timerId) clearInterval(recState.timerId);
+    if (recState.recorder){
+      recState.recorder.onstop = null;
+      recState.recorder.ondataavailable = null;
+      if (recState.recorder.state !== "inactive"){ try { recState.recorder.stop(); } catch (e){} }
+    }
+    if (recState.stream) recState.stream.getTracks().forEach(function(t){ t.stop(); });
+    recState = null;
+  }
+  function recElapsed(){
+    return recState ? Math.floor((Date.now() - recState.startedAt) / 1000) : 0;
+  }
+  function recFmtTime(s){
+    var m = Math.floor(s / 60), sec = s % 60;
+    return (m < 10 ? "0" : "") + m + ":" + (sec < 10 ? "0" : "") + sec;
+  }
+  function ivRecordSurface(iv){
+    if (!recSupported()){
+      return '<div class="card"><p class="empty"><b>Recording is not available here.</b>This browser does not ' +
+        "expose camera or microphone recording, or this page is embedded somewhere that blocks it -- for example " +
+        "inside a Claude Artifact. Open MedNav in its own browser tab and it should work.</p></div>";
+    }
+    var errMsg = recState && recState.error ? recState.error : null;
+    if (errMsg) recState = null;
+    var h = '<div class="card"><div class="card-head"><h2>Record & review</h2>' +
+      '<span class="aside">' + ivRecordings(iv.id).length + " recorded so far</span></div>" +
+      '<p class="lede" style="max-width:66ch;margin-bottom:14px">Answer a question out loud, on camera or just ' +
+      "audio, then watch or listen back before you rate yourself. Nothing here is scored for you, nothing is " +
+      "uploaded, and a recording is lost the moment you leave this page or reload it -- it exists only to let you " +
+      "hear yourself the way a panel will.</p>";
+    if (errMsg){
+      h += '<p class="empty"><b>Could not start.</b>' + esc(errMsg) + " If this page is embedded (for example " +
+        "inside a Claude Artifact), the browser may be blocking camera and microphone access entirely -- try " +
+        "opening MedNav in its own tab, or try again below.</p>";
+    }
+
+    if (recState && recState.recording){
+      h += '<div class="rec-stage' + (recState.kind === "audio" ? " audio-only" : "") + '">' +
+        (recState.kind === "video" ? '<video id="recLive" autoplay muted playsinline></video>' : "") +
+        '<span class="rec-badge"><span class="rec-dot" aria-hidden="true"></span><span id="recTimer">00:00</span></span>' +
+        "</div>";
+      h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="btn btn-sm btn-primary" data-rec-stop>Stop recording</button></div>';
+      return h + "</div>";
+    }
+
+    if (recState && recState.reviewUrl){
+      var r = ivRatings(iv.id);
+      h += '<div class="rec-stage' + (recState.kind === "audio" ? " audio-only" : "") + '">' +
+        (recState.kind === "video"
+          ? '<video src="' + recState.reviewUrl + '" controls playsinline></video>'
+          : '<audio src="' + recState.reviewUrl + '" controls style="width:100%"></audio>') + "</div>";
+      h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="btn btn-sm btn-ghost" data-rec-discard>Discard and record again</button>' +
+        '<button class="btn btn-sm btn-primary" data-rec-save>Log this take</button></div>';
+      h += '<p class="group-h">How did that domain go?</p>';
+      var rd = recState.domain;
+      var v = r[rd] || 0;
+      h += '<div class="row"><span class="t">' + esc((IV_DOMAINS.filter(function(x){ return x.id === rd; })[0] || {}).t || rd) +
+        (v ? "<small>Rated " + v + " of 5</small>" : "<small>Not rated</small>") + "</span>" +
+        '<span class="r rate">' + [1,2,3,4,5].map(function(n){
+          return '<button class="rt' + (v >= n ? " on" : "") + '" data-iv-rate="' + rd + ':' + n +
+            '" aria-label="Rate ' + n + ' of 5">' + n + "</button>";
+        }).join("") + "</span></div>";
+      return h + "</div>";
+    }
+
+    var pick = recPick;
+    h += '<div class="field"><label for="recDomain">Which domain are you answering for</label>' +
+      '<select id="recDomain">' + IV_DOMAINS.map(function(d){
+        return '<option value="' + esc(d.id) + '"' + (d.id === pick.domain ? " selected" : "") + ">" + esc(d.t) + "</option>";
+      }).join("") + "</select></div>";
+    h += '<div style="display:flex;gap:8px;margin:10px 0 14px">' +
+      '<button class="btn btn-sm ' + (pick.kind === "video" ? "btn-primary" : "btn-ghost") + '" data-rec-kind="video">' +
+      ico(I.video, 13) + " Camera</button>" +
+      '<button class="btn btn-sm ' + (pick.kind === "audio" ? "btn-primary" : "btn-ghost") + '" data-rec-kind="audio">' +
+      ico(I.mic, 13) + " Audio only</button></div>";
+    h += '<div class="rec-stage' + (pick.kind === "audio" ? " audio-only" : "") + '">' +
+      '<p class="rec-empty">' + ico(pick.kind === "video" ? I.video : I.mic, 20) +
+      "Nothing recorded yet. If this page is embedded (for example inside a Claude Artifact), camera and " +
+      "microphone access may be blocked entirely -- open MedNav in its own tab if the button below does nothing.</p></div>";
+    h += '<div style="margin-top:12px"><button class="btn btn-sm btn-primary" data-rec-start>Start recording</button></div>';
+    return h + "</div>";
+  }
+  function recStart(domain, kind){
+    if (!recSupported()) return;
+    var constraints = kind === "video" ? {video:true, audio:true} : {video:false, audio:true};
+    navigator.mediaDevices.getUserMedia(constraints).then(function(stream){
+      var chunks = [], recorder;
+      try { recorder = new MediaRecorder(stream); }
+      catch (e){
+        stream.getTracks().forEach(function(t){ t.stop(); });
+        recState = {error:"This browser could not start a recorder for that combination."};
+        render();
+        return;
+      }
+      recorder.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
+      recorder.onstop = function(){
+        var type = recorder.mimeType || (kind === "video" ? "video/webm" : "audio/webm");
+        var blob = new Blob(chunks, {type:type});
+        var url = URL.createObjectURL(blob);
+        stream.getTracks().forEach(function(t){ t.stop(); });
+        recState = {kind:kind, domain:domain, reviewUrl:url, recording:false};
+        render();
+      };
+      recState = {kind:kind, domain:domain, stream:stream, recorder:recorder, chunks:chunks,
+                  recording:true, startedAt:Date.now(), timerId:null};
+      render();
+      var vEl = document.getElementById("recLive");
+      if (vEl) vEl.srcObject = stream;
+      /* start() can throw synchronously (no available encoder is the usual
+         cause), and by this point the stream lives in recState rather than a
+         variable this .catch below can see -- so it has to be handled right
+         here, or the camera stays lit behind an error message */
+      try { recorder.start(); }
+      catch (e){
+        stream.getTracks().forEach(function(t){ t.stop(); });
+        recState = {error:"This browser could not start recording just now."};
+        render();
+        return;
+      }
+      recState.timerId = setInterval(function(){
+        var t = document.getElementById("recTimer");
+        if (t) t.textContent = recFmtTime(recElapsed());
+      }, 500);
+    }).catch(function(err){
+      var msg = err && err.name === "NotAllowedError" ? "Camera or microphone access was denied."
+        : err && err.name === "NotFoundError" ? "No camera or microphone was found on this device."
+        : "Camera or microphone access could not be started.";
+      recState = {error:msg};
+      render();
+    });
+  }
+  function recStopClick(){
+    if (!recState || !recState.recording) return;
+    if (recState.timerId){ clearInterval(recState.timerId); recState.timerId = null; }
+    recState.recording = false;
+    try { recState.recorder.stop(); } catch (e){}
+  }
+  function recDiscard(){
+    if (recState && recState.reviewUrl) URL.revokeObjectURL(recState.reviewUrl);
+    recState = null;
+    render();
+  }
+  function recSaveClick(ivId){
+    if (!recState || !recState.reviewUrl) return;
+    S.ivRecordings = S.ivRecordings || {};
+    S.ivRecordings[ivId] = S.ivRecordings[ivId] || [];
+    S.ivRecordings[ivId].push({at:new Date().toISOString().slice(0, 10), domain:recState.domain, kind:recState.kind});
+    logActivity("Recorded and reviewed a take", ivId);
+    URL.revokeObjectURL(recState.reviewUrl);
+    recState = null;
+    save(); render();
+    toast("Take logged.");
+  }
+
+  /* Nine surfaces, not six. Exam prep had a countdown plan and interview prep
+     never did; "practice questions" quietly carried both technique and content
+     in one thin stub, which is really two different things; and there was
+     nothing between "rate yourself" and an unwired tutor booking -- no actual
+     practice MOMENT on the page, just a score entered after one happened
+     somewhere else. Knowledge base and Record & review fill exactly that gap,
+     both honestly: technique is structure the same way a topic list is, and
+     self-recording needs no AI judgment to be worth having -- you watch
+     yourself back and rate what you see, the same rating you already give a
+     mock either way. */
   var IV_GYM = [
+    {id:"plan",  t:"Countdown plan", ic:I.cal, d:"Weeks to interview day, and what this week is for",
+     feeds:"Sets the pace the rest is measured against"},
     {id:"what",  t:"What is assessed", ic:I.target, d:"The domains this format scores, and what each one means",
      feeds:"Frames everything else in the hub"},
     {id:"evid",  t:"Your evidence",    ic:I.clip,   d:"What you already hold that answers each domain",
      feeds:"Read straight off your portfolio"},
+    {id:"kb",    t:"Knowledge base",   ic:I.book,   d:"How to structure an answer, domain by domain",
+     feeds:"Technique, not questions"},
     {id:"qs",    t:"Practice questions", ic:I.list, d:"Questions by domain, with what a strong answer covers",
      feeds:"Practice is tracked per domain"},
-    {id:"mock",  t:"Mock interview",   ic:I.mic,    d:"Run one, then rate yourself honestly per domain",
+    {id:"record",t:"Record & review",  ic:I.mic,    d:"Answer out loud, on camera or just audio, then watch it back",
+     feeds:"Nothing here is scored for you -- you watch, then rate"},
+    {id:"mock",  t:"Mock interview",   ic:I.flag,   d:"Run one, then rate yourself honestly per domain",
      feeds:"Your ratings drive the readiness figure"},
-    {id:"stats", t:"Analytics",        ic:I.chart,  d:"Which domains you are weakest on",
-     feeds:"Reads your self-ratings and your evidence"},
+    {id:"stats", t:"Analytics",        ic:I.chart,  d:"Which domains you are weakest on, and whether that is moving",
+     feeds:"Reads your self-ratings over time"},
     {id:"tutor", t:"Mock with a tutor", ic:I.user,  d:"A scored practice interview with someone who has sat on a panel",
      feeds:"Attendance is logged to your record"}
   ];
@@ -4944,7 +5176,7 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
     if (!prepOpen(iv.id, ivIncluded(iv.id))) return prepLocked(iv, "interview");
     var surface = S.gymSurface || "";
     var g = IV_GYM.filter(function(x){ return x.id === surface; })[0];
-    var d = iv.cycle ? until(iv.cycle.interview) : null, rd = ivReady(iv.id);
+    var d = iv.cycle ? until(iv.cycle.interview) : null, rd = ivReady(iv.id), wk = ivWeeksTo(iv);
 
     var h = '<button class="btn btn-sm btn-ghost" data-iv-open="" style="margin-bottom:12px">' +
       ico(I.arrow, 13) + "All interviews</button>";
@@ -4968,16 +5200,47 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
         "who have sat on these panels and are never generated.");
       return h;
     }
-    h += '<p class="sec-label">' + esc(g.t) + "</p>" + ivSurface(g, iv);
+    h += '<p class="sec-label">' + esc(g.t) + "</p>" + ivSurface(g, iv, wk);
     return h;
   }
 
-  function ivSurface(g, iv){
+  function ivSurface(g, iv, wk){
+    if (g.id === "plan"){
+      if (wk === null){
+        return '<div class="card"><p class="empty"><b>No date to plan against.</b>' +
+          (iv.cycle ? "That date has passed, so there is nothing left to count down to."
+                     : "This panel has no interview date on your record yet, so the plan starts once one is set.") +
+          "</p></div>";
+      }
+      var blocks = [
+        {w:"Weeks 1 to 2", t:"Map what you hold", d:"Read What is assessed and Your evidence together, so you know which domains you can already answer and which are thin"},
+        {w:"Weeks 3 to 4", t:"Build your answers", d:"Work Knowledge base and Practice questions domain by domain, starting with the thinnest evidence"},
+        {w:"Week 5", t:"Record yourself once", d:"Answer out loud on Record & review before you sit a full mock, so the first time you hear yourself back is not in front of a panel"},
+        {w:"Weeks 6 to 7", t:"Run a mock, then close what it found", d:"Rate yourself honestly. Analytics ranks the weakest domains -- work down, not across"},
+        {w:"Final week", t:"Second mock, then taper", d:"Confirm the direction of travel and stop"}
+      ];
+      var h = '<div class="card"><div class="card-head"><h2>' + wk + (wk === 1 ? " week" : " weeks") + " to go</h2>" +
+        '<span class="aside">Five to seven weeks is the working minimum</span></div>';
+      h += blocks.map(function(b){
+        return '<div class="row"><span class="t">' + esc(b.t) + "<small>" + esc(b.d) + "</small></span>" +
+          '<span class="r"><span class="chip mute">' + esc(b.w) + "</span></span></div>";
+      }).join("");
+      return h + ctxFoot("The shape of the plan is ours. The weeks come from your own cycle dates, which are " +
+        "illustrative in this prototype.") + "</div>";
+    }
+
     if (g.id === "what"){
+      var r0 = ivRatings(iv.id);
       var h = '<div class="card"><div class="card-head"><h2>' + IV_DOMAINS.length + " domains</h2>" +
-        '<span class="aside">' + esc(iv.fmt) + "</span></div>";
+        '<span class="aside">' + esc(iv.fmt) + "</span></div>" +
+        '<p class="lede" style="max-width:68ch;margin-bottom:8px">A structured format scores each domain on its ' +
+        "own, then combines them. Nothing here changes that a panel is free to weight one domain over another on " +
+        "the day -- this is the shape it is scored in, not a formula for the result.</p>";
       h += IV_DOMAINS.map(function(d){
-        return '<div class="row"><span class="t">' + esc(d.t) + "<small>" + esc(d.d) + "</small></span></div>";
+        var v = r0[d.id];
+        return '<div class="row"><span class="t">' + esc(d.t) + "<small>" + esc(d.d) + "</small></span>" +
+          '<span class="r">' + (v ? '<span class="chip mute">Self-rated ' + v + "/5</span>" :
+            '<span class="chip mute">Not yet rated</span>') + "</span></div>";
       }).join("");
       return h + ctxFoot("The domain list is illustrative. " + esc(iv.body) + " publishes what it actually scores.") + "</div>";
     }
@@ -5008,24 +5271,52 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       return h2 + "</div>";
     }
 
-    if (g.id === "qs"){
-      return '<div class="card"><div class="card-head"><h2>Practice questions</h2>' +
-        '<span class="chip mute">Content to be authored</span></div>' +
-        '<p class="lede" style="max-width:66ch">Questions by domain, each with what a strong answer covers and what ' +
-        "a panel is listening for. Written by doctors who have sat on these panels, never generated, so the " +
-        "structure is here and the content is the work.</p>" +
-        '<p class="group-h">Domains they would be organised under</p>' +
-        '<div class="picks">' + IV_DOMAINS.map(function(d){
-          return '<span class="pick">' + esc(d.t) + "</span>";
-        }).join("") + "</div></div>";
+    if (g.id === "kb"){
+      var kb = ivKbDone(iv.id), nkb = IV_DOMAINS.filter(function(d){ return kb[d.id]; }).length;
+      var hk = '<div class="card"><div class="card-head"><h2>' + nkb + " of " + IV_DOMAINS.length + " reviewed</h2>" +
+        '<span class="aside">' + esc(iv.t) + "</span></div>" + bar(Math.round(nkb / IV_DOMAINS.length * 100)) +
+        '<p class="lede" style="max-width:68ch;margin:14px 0 4px">How to structure an answer, not what to say. ' +
+        "Situation, your role in it, what changed, and what you would do differently -- the shape a panel is " +
+        "listening for under any question in a domain, whichever one they ask.</p>";
+      hk += IV_DOMAINS.map(function(d){
+        return '<div class="chk' + (kb[d.id] ? " done" : "") + '">' +
+          '<span class="chk-box' + (kb[d.id] ? " on" : "") + '" aria-hidden="true">' +
+          (kb[d.id] ? ico(I.tick, 12) : "") + "</span>" +
+          '<div class="chk-b"><b>' + esc(d.t) + "</b><small>" + esc(d.d) + "</small></div>" +
+          '<div class="chk-r"><button class="btn btn-sm btn-ghost" data-iv-kb="' + esc(d.id) + '">' +
+          (kb[d.id] ? "Mark unreviewed" : "Mark reviewed") + "</button></div></div>";
+      }).join("");
+      return hk + ctx("The technique notes behind each domain are written by doctors who have sat on this panel " +
+        "and are never generated, so this shows the structure they go into rather than pretending to hold them.", true) + "</div>";
     }
 
+    if (g.id === "qs"){
+      var pr = ivPracticed(iv.id);
+      var hq = '<div class="card"><div class="card-head"><h2>Practice questions</h2>' +
+        '<span class="chip mute">Content to be authored</span></div>' +
+        '<p class="lede" style="max-width:66ch;margin-bottom:12px">Questions by domain, each with what a strong ' +
+        "answer covers and what a panel is listening for. Written by doctors who have sat on these panels, never " +
+        "generated, so the structure is here and the content is the work.</p>";
+      hq += IV_DOMAINS.map(function(d){
+        var n = pr[d.id] || 0;
+        return '<div class="row"><span class="t">' + esc(d.t) +
+          (n ? "<small>" + n + " attempt" + (n === 1 ? "" : "s") + " logged</small>" : "<small>Not practised yet</small>") + "</span>" +
+          '<span class="r"><button class="btn btn-sm btn-ghost" data-iv-practice="' + esc(d.id) +
+          '">Log a practice attempt</button></span></div>';
+      }).join("");
+      return hq + ctxFoot("There is no question bank behind this yet -- logging an attempt only tracks that you " +
+        "worked a domain, the same way marking a topic covered does in exam prep.") + "</div>";
+    }
+
+    if (g.id === "record") return ivRecordSurface(iv);
+
     if (g.id === "mock"){
-      var r = ivRatings(iv.id);
+      var r = ivRatings(iv.id), ms = ivMocks(iv.id);
       var h3 = '<div class="card"><div class="card-head"><h2>Rate yourself by domain</h2>' +
-        '<span class="aside">' + ivMocks(iv.id).length + " mocks run</span></div>" +
+        '<span class="aside">' + ms.length + " mocks run</span></div>" +
         '<p class="lede" style="max-width:66ch;margin-bottom:12px">Run a mock, then rate each domain one to five. ' +
-        "Honestly: the figure is only worth having if it is uncomfortable.</p>";
+        "Honestly: the figure is only worth having if it is uncomfortable. Recording yourself first on Record & " +
+        "review is not required, but it makes the rating less of a guess.</p>";
       h3 += IV_DOMAINS.map(function(d){
         var v = r[d.id] || 0;
         return '<div class="row"><span class="t">' + esc(d.t) +
@@ -5037,6 +5328,13 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       }).join("");
       h3 += '<div style="margin-top:14px"><button class="btn btn-sm btn-primary" data-iv-mock="' + esc(iv.id) +
         '">Log this mock</button></div>';
+      if (ms.length){
+        h3 += '<p class="group-h">Your mocks</p>' + ms.slice().reverse().map(function(m){
+          return '<div class="row"><span class="t">' + m.ready + "%<small>" + fmtLong(m.at) + "</small></span>" +
+            '<span class="r"><span class="chip ' + (m.ready >= 70 ? "good" : m.ready >= 50 ? "warn" : "crit") + '">' +
+            (m.ready >= 70 ? "Comfortable" : m.ready >= 50 ? "Borderline" : "Behind") + "</span></span></div>";
+        }).join("");
+      }
       return h3 + "</div>";
     }
 
@@ -5048,13 +5346,27 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       }
       var ranked = IV_DOMAINS.filter(function(d){ return r2[d.id]; })
         .sort(function(a, b){ return r2[a.id] - r2[b.id]; });
+      var tr = ivTrend(iv.id);
       var h4 = '<div class="card"><div class="card-head"><h2>' + ivReady(iv.id) + "% self-rated</h2>" +
-        '<span class="aside">Weakest first</span></div>';
+        (tr ? '<span class="aside">' + (tr.delta >= 0 ? "up " : "down ") + Math.abs(tr.delta) + " across " +
+          ivMocks(iv.id).length + " mocks</span>" : '<span class="aside">Weakest first</span>') + "</div>";
+      if (tr){
+        h4 += '<p class="trend' + (tr.delta > 0 ? " up" : tr.delta < 0 ? " down" : "") + '">' +
+          spark(tr.points, 80, 24) + "<span>From " + tr.from + "% to " + tr.to + "%</span></p>";
+      }
       h4 += ranked.map(function(d){
         var pct = r2[d.id] * 20;
         return '<div class="barrow" style="padding:9px 0"><span class="lbl">' + esc(d.t) + "</span>" +
           '<span class="val num">' + r2[d.id] + "/5</span>" + bar(pct) + "</div>";
       }).join("");
+      var kbDone = Object.keys(ivKbDone(iv.id)).length;
+      var pracN = Object.keys(ivPracticed(iv.id)).filter(function(k){ return ivPracticed(iv.id)[k] > 0; }).length;
+      h4 += '<div class="barrow" style="margin-top:14px"><span class="lbl">Domains reviewed in Knowledge base</span>' +
+        '<span class="val num">' + kbDone + " of " + IV_DOMAINS.length + "</span>" +
+        bar(Math.round(kbDone / IV_DOMAINS.length * 100)) + "</div>";
+      h4 += '<div class="barrow" style="padding-top:9px"><span class="lbl">Domains with a practice attempt logged</span>' +
+        '<span class="val num">' + pracN + " of " + IV_DOMAINS.length + "</span>" +
+        bar(Math.round(pracN / IV_DOMAINS.length * 100)) + "</div>";
       return h4 + ctxFoot("This is your own rating of yourself, not a mark. It is useful because it ranks what to " +
         "work on, not because the number means anything on its own.") + "</div>";
     }
@@ -5350,6 +5662,12 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
   var ROUTE_ALIAS = {readiness:"gaps", score:"gaps", deadlines:"progress", programmes:"progress"};
   function moduleFor(id){ return ROUTE_ALIAS[id] || id; }
   function render(){
+    /* the one choke point every navigation runs through -- a gym-tile switch,
+       opening a different interview, the exit control, back/forward, all of
+       it. A live camera/mic stream cannot survive #view being torn out from
+       under it, so this is also the one place a recording left running while
+       the doctor moves on is guaranteed to be stopped rather than leaking. */
+    if (recState && recState.recording) recAbort();
     var id = currentId(), v = VIEWS[id];
     /* the old Deadlines link means "show me the dates" and the old Programmes
        link means "show me the list", so each lands on the tab it meant */
@@ -6087,6 +6405,61 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       logActivity("Mock interview logged, " + ivReady(mid) + "% self-rated", mid);
       save(); render();
       toast("Mock logged. <em>" + ivReady(mid) + "%</em> self-rated across " + rated + " domains."); return;
+    }
+    var ikb = ev.target.closest("[data-iv-kb]");
+    if (ikb){
+      ev.preventDefault();
+      if (!S.ivOpen) return;
+      var kd = ikb.getAttribute("data-iv-kb");
+      S.ivKbDone = S.ivKbDone || {};
+      S.ivKbDone[S.ivOpen] = S.ivKbDone[S.ivOpen] || {};
+      if (S.ivKbDone[S.ivOpen][kd]) delete S.ivKbDone[S.ivOpen][kd];
+      else S.ivKbDone[S.ivOpen][kd] = true;
+      save(); render(); return;
+    }
+    var ipr = ev.target.closest("[data-iv-practice]");
+    if (ipr){
+      ev.preventDefault();
+      if (!S.ivOpen) return;
+      var pd = ipr.getAttribute("data-iv-practice");
+      S.ivPractice = S.ivPractice || {};
+      S.ivPractice[S.ivOpen] = S.ivPractice[S.ivOpen] || {};
+      S.ivPractice[S.ivOpen][pd] = (S.ivPractice[S.ivOpen][pd] || 0) + 1;
+      save(); render(); return;
+    }
+    var rk = ev.target.closest("[data-rec-kind]");
+    if (rk){
+      ev.preventDefault();
+      recPick.kind = rk.getAttribute("data-rec-kind");
+      render(); return;
+    }
+    var rst = ev.target.closest("[data-rec-start]");
+    if (rst){
+      ev.preventDefault();
+      if (!S.ivOpen) return;
+      var domSel = document.getElementById("recDomain");
+      recPick.domain = domSel ? domSel.value : recPick.domain;
+      recStart(recPick.domain, recPick.kind);
+      return;
+    }
+    var rsp = ev.target.closest("[data-rec-stop]");
+    if (rsp){
+      ev.preventDefault();
+      recStopClick();
+      return;
+    }
+    var rd = ev.target.closest("[data-rec-discard]");
+    if (rd){
+      ev.preventDefault();
+      recDiscard();
+      return;
+    }
+    var rsv = ev.target.closest("[data-rec-save]");
+    if (rsv){
+      ev.preventDefault();
+      if (!S.ivOpen) return;
+      recSaveClick(S.ivOpen);
+      return;
     }
     var wx = ev.target.closest("[data-ws-exit]");
     if (wx){
