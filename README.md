@@ -2237,6 +2237,90 @@ via the `Shared` chip on each row, so cutting it lost no information, only a
 repeat of it. `tracker.mjs`'s three stale assertions for the old copy were
 updated to the new wording rather than left broken.
 
+## Gap analysis 2.0: a layout experiment, not a replacement
+
+Asked for a second version of Gap analysis to sit beside the first on the
+dashboard, so the two could be compared live and one kept. `VIEWS.gaps2`
+(`#/gaps2`) is that page — a new nav entry under "Your applications", not a
+replacement of `VIEWS.gaps`, both reachable at once.
+
+It reuses the model exactly: the same `DOMAINS`, the same `scorePts()` /
+`scoreMax()` / `readiness()` / `levers()` / `gapActions()` / `domOrder()`
+Gap analysis already calls, read from the same record. Nothing here is a
+second scoring engine — a doctor with two tracked applications scores
+identically on both pages (`gapmerge.mjs` and `gaps2.mjs` both assert this).
+What differs is shape: a four-tile KPI strip (shortlisting score, assembled
+readiness, point deficit, filing deadline) instead of two rings; a dense
+table row per domain instead of a card, each expandable into a step ladder
+naming what closes it; a priority-actions rail instead of an inline list;
+one static "banded, not linear" explainer card.
+
+This shape was prompted by a reference mockup ("Strategic Scorecard & Gap
+ROI") shared for comparison, which had the same visual instinct — dual bars,
+a banded-threshold callout, an expandable ladder per domain, a priority rail
+— but real content problems: a fabricated named journal and PMID, named
+hospitals presented as this doctor's own history, and scoring weights shown
+to one decimal place with no illustrative framing anywhere on the page.
+None of that travelled into `gaps2`. `domainSteps2()`, the function behind
+every ladder step, only restates each domain's real band thresholds as
+steps (12/24 months post-internship, one/second audit project, and so on)
+from `S.*` and `domSpec()` — it invents nothing, and the illustrative-weight
+disclaimer Gap analysis already carries at the foot of the page is repeated
+here rather than dropped.
+
+### What the a11y pass caught before this shipped
+
+The dedicated `a11y_gap2.mjs` suite (same method as `a11y_gap.mjs`: axe,
+24px touch targets, painted-background contrast on every new class, and a
+7-width overflow sweep) found four real problems on the first pass, all
+fixed before the sweep went green:
+
+- **An empty `<th>`.** The chevron column's header cell had no accessible
+  name at all — axe's `empty-table-header` rule. Fixed with an `.sr-only`
+  "Expand" label, the same pattern the app already uses for icon-only
+  buttons elsewhere.
+- **The hero KPI tile's text read as failing contrast against its own
+  background.** `.hud2-tile.hero` painted its dark background via
+  `background: linear-gradient(...)` alone, which never sets
+  `background-color` — so a script that reads `backgroundColor` to test
+  contrast walks straight past it to the page's pale background behind it,
+  and every light-on-dark color on the tile reads as failing against white.
+  The tile always rendered correctly; the fix (`background-color: var(--deep)`
+  alongside the existing gradient) makes the real, always-dark background
+  visible to that kind of check too, rather than only to the eye.
+- **One borderline-failing label.** `.dbar2-labels` used `--txt-mute` at
+  10.5px, 4.17:1 against a 4.5:1 requirement. Switched to the darker
+  `--txt-soft`.
+- **The table overflowed the page at phone widths, but not from the
+  table.** The actual culprit was the "Layout experiment" banner at the top
+  of the page: it borrows the existing `.chip` class, which is
+  `white-space:nowrap` by design for short badges, and this banner is a full
+  sentence. Fixed with an inline `white-space:normal`. Separately, `.panel2`
+  and `.gaps2-split`'s grid children were given `min-width:0` — the classic
+  CSS grid trap where a track sizes to its content's intrinsic width even
+  when a child has `overflow-x:auto`, so the table's own scroll never
+  engaged at narrow widths until the track itself could shrink.
+
+### Testing
+
+`gaps2.mjs` (new, in the permanent sweep) covers: the nav entry and page
+title; that 1.0 and 2.0 report the identical score fraction and readiness
+percentage for the same record; all four KPI tiles render; all six domains
+appear via `domOrder()`; a domain's ladder expands to its real steps with
+correct met/active state and collapses again; expand-all / collapse-all
+toggles all six and the open state persists in `S.gaps2Open` across a
+reload; the priority rail shows up to three `levers()` entries with point
+values; the banded-threshold callout carries no fabricated specifics; the
+page's own copy calls itself an experiment rather than a second source of
+truth; the true empty state (nothing to seed a programme from) still shows
+the same "no application open" pattern as 1.0; and the application switcher
+appears with two or more tracked applications. `gapmerge.mjs`'s nav-count
+assertion was updated from "exactly one nav entry matches /Gap analysis/"
+to "one entry matches exactly, and a second, `Gap analysis 2.0`, sits beside
+it" — the old assertion was written when only one such page existed and
+was never meant to forbid a second, but it read as a straightforward count
+either way.
+
 ## Noted for later, deliberately not built
 
 - **The Application tracker is unfinished and parked.** What is built works —
