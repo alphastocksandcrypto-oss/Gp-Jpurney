@@ -468,6 +468,26 @@ button.chk-box:hover{border-color:var(--deep)}
 .rec-empty{color:#8b969d;font-size:12.5px;display:flex;flex-direction:column;align-items:center;gap:8px;
   padding:22px;text-align:center;max-width:38ch;line-height:1.5}
 .rec-empty svg{color:#5b666c}
+/* the "grading" pause between stopping a recording and the simulated result */
+.grading-line{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--txt-soft);margin-top:12px}
+.grading-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);animation:recPulse 1.1s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){ .grading-dot{animation:none} }
+/* the simulated grade: a headline score, three sub-scores against the same
+   bars every readiness figure uses, then feedback as plain bullets */
+.grade-result{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.grade-score{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.grade-score b{font-family:var(--fd);font-size:28px;font-weight:800;color:var(--deep)}
+.grade-score span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-mute);
+  background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+.grade-fb{margin:10px 0 0;padding-left:18px}
+.grade-fb li{font-size:12.5px;color:var(--txt-soft);line-height:1.6;margin-bottom:3px}
+/* the scoring-criteria rubric ladder: five mark bands, low to high */
+.rubric{display:flex;flex-direction:column}
+.rub-row{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}
+.rub-row:first-child{border-top:0}
+.rub-n{flex:none;width:22px;height:22px;border-radius:50%;background:var(--mint-soft);color:var(--good-text);
+  font-family:var(--fd);font-size:11px;font-weight:800;display:grid;place-items:center;margin-top:1px}
+.rub-t{font-size:13px;color:var(--txt-soft);line-height:1.5}
 /* ============ FINDING A PREP ============ */
 .prep-find{display:flex;gap:8px;align-items:center;margin-bottom:10px}
 .prep-find input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:12px;padding:10px 14px;
@@ -938,7 +958,7 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
     examStageDone:{}, examActive:[], examOpen:"", gymSurface:"",
     mocks:{}, topicsDone:{},
     /* interview prep, keyed by college the way the exam hub is keyed by stage */
-    ivOpen:"", ivRatings:{}, ivMocks:{},
+    ivOpen:"", ivAttempts:{}, ivSessions:{}, ivKbDone:{},
     /* which prep products the doctor holds. Their own route's interview comes
        with the account; anything else is taken on deliberately. Nothing here
        charges anybody: this records intent, and billing is a real surface
@@ -4191,7 +4211,7 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
         (d === null ? '<span class="rm mute">No date held</span>'
          : d < 0 ? '<span class="rm mute">That date has passed</span>'
          : '<span class="rm ' + (d <= 21 ? "warn" : "mute") + '">' + esc(awayText(d)) + "</span>") +
-        (rd !== null ? '<span class="rm mute">' + rd + "% self-rated</span>" : "") +
+        (rd !== null ? '<span class="rm mute">' + rd + "% graded</span>" : "") +
         '<button class="btn btn-sm ' + (x.now ? "btn-primary" : "btn-ghost") + '" data-iv-open="' +
         esc(iv.id) + '">' + (open ? "Open the hub" : "Look inside") + "</button></div></div></div>";
       return h;
@@ -4782,13 +4802,6 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
   }
   function ivIncluded(id){ return myInterviews().some(function(x){ return x.id === id; }); }
 
-  function ivRatings(id){ return (S.ivRatings || {})[id] || {}; }
-  function ivMocks(id){ return (S.ivMocks || {})[id] || []; }
-  function ivReady(id){
-    var r = ivRatings(id), keys = Object.keys(r);
-    if (!keys.length) return null;
-    return Math.round(keys.reduce(function(a, k){ return a + r[k]; }, 0) / keys.length * 20);
-  }
   /* what the doctor already holds that answers a given interview domain,
      read straight off the portfolio rather than asked for again */
   function evidenceFor(d){
@@ -4796,18 +4809,36 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       return DOMAINS.filter(function(x){ return x.id === id; })[0];
     }).filter(Boolean);
   }
-  /* whether a domain's answer-structure notes have been marked read, and how
-     many practice attempts have been logged against it -- both trackable
-     without inventing the questions or the technique text themselves */
+  /* whether a domain's answer-structure notes have been marked read */
   function ivKbDone(id){ return (S.ivKbDone || {})[id] || {}; }
-  function ivPracticed(id){ return (S.ivPractice || {})[id] || {}; }
-  function ivRecordings(id){ return (S.ivRecordings || {})[id] || []; }
-  /* the same shape trendFor() gives an exam stage, read off ivMocks instead */
+  /* every graded scenario attempt (Voice/Video simulator) and every full
+     graded session (Mock interview), per interview prep */
+  function ivAttempts(id){ return (S.ivAttempts || {})[id] || []; }
+  function ivSessions(id){ return (S.ivSessions || {})[id] || []; }
+  function ivAllScores(id){
+    return ivAttempts(id).map(function(a){ return a.overall; })
+      .concat(ivSessions(id).map(function(s){ return s.overall; }));
+  }
+  /* the headline readiness figure now reads graded attempts and sessions --
+     the panel is the simulated grade, not a number the doctor typed in */
+  function ivReady(id){
+    var scores = ivAllScores(id);
+    if (!scores.length) return null;
+    return Math.round(scores.reduce(function(a, b){ return a + b; }, 0) / scores.length);
+  }
+  function ivDomainAvg(id, domainId){
+    var xs = ivAttempts(id).filter(function(a){ return a.domain === domainId; }).map(function(a){ return a.overall; });
+    if (!xs.length) return null;
+    return Math.round(xs.reduce(function(a, b){ return a + b; }, 0) / xs.length);
+  }
+  /* the same shape trendFor() gives an exam stage, read off full mock
+     sessions rather than individual scenario attempts -- a session is the
+     comparable, complete unit */
   function ivTrend(id){
-    var m = ivMocks(id);
-    if (m.length < 2) return null;
-    return {from:m[0].ready, to:m[m.length - 1].ready, delta:m[m.length - 1].ready - m[0].ready,
-            points:m.map(function(x){ return x.ready; })};
+    var s = ivSessions(id);
+    if (s.length < 2) return null;
+    var pts = s.map(function(x){ return x.overall; });
+    return {from:pts[0], to:pts[pts.length - 1], delta:pts[pts.length - 1] - pts[0], points:pts};
   }
   /* weeks to the interview itself, the same shape weeksTo() gives an exam
      stage. Only ever paced against a cycle the doctor is actually in. */
@@ -4817,29 +4848,170 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
     return d < 0 ? null : Math.max(0, Math.round(d / 7));
   }
 
-  /* ============ RECORD & REVIEW ============
-     A self-recording tool, not a simulator: nothing here is scored or judged
-     by anything but the doctor watching it back. There is no AI evaluation,
-     because there is no honest way to build one without either faking a
-     judgment or quietly asking a model to grade someone's interview technique,
-     both of which this product has ruled out.
+  /* ============ SCORING CRITERIA, KNOWLEDGE BASE, SCENARIOS ============
+     Real, populated content rather than a "to be authored" stub -- every
+     scenario, example answer and rubric line below is placeholder content
+     written for this prototype, not any college's actual material, and is
+     listed in the README placeholders section. The point of writing it out
+     in full is that the pages read and behave like the finished product; the
+     content itself still has to come from doctors who have sat these panels
+     before this reaches a real one. */
+  var IV_CRITERIA = {
+    clinical:{summary:"Judgement on real cases under pressure, and the knowledge behind the decision.", weight:25,
+      anchors:["Vague or textbook; no sense of a real decision being made",
+        "States a plan but cannot say why, or misses an obvious safety step",
+        "A safe, reasonable plan with the main differentials covered",
+        "A clear plan, prioritised correctly, with reasoning the panel can follow",
+        "Anticipates complications, states what would change the plan, and why"]},
+    qi:{summary:"A project you actually ran: the problem, what changed, and what you would do differently.", weight:15,
+      anchors:["No project, or describes attending one rather than running it",
+        "A project with no measured before and after",
+        "A completed audit cycle with a clear before and after",
+        "A cycle plus a real, described change in practice",
+        "A cycle, a change, re-measurement, and honest reflection on what did not work"]},
+    comm:{summary:"Explaining to patients, families and colleagues, clearly and without jargon.", weight:20,
+      anchors:["Jargon-heavy or one-directional; no check for understanding",
+        "Clear but generic; not adapted to the person in the scenario",
+        "Adapts language to the audience and checks understanding once",
+        "Structures the conversation, checks understanding, and handles emotion in the room",
+        "All of that, plus names what they would do differently if it went badly"]},
+    appraisal:{summary:"Reading a paper properly and saying what it is actually worth.", weight:15,
+      anchors:["Accepts a claim at face value",
+        "Names one obvious limitation, such as a small sample or industry funding",
+        "Weighs study design and population against the claim being made",
+        "All of that, plus states what evidence would change their mind",
+        "Ties the appraisal to a real decision they would or would not make in practice"]},
+    teamwork:{summary:"Where you led, where you followed, and how you handled it going wrong.", weight:15,
+      anchors:["Describes a team event without naming their own role in it",
+        "Names their role but not what they would do differently",
+        "A clear account of leading or following well",
+        "Names a real conflict or failure and how they handled it in the moment",
+        "All of that, plus what changed in how they work afterward"]},
+    self:{summary:"Insight, probity, and knowing your own limits.", weight:10,
+      anchors:["No real mistake named, or blame placed entirely elsewhere",
+        "Names a mistake but minimises it",
+        "Owns a real mistake and its consequence",
+        "Owns it, and states what changed afterward",
+        "All of that, plus how they now catch the same error earlier"]}
+  };
+  var IV_KB = {
+    clinical:{technique:"State the immediate priority first (safety, resuscitation), then your differential, then " +
+        "how you would confirm or rule each one out. Say what you would do while waiting for results, not just " +
+        "what you would order.",
+      example:"“First I would check this patient is haemodynamically stable before anything else. Given the " +
+        "chest pain and instability, my leading concerns are ACS and a PE, so I'd get an ECG and troponin while " +
+        "starting oxygen and IV access, keeping aortic dissection in mind before reaching for anticoagulation.”"},
+    qi:{technique:"Name the problem in one sentence, then the baseline measurement, then the specific change you " +
+        "made, then the re-measurement, then what you would still change. A project with no numbers either side of " +
+        "the change is not a completed cycle.",
+      example:"“We were missing VTE prophylaxis in about a third of surgical admissions. I audited 40 charts, " +
+        "introduced a prompt on the admission form, then re-audited at 8 weeks -- missed doses dropped to under " +
+        "10%. What I would change next time is measuring weekly rather than waiting eight weeks to find out.”"},
+    comm:{technique:"Say what you would find out before you start talking (what do they already know, who is in " +
+        "the room), then how you would open, then how you would check they have understood -- not just whether " +
+        "they nodded.",
+      example:"“I would first find out what she already understands and who she wants in the room. I'd give " +
+        "a warning shot before the diagnosis itself, then pause. Rather than asking if that makes sense, I'd ask " +
+        "her to tell me in her own words what she is taking from this.”"},
+    appraisal:{technique:"State the claim, then the study design, then the population it was tested in, then " +
+        "whether that matches your patients, then what would make you actually change practice.",
+      example:"“It's a single industry-funded trial in a population younger and fitter than most of my " +
+        "patients. The effect size is real but the number needed to treat is large, and I'd want independent " +
+        "replication before changing first-line practice on this alone.”"},
+    teamwork:{technique:"Describe the situation briefly, then your specific action, not the team's, then the " +
+        "outcome, then what you would do differently if it happened again.",
+      example:"“A junior colleague prescribed a dose I thought was wrong. I checked with them directly " +
+        "rather than overriding it in front of the patient, we corrected it together, and afterward I flagged it " +
+        "as a near-miss so the ward could look at why the chart made that error easy to make.”"},
+    self:{technique:"Name the actual mistake plainly, not a humble-brag disguised as one, then the consequence, " +
+        "then what specifically changed in how you practise afterward.",
+      example:"“I once discharged a patient without reviewing a pending potassium result. It came back " +
+        "critically high after they had left, and we had to recall them. I now do not sign a discharge until " +
+        "every pending result either is back or has a named plan for who checks it.”"}
+  };
+  var IV_SCENARIOS = [
+    {id:"cl1", domain:"clinical", t:"Acute chest pain", prompt:"A 68-year-old man presents with acute chest pain and looks unwell. Walk the panel through your immediate assessment and management priorities."},
+    {id:"cl2", domain:"clinical", t:"A diagnosis you got wrong", prompt:"Describe a case where your initial diagnosis was wrong. What changed your mind, and what did you learn?"},
+    {id:"qi1", domain:"qi", t:"A project you led", prompt:"Describe an audit or quality improvement project you led. What was the problem, what did you change, and what happened after?"},
+    {id:"qi2", domain:"qi", t:"Resistance to change", prompt:"A colleague resists a process change you believe improves patient safety. How do you handle it?"},
+    {id:"co1", domain:"comm", t:"Breaking bad news", prompt:"You need to break bad news to a patient and their family on a busy ward. Talk the panel through how you would approach it."},
+    {id:"co2", domain:"comm", t:"Explaining a complex plan", prompt:"Describe a time you had to explain a complex treatment plan to a patient with low health literacy."},
+    {id:"ap1", domain:"appraisal", t:"A paper that changes practice", prompt:"You read a paper claiming a new drug halves mortality in a condition you treat. Walk the panel through how you would critically appraise it before changing your own practice."},
+    {id:"ap2", domain:"appraisal", t:"Research you have done", prompt:"Describe a piece of research or audit you have been involved in, and what you would do differently."},
+    {id:"tm1", domain:"teamwork", t:"A junior's error", prompt:"Describe a time a junior colleague made a significant error. How did you handle it in the moment, and afterward?"},
+    {id:"tm2", domain:"teamwork", t:"Disagreeing with a senior", prompt:"Tell the panel about a time you disagreed with a senior colleague's clinical decision. What did you do?"},
+    {id:"sf1", domain:"self", t:"A mistake that affected care", prompt:"Describe a mistake you made that affected patient care. What did you do next, and what changed?"},
+    {id:"sf2", domain:"self", t:"Knowing your limits", prompt:"How do you know when you are out of your depth, and what do you do about it?"}
+  ];
+  function scenarioById(id){ return IV_SCENARIOS.filter(function(s){ return s.id === id; })[0] || null; }
+  function scenariosFor(domainId){ return IV_SCENARIOS.filter(function(s){ return s.domain === domainId; }); }
 
-     State lives OUTSIDE S on purpose. render() replaces #view wholesale on
+  /* ============ SIMULATED GRADING ============
+     This is a static file with no backend and nowhere safe to hold a real
+     model API key client-side, so it cannot call a real model. What it
+     builds instead is the full grading EXPERIENCE -- a score, a breakdown,
+     feedback -- from a small illustrative pool rather than any actual
+     analysis of what was said, labelled "simulated" everywhere it appears.
+     Swapping this one function for a real call (transcribe the recording,
+     score the transcript against IV_CRITERIA) is a backend job later, not a
+     redesign: nothing that reads its output would need to change shape. */
+  var GRADE_BANK = {
+    high:["Clear structure and a specific example rather than a general answer.",
+          "Named the safety-critical step early, which is what panels listen for first.",
+          "Answered the question that was actually asked, rather than a nearby one."],
+    mid:["The structure is there, but stayed general where a specific detail would land harder.",
+         "Good content, delivered a little too fast to follow under pressure.",
+         "Right answer, but the reasoning behind it needs to come out loud, not stay implied."],
+    low:["Started well but drifted away from the actual question partway through.",
+         "Described the situation at length before saying what was actually done.",
+         "Missing the ‘what I would do differently’ close a panel is listening for."]
+  };
+  var GRADE_CRITERIA_LABELS = ["Structure", "Specific detail", "What you'd do differently"];
+  function simulateGrade(domainId){
+    var overall = 48 + Math.round(Math.random() * 42); // an illustrative 48-90 spread
+    var band = overall >= 75 ? "high" : overall >= 58 ? "mid" : "low";
+    var subs = GRADE_CRITERIA_LABELS.map(function(){
+      var jitter = Math.round((Math.random() - 0.5) * 24);
+      return Math.max(20, Math.min(100, overall + jitter));
+    });
+    var pool = GRADE_BANK[band].slice(), feedback = [];
+    while (feedback.length < 2 && pool.length){
+      feedback.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+    }
+    return {overall:overall, subs:subs, feedback:feedback};
+  }
+
+  /* ============ RECORDING ENGINE ============
+     Shared by Voice simulator, Video simulator and Mock interview -- all
+     three are the same mechanic (answer a scenario on camera or audio, get
+     graded), just entered from a different place and, for Mock interview,
+     run several times in a row.
+
+     State lives OUTSIDE S on purpose: render() replaces #view wholesale on
      every change (see render() below), and a live MediaStream or an
      in-progress MediaRecorder cannot survive having its DOM torn out from
-     under it. So this holds the live camera/mic state for exactly as long as
-     a recording is in progress, never touches localStorage, and render()
-     itself is the one place that guarantees it gets cleaned up if the doctor
-     navigates away mid-recording -- see the guard at the top of render(). */
-  var recState = null; // {kind, stream, recorder, chunks, startedAt, timerId}
-  var recPick = {kind:"video", domain:IV_DOMAINS[0].id};
+     under it. recToken guards the async gaps -- getUserMedia resolving, the
+     recorder stopping, the simulated grading delay -- so a doctor starting a
+     NEW recording, discarding, or simply navigating away can never have a
+     stale, in-flight callback overwrite what they are now looking at; each
+     async step checks its own token is still current before touching
+     recState or calling render(). recAbort() is render()'s own cleanup
+     guard (see the top of render()) for the one case a token cannot cover by
+     itself: leaving mid-recording, while a live stream is still open. */
+  var recState = null; // {kind, scenarioId, domain, stream, recorder, chunks, startedAt, timerId, recording, grading, reviewUrl, grade}
+  var recToken = 0;
+  var mockSession = null; // {ivId, scenarioIds, idx, results}
+  /* true for exactly the one render() call recStart() makes to show its own
+     "now recording" state -- without this, render()'s own cleanup guard
+     (see render() below) would see recording:true on that very call and
+     abort the recording it had just started */
+  var recSuppressGuard = false;
   function recSupported(){
     return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
   }
-  /* stops and discards without any review step -- the only path that runs
-     when the doctor leaves the surface mid-recording rather than pressing Stop */
   function recAbort(){
     if (!recState) return;
+    recToken++;
     if (recState.timerId) clearInterval(recState.timerId);
     if (recState.recorder){
       recState.recorder.onstop = null;
@@ -4847,6 +5019,7 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       if (recState.recorder.state !== "inactive"){ try { recState.recorder.stop(); } catch (e){} }
     }
     if (recState.stream) recState.stream.getTracks().forEach(function(t){ t.stop(); });
+    if (recState.reviewUrl) URL.revokeObjectURL(recState.reviewUrl);
     recState = null;
   }
   function recElapsed(){
@@ -4856,78 +5029,12 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
     var m = Math.floor(s / 60), sec = s % 60;
     return (m < 10 ? "0" : "") + m + ":" + (sec < 10 ? "0" : "") + sec;
   }
-  function ivRecordSurface(iv){
-    if (!recSupported()){
-      return '<div class="card"><p class="empty"><b>Recording is not available here.</b>This browser does not ' +
-        "expose camera or microphone recording, or this page is embedded somewhere that blocks it -- for example " +
-        "inside a Claude Artifact. Open MedNav in its own browser tab and it should work.</p></div>";
-    }
-    var errMsg = recState && recState.error ? recState.error : null;
-    if (errMsg) recState = null;
-    var h = '<div class="card"><div class="card-head"><h2>Record & review</h2>' +
-      '<span class="aside">' + ivRecordings(iv.id).length + " recorded so far</span></div>" +
-      '<p class="lede" style="max-width:66ch;margin-bottom:14px">Answer a question out loud, on camera or just ' +
-      "audio, then watch or listen back before you rate yourself. Nothing here is scored for you, nothing is " +
-      "uploaded, and a recording is lost the moment you leave this page or reload it -- it exists only to let you " +
-      "hear yourself the way a panel will.</p>";
-    if (errMsg){
-      h += '<p class="empty"><b>Could not start.</b>' + esc(errMsg) + " If this page is embedded (for example " +
-        "inside a Claude Artifact), the browser may be blocking camera and microphone access entirely -- try " +
-        "opening MedNav in its own tab, or try again below.</p>";
-    }
-
-    if (recState && recState.recording){
-      h += '<div class="rec-stage' + (recState.kind === "audio" ? " audio-only" : "") + '">' +
-        (recState.kind === "video" ? '<video id="recLive" autoplay muted playsinline></video>' : "") +
-        '<span class="rec-badge"><span class="rec-dot" aria-hidden="true"></span><span id="recTimer">00:00</span></span>' +
-        "</div>";
-      h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
-        '<button class="btn btn-sm btn-primary" data-rec-stop>Stop recording</button></div>';
-      return h + "</div>";
-    }
-
-    if (recState && recState.reviewUrl){
-      var r = ivRatings(iv.id);
-      h += '<div class="rec-stage' + (recState.kind === "audio" ? " audio-only" : "") + '">' +
-        (recState.kind === "video"
-          ? '<video src="' + recState.reviewUrl + '" controls playsinline></video>'
-          : '<audio src="' + recState.reviewUrl + '" controls style="width:100%"></audio>') + "</div>";
-      h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
-        '<button class="btn btn-sm btn-ghost" data-rec-discard>Discard and record again</button>' +
-        '<button class="btn btn-sm btn-primary" data-rec-save>Log this take</button></div>';
-      h += '<p class="group-h">How did that domain go?</p>';
-      var rd = recState.domain;
-      var v = r[rd] || 0;
-      h += '<div class="row"><span class="t">' + esc((IV_DOMAINS.filter(function(x){ return x.id === rd; })[0] || {}).t || rd) +
-        (v ? "<small>Rated " + v + " of 5</small>" : "<small>Not rated</small>") + "</span>" +
-        '<span class="r rate">' + [1,2,3,4,5].map(function(n){
-          return '<button class="rt' + (v >= n ? " on" : "") + '" data-iv-rate="' + rd + ':' + n +
-            '" aria-label="Rate ' + n + ' of 5">' + n + "</button>";
-        }).join("") + "</span></div>";
-      return h + "</div>";
-    }
-
-    var pick = recPick;
-    h += '<div class="field"><label for="recDomain">Which domain are you answering for</label>' +
-      '<select id="recDomain">' + IV_DOMAINS.map(function(d){
-        return '<option value="' + esc(d.id) + '"' + (d.id === pick.domain ? " selected" : "") + ">" + esc(d.t) + "</option>";
-      }).join("") + "</select></div>";
-    h += '<div style="display:flex;gap:8px;margin:10px 0 14px">' +
-      '<button class="btn btn-sm ' + (pick.kind === "video" ? "btn-primary" : "btn-ghost") + '" data-rec-kind="video">' +
-      ico(I.video, 13) + " Camera</button>" +
-      '<button class="btn btn-sm ' + (pick.kind === "audio" ? "btn-primary" : "btn-ghost") + '" data-rec-kind="audio">' +
-      ico(I.mic, 13) + " Audio only</button></div>";
-    h += '<div class="rec-stage' + (pick.kind === "audio" ? " audio-only" : "") + '">' +
-      '<p class="rec-empty">' + ico(pick.kind === "video" ? I.video : I.mic, 20) +
-      "Nothing recorded yet. If this page is embedded (for example inside a Claude Artifact), camera and " +
-      "microphone access may be blocked entirely -- open MedNav in its own tab if the button below does nothing.</p></div>";
-    h += '<div style="margin-top:12px"><button class="btn btn-sm btn-primary" data-rec-start>Start recording</button></div>';
-    return h + "</div>";
-  }
-  function recStart(domain, kind){
+  function recStart(scenario, kind){
     if (!recSupported()) return;
+    var myToken = ++recToken;
     var constraints = kind === "video" ? {video:true, audio:true} : {video:false, audio:true};
     navigator.mediaDevices.getUserMedia(constraints).then(function(stream){
+      if (myToken !== recToken){ stream.getTracks().forEach(function(t){ t.stop(); }); return; }
       var chunks = [], recorder;
       try { recorder = new MediaRecorder(stream); }
       catch (e){
@@ -4942,18 +5049,27 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
         var blob = new Blob(chunks, {type:type});
         var url = URL.createObjectURL(blob);
         stream.getTracks().forEach(function(t){ t.stop(); });
-        recState = {kind:kind, domain:domain, reviewUrl:url, recording:false};
+        if (myToken !== recToken){ URL.revokeObjectURL(url); return; }
+        recState = {kind:kind, scenarioId:scenario.id, domain:scenario.domain, reviewUrl:url,
+                    recording:false, grading:true};
         render();
+        setTimeout(function(){
+          if (myToken !== recToken) return;
+          recState.grade = simulateGrade(scenario.domain);
+          recState.grading = false;
+          render();
+        }, 1300 + Math.round(Math.random() * 500));
       };
-      recState = {kind:kind, domain:domain, stream:stream, recorder:recorder, chunks:chunks,
-                  recording:true, startedAt:Date.now(), timerId:null};
+      /* render() must show this recording's own "recording" state without its
+         own guard tearing it straight back down -- see the note on that
+         guard, at the top of render() */
+      recState = {kind:kind, scenarioId:scenario.id, domain:scenario.domain, stream:stream, recorder:recorder,
+                  chunks:chunks, recording:true, startedAt:Date.now(), timerId:null};
+      recSuppressGuard = true;
       render();
+      recSuppressGuard = false;
       var vEl = document.getElementById("recLive");
       if (vEl) vEl.srcObject = stream;
-      /* start() can throw synchronously (no available encoder is the usual
-         cause), and by this point the stream lives in recState rather than a
-         variable this .catch below can see -- so it has to be handled right
-         here, or the camera stays lit behind an error message */
       try { recorder.start(); }
       catch (e){
         stream.getTracks().forEach(function(t){ t.stop(); });
@@ -4962,10 +5078,12 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
         return;
       }
       recState.timerId = setInterval(function(){
+        if (myToken !== recToken){ clearInterval(recState && recState.timerId); return; }
         var t = document.getElementById("recTimer");
         if (t) t.textContent = recFmtTime(recElapsed());
       }, 500);
     }).catch(function(err){
+      if (myToken !== recToken) return;
       var msg = err && err.name === "NotAllowedError" ? "Camera or microphone access was denied."
         : err && err.name === "NotFoundError" ? "No camera or microphone was found on this device."
         : "Camera or microphone access could not be started.";
@@ -4980,50 +5098,157 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
     try { recState.recorder.stop(); } catch (e){}
   }
   function recDiscard(){
+    recToken++;
     if (recState && recState.reviewUrl) URL.revokeObjectURL(recState.reviewUrl);
     recState = null;
     render();
   }
-  function recSaveClick(ivId){
-    if (!recState || !recState.reviewUrl) return;
-    S.ivRecordings = S.ivRecordings || {};
-    S.ivRecordings[ivId] = S.ivRecordings[ivId] || [];
-    S.ivRecordings[ivId].push({at:new Date().toISOString().slice(0, 10), domain:recState.domain, kind:recState.kind});
-    logActivity("Recorded and reviewed a take", ivId);
-    URL.revokeObjectURL(recState.reviewUrl);
+  /* standalone practice (Voice/Video simulator): logs one graded attempt */
+  function recLogClick(ivId){
+    if (!recState || !recState.grade) return;
+    var sc = scenarioById(recState.scenarioId);
+    S.ivAttempts = S.ivAttempts || {};
+    S.ivAttempts[ivId] = S.ivAttempts[ivId] || [];
+    S.ivAttempts[ivId].push({at:new Date().toISOString().slice(0, 10),
+      mode:recState.kind === "video" ? "video" : "voice", scenarioId:recState.scenarioId,
+      domain:recState.domain, overall:recState.grade.overall, subs:recState.grade.subs});
+    logActivity("Practised " + (sc ? sc.t : "a scenario") + ", graded " + recState.grade.overall + "%", ivId);
+    recToken++;
+    if (recState.reviewUrl) URL.revokeObjectURL(recState.reviewUrl);
     recState = null;
     save(); render();
-    toast("Take logged.");
+    toast("Attempt logged.");
+  }
+  /* inside a mock session: banks the result and advances instead of logging
+     to S directly -- the session itself is what gets logged, once complete */
+  function recNextClick(){
+    if (!recState || !recState.grade || !mockSession) return;
+    mockSession.results.push({scenarioId:recState.scenarioId, domain:recState.domain,
+      overall:recState.grade.overall, subs:recState.grade.subs});
+    recToken++;
+    if (recState.reviewUrl) URL.revokeObjectURL(recState.reviewUrl);
+    recState = null;
+    mockSession.idx++;
+    render();
+  }
+  function startMockSession(ivId){
+    var picks = IV_DOMAINS.map(function(d){
+      var opts = scenariosFor(d.id);
+      return opts[Math.floor(Math.random() * opts.length)];
+    });
+    mockSession = {ivId:ivId, scenarioIds:picks.map(function(s){ return s.id; }), idx:0, results:[]};
+  }
+  function logMockSession(){
+    if (!mockSession || mockSession.idx < mockSession.scenarioIds.length) return;
+    var overall = Math.round(mockSession.results.reduce(function(a, r){ return a + r.overall; }, 0) /
+      mockSession.results.length);
+    S.ivSessions = S.ivSessions || {};
+    S.ivSessions[mockSession.ivId] = S.ivSessions[mockSession.ivId] || [];
+    S.ivSessions[mockSession.ivId].push({at:new Date().toISOString().slice(0, 10), overall:overall,
+      results:mockSession.results});
+    logActivity("Mock interview session logged, " + overall + "% overall", mockSession.ivId);
+    mockSession = null;
+    save(); render();
+    toast("Session logged.");
+  }
+  function abandonMockSession(){ mockSession = null; render(); }
+
+  /* the recording/review/grading card, shared by Voice simulator, Video
+     simulator and each step of a Mock interview session */
+  function recordAndGradeUI(scenario, kind, inSession){
+    if (!recSupported()){
+      return '<div class="card"><p class="empty"><b>Recording is not available here.</b>This browser does not ' +
+        "expose camera or microphone recording, or this page is embedded somewhere that blocks it -- for example " +
+        "inside a Claude Artifact. Open MedNav in its own browser tab and it should work.</p></div>";
+    }
+    var errMsg = recState && recState.error ? recState.error : null;
+    if (errMsg) recState = null;
+    var h = '<div class="card">';
+    if (errMsg){
+      h += '<p class="empty"><b>Could not start.</b>' + esc(errMsg) + " If this page is embedded (for example " +
+        "inside a Claude Artifact), the browser may be blocking camera and microphone access entirely -- try " +
+        "opening MedNav in its own tab, or try again below.</p>";
+    }
+    var active = recState && recState.scenarioId === scenario.id;
+
+    if (active && recState.recording){
+      h += '<div class="rec-stage' + (kind === "audio" ? " audio-only" : "") + '">' +
+        (kind === "video" ? '<video id="recLive" autoplay muted playsinline></video>' : "") +
+        '<span class="rec-badge"><span class="rec-dot" aria-hidden="true"></span><span id="recTimer">00:00</span></span>' +
+        "</div>";
+      h += '<div style="margin-top:12px"><button class="btn btn-sm btn-primary" data-rec-stop>Stop and grade</button></div>';
+      return h + "</div>";
+    }
+
+    if (active && recState.grading){
+      h += '<div class="rec-stage' + (kind === "audio" ? " audio-only" : "") + '">' +
+        (kind === "video"
+          ? '<video src="' + recState.reviewUrl + '" controls playsinline></video>'
+          : '<audio src="' + recState.reviewUrl + '" controls style="width:100%"></audio>') + "</div>";
+      h += '<p class="grading-line"><span class="grading-dot" aria-hidden="true"></span>Grading your answer' +
+        '…<span class="chip mute" style="margin-left:8px">simulated</span></p>';
+      return h + "</div>";
+    }
+
+    if (active && recState.grade){
+      var g = recState.grade;
+      h += '<div class="rec-stage' + (kind === "audio" ? " audio-only" : "") + '">' +
+        (kind === "video"
+          ? '<video src="' + recState.reviewUrl + '" controls playsinline></video>'
+          : '<audio src="' + recState.reviewUrl + '" controls style="width:100%"></audio>') + "</div>";
+      h += '<div class="grade-result"><div class="grade-score"><b>' + g.overall + "%</b>" +
+        '<span>simulated grade</span></div><div class="grade-subs">' +
+        GRADE_CRITERIA_LABELS.map(function(lbl, i){
+          return '<div class="barrow" style="padding:6px 0"><span class="lbl">' + esc(lbl) + "</span>" +
+            '<span class="val num">' + g.subs[i] + "%</span>" + bar(g.subs[i]) + "</div>";
+        }).join("") + "</div>";
+      h += '<ul class="grade-fb">' + g.feedback.map(function(f){ return "<li>" + esc(f) + "</li>"; }).join("") + "</ul></div>";
+      h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="btn btn-sm btn-ghost" data-rec-discard>Discard and try again</button>' +
+        '<button class="btn btn-sm btn-primary" data-rec-' + (inSession ? "next" : "log") + '>' +
+        (inSession ? "Next question" : "Log this attempt") + "</button></div>";
+      return h + "</div>";
+    }
+
+    h += '<p class="lede" style="max-width:66ch;margin-bottom:14px">Answer ' +
+      (kind === "video" ? "on camera" : "out loud") + ", then it is graded automatically. Nothing is uploaded -- " +
+      "the recording and the grade both live only in this browser tab.</p>";
+    h += '<div class="rec-stage' + (kind === "audio" ? " audio-only" : "") + '">' +
+      '<p class="rec-empty">' + ico(kind === "video" ? I.video : I.mic, 20) +
+      "Nothing recorded yet. If this page is embedded (for example inside a Claude Artifact), camera and " +
+      "microphone access may be blocked entirely.</p></div>";
+    h += '<div style="margin-top:12px"><button class="btn btn-sm btn-primary" data-rec-start>Start recording</button></div>';
+    return h + "</div>";
   }
 
-  /* Nine surfaces, not six. Exam prep had a countdown plan and interview prep
-     never did; "practice questions" quietly carried both technique and content
-     in one thin stub, which is really two different things; and there was
-     nothing between "rate yourself" and an unwired tutor booking -- no actual
-     practice MOMENT on the page, just a score entered after one happened
-     somewhere else. Knowledge base and Record & review fill exactly that gap,
-     both honestly: technique is structure the same way a topic list is, and
-     self-recording needs no AI judgment to be worth having -- you watch
-     yourself back and rate what you see, the same rating you already give a
-     mock either way. */
+  /* Nine surfaces. Exam prep had a countdown plan and interview prep never
+     did; the scoring criteria were a thin domain list rather than a page you
+     could actually read; the knowledge base and the practice surfaces were
+     both stubs, "content to be authored"; and there was nothing between
+     "rate yourself" and an unwired tutor booking -- no actual practice
+     MOMENT, just a score entered after one happened somewhere else. Voice
+     and Video simulator are that moment: a real scenario, answered for
+     real, graded automatically. Mock interview is the same mechanic run as
+     one continuous session instead of one scenario at a time. */
   var IV_GYM = [
-    {id:"plan",  t:"Countdown plan", ic:I.cal, d:"Weeks to interview day, and what this week is for",
+    {id:"plan",     t:"Countdown plan", ic:I.cal, d:"Weeks to interview day, and what this week is for",
      feeds:"Sets the pace the rest is measured against"},
-    {id:"what",  t:"What is assessed", ic:I.target, d:"The domains this format scores, and what each one means",
-     feeds:"Frames everything else in the hub"},
-    {id:"evid",  t:"Your evidence",    ic:I.clip,   d:"What you already hold that answers each domain",
+    {id:"criteria", t:"Interview scoring criteria", ic:I.target,
+     d:"Every domain the panel scores, what it means, and what each mark band looks like",
+     feeds:"Everything else in the hub is scored against this"},
+    {id:"evid",     t:"Your evidence",  ic:I.clip, d:"What you already hold that answers each domain",
      feeds:"Read straight off your portfolio"},
-    {id:"kb",    t:"Knowledge base",   ic:I.book,   d:"How to structure an answer, domain by domain",
-     feeds:"Technique, not questions"},
-    {id:"qs",    t:"Practice questions", ic:I.list, d:"Questions by domain, with what a strong answer covers",
-     feeds:"Practice is tracked per domain"},
-    {id:"record",t:"Record & review",  ic:I.mic,    d:"Answer out loud, on camera or just audio, then watch it back",
-     feeds:"Nothing here is scored for you -- you watch, then rate"},
-    {id:"mock",  t:"Mock interview",   ic:I.flag,   d:"Run one, then rate yourself honestly per domain",
-     feeds:"Your ratings drive the readiness figure"},
-    {id:"stats", t:"Analytics",        ic:I.chart,  d:"Which domains you are weakest on, and whether that is moving",
-     feeds:"Reads your self-ratings over time"},
-    {id:"tutor", t:"Mock with a tutor", ic:I.user,  d:"A scored practice interview with someone who has sat on a panel",
+    {id:"kb",       t:"Knowledge base", ic:I.book, d:"How to structure an answer, with a worked example per domain",
+     feeds:"Technique and a model answer, domain by domain"},
+    {id:"voice",    t:"Voice simulator", ic:I.mic, d:"Pick a scenario, answer it out loud, get graded",
+     feeds:"Every attempt is graded and logged"},
+    {id:"video",    t:"Video simulator", ic:I.video, d:"The same scenarios, on camera",
+     feeds:"Every attempt is graded and logged"},
+    {id:"mock",     t:"Mock interview", ic:I.flag, d:"A full session: several scenarios back to back, on camera",
+     feeds:"Ends in a complete graded session summary"},
+    {id:"stats",    t:"Analytics",      ic:I.chart, d:"Your full breakdown by domain, and the trend across sessions",
+     feeds:"Reads every graded attempt and session"},
+    {id:"tutor",    t:"Mock with a tutor", ic:I.user, d:"A scored practice interview with someone who has sat on a panel",
      feeds:"Attendance is logged to your record"}
   ];
 
@@ -5134,7 +5359,7 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
   function ivCard(iv, lead){
     var d = iv.cycle ? until(iv.cycle.interview) : null, rd = ivReady(iv.id);
     var inc = ivIncluded(iv.id), open = prepOpen(iv.id, inc);
-    var mocks = ivMocks(iv.id).length;
+    var sessions = ivSessions(iv.id).length;
     var state = inc ? "included" : open ? "unlocked" : "locked";
 
     /* the same specialty hue an exam in this specialty wears, so a doctor's
@@ -5149,8 +5374,8 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       '<p class="pc-d">' + esc(iv.d) + "</p>";
 
     if (rd !== null){
-      h += '<div class="pc-prog"><div class="pr"><span>' + rd + " % self-rated</span><span>" +
-        mocks + " mock" + (mocks === 1 ? "" : "s") + '</span></div><div class="pc-bar"><i style="width:' +
+      h += '<div class="pc-prog"><div class="pr"><span>' + rd + " % graded</span><span>" +
+        sessions + " session" + (sessions === 1 ? "" : "s") + '</span></div><div class="pc-bar"><i style="width:' +
         rd + '%"></i></div></div>';
     } else if (!open){
       h += '<p class="pc-sub" style="margin-top:10px">' + IV_GYM.length +
@@ -5183,10 +5408,10 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
     h += '<div class="gym-h"><div class="gym-id"><span class="gym-k">' + esc(iv.body) + "</span>" +
       "<h2>" + esc(iv.t) + "</h2><p>" + esc(iv.fmt) + ". " +
       (d === null ? "No date held." : d < 0 ? "That date has passed." : awayText(d) + ", for " + esc(iv.target) + ".") + "</p></div>";
-    h += '<div class="gym-stat"><span class="k">Self-rated</span><b>' + (rd === null ? "—" : rd + "%") + "</b>" +
-      "<small>" + (rd === null ? "Rate yourself in a mock" : "Across " + Object.keys(ivRatings(iv.id)).length + " domains") + "</small></div>";
-    h += '<div class="gym-stat"><span class="k">Mocks run</span><b>' + ivMocks(iv.id).length + "</b>" +
-      "<small>Recorded by you</small></div></div>";
+    h += '<div class="gym-stat"><span class="k">Graded average</span><b>' + (rd === null ? "—" : rd + "%") + "</b>" +
+      "<small>" + (rd === null ? "Practise a scenario to start" : "Across " + ivAllScores(iv.id).length + " graded attempts") + "</small></div>";
+    h += '<div class="gym-stat"><span class="k">Sessions run</span><b>' + ivSessions(iv.id).length + "</b>" +
+      "<small>Full mock interviews</small></div></div>";
 
     h += '<div class="gym-grid">' + IV_GYM.map(function(x){
       return '<button class="gym-card' + (x.id === surface ? " on" : "") + '" data-gym="' + x.id + '">' +
@@ -5213,10 +5438,10 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
           "</p></div>";
       }
       var blocks = [
-        {w:"Weeks 1 to 2", t:"Map what you hold", d:"Read What is assessed and Your evidence together, so you know which domains you can already answer and which are thin"},
-        {w:"Weeks 3 to 4", t:"Build your answers", d:"Work Knowledge base and Practice questions domain by domain, starting with the thinnest evidence"},
-        {w:"Week 5", t:"Record yourself once", d:"Answer out loud on Record & review before you sit a full mock, so the first time you hear yourself back is not in front of a panel"},
-        {w:"Weeks 6 to 7", t:"Run a mock, then close what it found", d:"Rate yourself honestly. Analytics ranks the weakest domains -- work down, not across"},
+        {w:"Weeks 1 to 2", t:"Map what you hold", d:"Read Interview scoring criteria and Your evidence together, so you know which domains you can already answer and which are thin"},
+        {w:"Weeks 3 to 4", t:"Build your answers", d:"Work Knowledge base domain by domain, starting with the thinnest evidence, then try the matching scenarios in Voice simulator"},
+        {w:"Week 5", t:"Move to camera", d:"Repeat your strongest scenarios in Video simulator -- the first time you are on camera should not be in front of a panel"},
+        {w:"Weeks 6 to 7", t:"Run a full mock, then close what it found", d:"Sit a complete Mock interview session. Analytics ranks the weakest domains from your graded attempts -- work down, not across"},
         {w:"Final week", t:"Second mock, then taper", d:"Confirm the direction of travel and stop"}
       ];
       var h = '<div class="card"><div class="card-head"><h2>' + wk + (wk === 1 ? " week" : " weeks") + " to go</h2>" +
@@ -5229,20 +5454,25 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
         "illustrative in this prototype.") + "</div>";
     }
 
-    if (g.id === "what"){
-      var r0 = ivRatings(iv.id);
-      var h = '<div class="card"><div class="card-head"><h2>' + IV_DOMAINS.length + " domains</h2>" +
+    if (g.id === "criteria"){
+      var h = '<div class="card"><div class="card-head"><h2>What this panel scores</h2>' +
         '<span class="aside">' + esc(iv.fmt) + "</span></div>" +
-        '<p class="lede" style="max-width:68ch;margin-bottom:8px">A structured format scores each domain on its ' +
-        "own, then combines them. Nothing here changes that a panel is free to weight one domain over another on " +
-        "the day -- this is the shape it is scored in, not a formula for the result.</p>";
+        '<p class="lede" style="max-width:68ch">Six domains, each scored on its own, then combined. The weights ' +
+        "and mark bands below are illustrative -- " + esc(iv.body) + " publishes what it actually scores and how " +
+        "heavily.</p></div>";
       h += IV_DOMAINS.map(function(d){
-        var v = r0[d.id];
-        return '<div class="row"><span class="t">' + esc(d.t) + "<small>" + esc(d.d) + "</small></span>" +
-          '<span class="r">' + (v ? '<span class="chip mute">Self-rated ' + v + "/5</span>" :
-            '<span class="chip mute">Not yet rated</span>') + "</span></div>";
+        var crit = IV_CRITERIA[d.id];
+        return '<div class="card" style="margin-top:12px"><div class="card-head"><h2>' + esc(d.t) + "</h2>" +
+          '<span class="chip mute">' + crit.weight + "% illustrative weight</span></div>" +
+          '<p class="lede" style="max-width:68ch;margin-bottom:14px">' + esc(crit.summary) + "</p>" +
+          '<p class="group-h">Mark band, low to high</p><div class="rubric">' +
+          crit.anchors.map(function(a, i){
+            return '<div class="rub-row"><span class="rub-n">' + (i + 1) + "</span><span class=\"rub-t\">" +
+              esc(a) + "</span></div>";
+          }).join("") + "</div></div>";
       }).join("");
-      return h + ctxFoot("The domain list is illustrative. " + esc(iv.body) + " publishes what it actually scores.") + "</div>";
+      return h + ctxFoot("Example content for this prototype. The real weights, and the wording a panel actually " +
+        "scores against, are " + esc(iv.body) + "'s.");
     }
 
     if (g.id === "evid"){
@@ -5275,107 +5505,151 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       var kb = ivKbDone(iv.id), nkb = IV_DOMAINS.filter(function(d){ return kb[d.id]; }).length;
       var hk = '<div class="card"><div class="card-head"><h2>' + nkb + " of " + IV_DOMAINS.length + " reviewed</h2>" +
         '<span class="aside">' + esc(iv.t) + "</span></div>" + bar(Math.round(nkb / IV_DOMAINS.length * 100)) +
-        '<p class="lede" style="max-width:68ch;margin:14px 0 4px">How to structure an answer, not what to say. ' +
-        "Situation, your role in it, what changed, and what you would do differently -- the shape a panel is " +
-        "listening for under any question in a domain, whichever one they ask.</p>";
+        '<p class="lede" style="max-width:68ch;margin:14px 0 4px">How to structure an answer, and a worked ' +
+        "example of one, domain by domain.</p></div>";
       hk += IV_DOMAINS.map(function(d){
-        return '<div class="chk' + (kb[d.id] ? " done" : "") + '">' +
-          '<span class="chk-box' + (kb[d.id] ? " on" : "") + '" aria-hidden="true">' +
-          (kb[d.id] ? ico(I.tick, 12) : "") + "</span>" +
-          '<div class="chk-b"><b>' + esc(d.t) + "</b><small>" + esc(d.d) + "</small></div>" +
-          '<div class="chk-r"><button class="btn btn-sm btn-ghost" data-iv-kb="' + esc(d.id) + '">' +
-          (kb[d.id] ? "Mark unreviewed" : "Mark reviewed") + "</button></div></div>";
+        var ex = IV_KB[d.id];
+        return '<div class="card" style="margin-top:12px"><div class="card-head"><h2>' + esc(d.t) + "</h2>" +
+          '<button class="btn btn-sm btn-ghost" data-iv-kb="' + esc(d.id) + '">' +
+          (kb[d.id] ? "Mark unreviewed" : "Mark reviewed") + "</button></div>" +
+          '<p class="group-h">Technique</p><p class="lede" style="max-width:70ch;margin-bottom:12px">' +
+          esc(ex.technique) + "</p>" +
+          '<p class="group-h">Example answer</p><p class="lede" style="max-width:70ch;font-style:italic">' +
+          esc(ex.example) + "</p></div>";
       }).join("");
-      return hk + ctx("The technique notes behind each domain are written by doctors who have sat on this panel " +
-        "and are never generated, so this shows the structure they go into rather than pretending to hold them.", true) + "</div>";
+      return hk + ctx("Example content for this prototype, not " + esc(iv.body) + "'s real material -- the " +
+        "technique notes and worked answers a doctor would actually rely on have to be written by doctors who " +
+        "have sat this panel before this reaches a real one.", true);
     }
 
-    if (g.id === "qs"){
-      var pr = ivPracticed(iv.id);
-      var hq = '<div class="card"><div class="card-head"><h2>Practice questions</h2>' +
-        '<span class="chip mute">Content to be authored</span></div>' +
-        '<p class="lede" style="max-width:66ch;margin-bottom:12px">Questions by domain, each with what a strong ' +
-        "answer covers and what a panel is listening for. Written by doctors who have sat on these panels, never " +
-        "generated, so the structure is here and the content is the work.</p>";
-      hq += IV_DOMAINS.map(function(d){
-        var n = pr[d.id] || 0;
-        return '<div class="row"><span class="t">' + esc(d.t) +
-          (n ? "<small>" + n + " attempt" + (n === 1 ? "" : "s") + " logged</small>" : "<small>Not practised yet</small>") + "</span>" +
-          '<span class="r"><button class="btn btn-sm btn-ghost" data-iv-practice="' + esc(d.id) +
-          '">Log a practice attempt</button></span></div>';
-      }).join("");
-      return hq + ctxFoot("There is no question bank behind this yet -- logging an attempt only tracks that you " +
-        "worked a domain, the same way marking a topic covered does in exam prep.") + "</div>";
-    }
+    if (g.id === "voice" || g.id === "video") return ivSimSurface(iv, g.id);
 
-    if (g.id === "record") return ivRecordSurface(iv);
-
-    if (g.id === "mock"){
-      var r = ivRatings(iv.id), ms = ivMocks(iv.id);
-      var h3 = '<div class="card"><div class="card-head"><h2>Rate yourself by domain</h2>' +
-        '<span class="aside">' + ms.length + " mocks run</span></div>" +
-        '<p class="lede" style="max-width:66ch;margin-bottom:12px">Run a mock, then rate each domain one to five. ' +
-        "Honestly: the figure is only worth having if it is uncomfortable. Recording yourself first on Record & " +
-        "review is not required, but it makes the rating less of a guess.</p>";
-      h3 += IV_DOMAINS.map(function(d){
-        var v = r[d.id] || 0;
-        return '<div class="row"><span class="t">' + esc(d.t) +
-          (v ? "<small>Rated " + v + " of 5</small>" : "<small>Not rated</small>") + "</span>" +
-          '<span class="r rate">' + [1,2,3,4,5].map(function(n){
-            return '<button class="rt' + (v >= n ? " on" : "") + '" data-iv-rate="' + d.id + ':' + n +
-              '" aria-label="Rate ' + esc(d.t) + " " + n + ' of 5">' + n + "</button>";
-          }).join("") + "</span></div>";
-      }).join("");
-      h3 += '<div style="margin-top:14px"><button class="btn btn-sm btn-primary" data-iv-mock="' + esc(iv.id) +
-        '">Log this mock</button></div>';
-      if (ms.length){
-        h3 += '<p class="group-h">Your mocks</p>' + ms.slice().reverse().map(function(m){
-          return '<div class="row"><span class="t">' + m.ready + "%<small>" + fmtLong(m.at) + "</small></span>" +
-            '<span class="r"><span class="chip ' + (m.ready >= 70 ? "good" : m.ready >= 50 ? "warn" : "crit") + '">' +
-            (m.ready >= 70 ? "Comfortable" : m.ready >= 50 ? "Borderline" : "Behind") + "</span></span></div>";
-        }).join("");
-      }
-      return h3 + "</div>";
-    }
+    if (g.id === "mock") return ivMockSurface(iv);
 
     if (g.id === "stats"){
-      var r2 = ivRatings(iv.id), keys = Object.keys(r2);
-      if (!keys.length){
+      var scores = ivAllScores(iv.id);
+      if (!scores.length){
         return '<div class="card"><p class="empty"><b>Nothing to read yet.</b>' +
-          "Rate yourself after a mock and this ranks the domains by where you are weakest.</p></div>";
+          "Practise a scenario in Voice or Video simulator, or run a full Mock interview, and this ranks the " +
+          "domains by where you are weakest.</p></div>";
       }
-      var ranked = IV_DOMAINS.filter(function(d){ return r2[d.id]; })
-        .sort(function(a, b){ return r2[a.id] - r2[b.id]; });
+      var ranked = IV_DOMAINS.map(function(d){ return {d:d, avg:ivDomainAvg(iv.id, d.id)}; })
+        .filter(function(x){ return x.avg !== null; })
+        .sort(function(a, b){ return a.avg - b.avg; });
       var tr = ivTrend(iv.id);
-      var h4 = '<div class="card"><div class="card-head"><h2>' + ivReady(iv.id) + "% self-rated</h2>" +
+      var h4 = '<div class="card"><div class="card-head"><h2>' + ivReady(iv.id) + "% graded average</h2>" +
         (tr ? '<span class="aside">' + (tr.delta >= 0 ? "up " : "down ") + Math.abs(tr.delta) + " across " +
-          ivMocks(iv.id).length + " mocks</span>" : '<span class="aside">Weakest first</span>') + "</div>";
+          ivSessions(iv.id).length + " sessions</span></div>" : '<span class="aside">Weakest first</span></div>') +
+        '<p class="lede" style="max-width:66ch;margin-bottom:4px">Every score here is simulated, the same as ' +
+        "everywhere it is graded -- read this as what the shape of a real analysis would show, not a real " +
+        "assessment of you.</p></div>";
       if (tr){
-        h4 += '<p class="trend' + (tr.delta > 0 ? " up" : tr.delta < 0 ? " down" : "") + '">' +
-          spark(tr.points, 80, 24) + "<span>From " + tr.from + "% to " + tr.to + "%</span></p>";
+        h4 = h4.slice(0, -6) + '<p class="trend' + (tr.delta > 0 ? " up" : tr.delta < 0 ? " down" : "") + '">' +
+          spark(tr.points, 80, 24) + "<span>From " + tr.from + "% to " + tr.to + "%</span></p></div>";
       }
-      h4 += ranked.map(function(d){
-        var pct = r2[d.id] * 20;
-        return '<div class="barrow" style="padding:9px 0"><span class="lbl">' + esc(d.t) + "</span>" +
-          '<span class="val num">' + r2[d.id] + "/5</span>" + bar(pct) + "</div>";
+      var h5 = '<div class="card" style="margin-top:12px"><div class="card-head"><h2>By domain</h2>' +
+        '<span class="aside">Mean of every graded attempt</span></div>';
+      h5 += ranked.map(function(x){
+        return '<div class="barrow" style="padding:9px 0"><span class="lbl">' + esc(x.d.t) + "</span>" +
+          '<span class="val num">' + x.avg + "%</span>" + bar(x.avg) + "</div>";
       }).join("");
       var kbDone = Object.keys(ivKbDone(iv.id)).length;
-      var pracN = Object.keys(ivPracticed(iv.id)).filter(function(k){ return ivPracticed(iv.id)[k] > 0; }).length;
-      h4 += '<div class="barrow" style="margin-top:14px"><span class="lbl">Domains reviewed in Knowledge base</span>' +
+      h5 += '<div class="barrow" style="margin-top:14px"><span class="lbl">Domains reviewed in Knowledge base</span>' +
         '<span class="val num">' + kbDone + " of " + IV_DOMAINS.length + "</span>" +
         bar(Math.round(kbDone / IV_DOMAINS.length * 100)) + "</div>";
-      h4 += '<div class="barrow" style="padding-top:9px"><span class="lbl">Domains with a practice attempt logged</span>' +
-        '<span class="val num">' + pracN + " of " + IV_DOMAINS.length + "</span>" +
-        bar(Math.round(pracN / IV_DOMAINS.length * 100)) + "</div>";
-      return h4 + ctxFoot("This is your own rating of yourself, not a mark. It is useful because it ranks what to " +
-        "work on, not because the number means anything on its own.") + "</div>";
+      h5 += '<div class="barrow" style="padding-top:9px"><span class="lbl">Attempts logged</span>' +
+        '<span class="val num">' + ivAttempts(iv.id).length + "</span></div>";
+      return h4 + h5 + ctxFoot("Grades are simulated for this prototype: a real version would transcribe the " +
+        "recording and score it against Interview scoring criteria, and this page would not need to change " +
+        "shape to read that instead.") + "</div>";
     }
 
     return '<div class="card"><div class="card-head"><h2>Mock with a tutor</h2>' +
       '<span class="chip mute">Not wired up in this prototype</span></div>' +
-      '<p class="lede" style="max-width:66ch">A scored practice interview with a doctor who has sat on a ' +
-      esc(iv.body) + " panel. Availability, booking and payment are real product surfaces rather than things to " +
-      "mock up here.</p></div>";
+      '<p class="lede" style="max-width:66ch">A scored practice interview with a real doctor who has sat on a ' +
+      esc(iv.body) + " panel -- live, not simulated. Availability, booking and payment are real product surfaces " +
+      "rather than things to mock up here.</p></div>";
+  }
+
+  /* Voice simulator / Video simulator: a scenario library, and the
+     record-and-grade flow once one is opened for practice */
+  var simScenario = null;
+  function ivSimSurface(iv, mode){
+    var kind = mode === "video" ? "video" : "audio";
+    var scenario = simScenario ? scenarioById(simScenario) : null;
+    if (!scenario){
+      var attempts = ivAttempts(iv.id).filter(function(a){ return a.mode === (mode === "video" ? "video" : "voice"); });
+      var hs = '<div class="card"><div class="card-head"><h2>' +
+        (mode === "video" ? "Video simulator" : "Voice simulator") + "</h2>" +
+        '<span class="aside">' + attempts.length + " attempts so far</span></div>" +
+        '<p class="lede" style="max-width:66ch">Pick a scenario, answer it ' +
+        (mode === "video" ? "on camera" : "out loud") + ", then it is graded automatically. Grading is simulated " +
+        "for this prototype -- see Analytics for what that means.</p></div>";
+      IV_DOMAINS.forEach(function(d){
+        hs += '<p class="sec-label" style="margin-top:20px">' + esc(d.t) + "</p>";
+        hs += scenariosFor(d.id).map(function(s){
+          var best = attempts.filter(function(a){ return a.scenarioId === s.id; })
+            .sort(function(a, b){ return b.overall - a.overall; })[0];
+          return '<div class="row"><span class="t">' + esc(s.t) + "<small>" + esc(s.prompt) + "</small></span>" +
+            '<span class="r">' + (best ? '<span class="chip good">Best ' + best.overall + "%</span>" : "") +
+            '<button class="btn btn-sm btn-primary" data-iv-scenario="' + esc(s.id) + '">Practice this</button></span></div>';
+        }).join("");
+      });
+      return hs;
+    }
+    var dom = IV_DOMAINS.filter(function(d){ return d.id === scenario.domain; })[0];
+    var h = '<div class="card" style="margin-bottom:12px">' +
+      '<button class="btn btn-sm btn-ghost" data-iv-scenario="">' + ico(I.arrow, 13) + "Back to scenarios</button>" +
+      '<p class="group-h" style="margin-top:12px">' + esc(dom ? dom.t : "") + "</p>" +
+      '<h2 style="font-family:var(--fd);font-size:18px;margin-bottom:6px">' + esc(scenario.t) + "</h2>" +
+      '<p class="lede" style="max-width:66ch">' + esc(scenario.prompt) + "</p></div>";
+    return h + recordAndGradeUI(scenario, kind, false);
+  }
+
+  /* Mock interview: the same record-and-grade mechanic run once per domain,
+     back to back, ending in a session summary */
+  function ivMockSurface(iv){
+    var sessions = ivSessions(iv.id);
+    if (!mockSession || mockSession.ivId !== iv.id){
+      var hm = '<div class="card"><div class="card-head"><h2>Mock interview</h2>' +
+        '<span class="aside">' + sessions.length + " run so far</span></div>" +
+        '<p class="lede" style="max-width:66ch;margin-bottom:14px">A full session: one scenario from every ' +
+        "domain, back to back, on camera. Each answer is graded as you go, and the session ends in a complete " +
+        "summary. Grading is simulated for this prototype.</p>" +
+        '<button class="btn btn-sm btn-primary" data-iv-mock-start>Start mock interview</button></div>';
+      if (sessions.length){
+        hm += '<p class="group-h">Your sessions</p>' + sessions.slice().reverse().map(function(s){
+          return '<div class="row"><span class="t">' + s.overall + "%<small>" + fmtLong(s.at) + "</small></span>" +
+            '<span class="r"><span class="chip ' + (s.overall >= 70 ? "good" : s.overall >= 50 ? "warn" : "crit") + '">' +
+            (s.overall >= 70 ? "Comfortable" : s.overall >= 50 ? "Borderline" : "Behind") + "</span></span></div>";
+        }).join("");
+      }
+      return hm;
+    }
+    if (mockSession.idx >= mockSession.scenarioIds.length){
+      var overall = Math.round(mockSession.results.reduce(function(a, r){ return a + r.overall; }, 0) /
+        mockSession.results.length);
+      var hf = '<div class="card"><div class="card-head"><h2>Session complete — ' + overall + "%</h2>" +
+        '<span class="aside">' + mockSession.results.length + " scenarios</span></div>";
+      hf += mockSession.results.map(function(r){
+        var sc = scenarioById(r.scenarioId), dm = IV_DOMAINS.filter(function(d){ return d.id === r.domain; })[0];
+        return '<div class="row"><span class="t">' + esc(sc ? sc.t : "") + "<small>" + esc(dm ? dm.t : "") + "</small></span>" +
+          '<span class="r"><span class="chip mute">' + r.overall + "%</span></span></div>";
+      }).join("");
+      hf += '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="btn btn-sm btn-primary" data-iv-mock-log>Log this session</button>' +
+        '<button class="btn btn-sm btn-ghost" data-iv-mock-abandon>Discard</button></div></div>';
+      return hf;
+    }
+    var scId = mockSession.scenarioIds[mockSession.idx];
+    var sc2 = scenarioById(scId), dm2 = IV_DOMAINS.filter(function(d){ return d.id === sc2.domain; })[0];
+    var hp = '<button class="btn btn-sm btn-ghost" data-iv-mock-abandon style="margin-bottom:10px">' +
+      ico(I.out, 13) + "Leave session</button>";
+    hp += '<div class="card" style="margin-bottom:12px"><div class="card-head">' +
+      "<h2>Question " + (mockSession.idx + 1) + " of " + mockSession.scenarioIds.length + "</h2>" +
+      '<span class="aside">' + esc(dm2 ? dm2.t : "") + "</span></div>" +
+      '<p class="lede" style="max-width:66ch;font-weight:600">' + esc(sc2.prompt) + "</p></div>";
+    return hp + recordAndGradeUI(sc2, "video", true);
   }
 
   VIEWS.profile = {
@@ -5666,8 +5940,24 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
        opening a different interview, the exit control, back/forward, all of
        it. A live camera/mic stream cannot survive #view being torn out from
        under it, so this is also the one place a recording left running while
-       the doctor moves on is guaranteed to be stopped rather than leaking. */
-    if (recState && recState.recording) recAbort();
+       the doctor moves on is guaranteed to be stopped rather than leaking.
+       recSuppressGuard is on for exactly the render() call recStart() makes
+       to show the recording it just started -- without it this guard would
+       fire on that very call and abort a recording before recorder.start()
+       even runs, every time, for anyone: not a leak-on-navigation edge case
+       but the ordinary path, found only once a browser here actually had a
+       working encoder to expose it. */
+    if (recState && recState.recording && !recSuppressGuard) recAbort();
+    /* a mock-interview session is scenario picks and results banked in
+       memory until the doctor logs it -- ephemeral the same way an unsaved
+       recording is, so leaving the Mock interview surface (or the hub
+       entirely) drops whatever was not yet logged rather than leaving it to
+       reappear stale later */
+    if (mockSession && (S.gymSurface !== "mock" || S.ivOpen !== mockSession.ivId)) mockSession = null;
+    /* which scenario is open for practice in Voice/Video simulator is
+       navigation state, not record state -- reset it the same way leaving
+       either surface resets everything else about the attempt in progress */
+    if (simScenario && S.gymSurface !== "voice" && S.gymSurface !== "video") simScenario = null;
     var id = currentId(), v = VIEWS[id];
     /* the old Deadlines link means "show me the dates" and the old Programmes
        link means "show me the list", so each lands on the tab it meant */
@@ -6380,32 +6670,6 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       toast("<em>" + esc((INTERVIEWS[sid] || {}).t || sid) + "</em> added. Billing is not wired up in this demo.");
       return;
     }
-    var ir = ev.target.closest("[data-iv-rate]");
-    if (ir){
-      ev.preventDefault();
-      var bits = ir.getAttribute("data-iv-rate").split(":");
-      if (!S.ivOpen) return;
-      S.ivRatings = S.ivRatings || {};
-      S.ivRatings[S.ivOpen] = S.ivRatings[S.ivOpen] || {};
-      /* clicking the rating you already hold clears it, so a doctor can undo
-         without having to pick a number they do not mean */
-      if (S.ivRatings[S.ivOpen][bits[0]] === +bits[1]) delete S.ivRatings[S.ivOpen][bits[0]];
-      else S.ivRatings[S.ivOpen][bits[0]] = +bits[1];
-      save(); render(); return;
-    }
-    var im = ev.target.closest("[data-iv-mock]");
-    if (im){
-      ev.preventDefault();
-      var mid = im.getAttribute("data-iv-mock");
-      var rated = Object.keys(ivRatings(mid)).length;
-      if (!rated){ toast("Rate at least one domain first."); return; }
-      S.ivMocks = S.ivMocks || {};
-      S.ivMocks[mid] = S.ivMocks[mid] || [];
-      S.ivMocks[mid].push({at:new Date().toISOString().slice(0, 10), ready:ivReady(mid)});
-      logActivity("Mock interview logged, " + ivReady(mid) + "% self-rated", mid);
-      save(); render();
-      toast("Mock logged. <em>" + ivReady(mid) + "%</em> self-rated across " + rated + " domains."); return;
-    }
     var ikb = ev.target.closest("[data-iv-kb]");
     if (ikb){
       ev.preventDefault();
@@ -6417,29 +6681,44 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       else S.ivKbDone[S.ivOpen][kd] = true;
       save(); render(); return;
     }
-    var ipr = ev.target.closest("[data-iv-practice]");
-    if (ipr){
+    var isc = ev.target.closest("[data-iv-scenario]");
+    if (isc){
+      ev.preventDefault();
+      var scv = isc.getAttribute("data-iv-scenario");
+      simScenario = scv || null;
+      render(); return;
+    }
+    var ims = ev.target.closest("[data-iv-mock-start]");
+    if (ims){
       ev.preventDefault();
       if (!S.ivOpen) return;
-      var pd = ipr.getAttribute("data-iv-practice");
-      S.ivPractice = S.ivPractice || {};
-      S.ivPractice[S.ivOpen] = S.ivPractice[S.ivOpen] || {};
-      S.ivPractice[S.ivOpen][pd] = (S.ivPractice[S.ivOpen][pd] || 0) + 1;
-      save(); render(); return;
-    }
-    var rk = ev.target.closest("[data-rec-kind]");
-    if (rk){
-      ev.preventDefault();
-      recPick.kind = rk.getAttribute("data-rec-kind");
+      startMockSession(S.ivOpen);
       render(); return;
+    }
+    var iml = ev.target.closest("[data-iv-mock-log]");
+    if (iml){
+      ev.preventDefault();
+      logMockSession();
+      return;
+    }
+    var ima = ev.target.closest("[data-iv-mock-abandon]");
+    if (ima){
+      ev.preventDefault();
+      abandonMockSession();
+      return;
     }
     var rst = ev.target.closest("[data-rec-start]");
     if (rst){
       ev.preventDefault();
-      if (!S.ivOpen) return;
-      var domSel = document.getElementById("recDomain");
-      recPick.domain = domSel ? domSel.value : recPick.domain;
-      recStart(recPick.domain, recPick.kind);
+      var startScenario, startKind;
+      if (mockSession && S.gymSurface === "mock" && mockSession.idx < mockSession.scenarioIds.length){
+        startScenario = scenarioById(mockSession.scenarioIds[mockSession.idx]);
+        startKind = "video";
+      } else if (simScenario){
+        startScenario = scenarioById(simScenario);
+        startKind = S.gymSurface === "video" ? "video" : "audio";
+      }
+      if (startScenario) recStart(startScenario, startKind);
       return;
     }
     var rsp = ev.target.closest("[data-rec-stop]");
@@ -6454,11 +6733,17 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       recDiscard();
       return;
     }
-    var rsv = ev.target.closest("[data-rec-save]");
-    if (rsv){
+    var rlg = ev.target.closest("[data-rec-log]");
+    if (rlg){
       ev.preventDefault();
       if (!S.ivOpen) return;
-      recSaveClick(S.ivOpen);
+      recLogClick(S.ivOpen);
+      return;
+    }
+    var rnx = ev.target.closest("[data-rec-next]");
+    if (rnx){
+      ev.preventDefault();
+      recNextClick();
       return;
     }
     var wx = ev.target.closest("[data-ws-exit]");

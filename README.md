@@ -939,14 +939,25 @@ inherited it, so the fix is applied in all six files.
 - Preparation pages: every fee, date, weight and station count is illustrative.
   Replace from the colleges' published documents, and mark anything not yet
   published rather than carrying last year's number forward.
-- Dashboard: interview prep's **Knowledge base** and **Practice questions**
-  surfaces are structure only. The generic answer-structure framing
-  (situation, role, outcome, what you would do differently) is a widely known
-  interview technique, not this product's claim about what any specific panel
-  wants; the domain-by-domain technique notes and the questions themselves are
-  both marked "content to be authored" and must be written by doctors who have
-  sat on these panels before launch, per the standing rule against generated
-  question banks.
+- Dashboard: interview prep's **Interview scoring criteria**, **Knowledge
+  base**, and the twelve scenarios shared by **Voice simulator**, **Video
+  simulator** and **Mock interview** are all placeholder content, written out
+  in full for this prototype rather than left as "to be authored" stubs, and
+  each surface says so on the page itself. None of it is any college's
+  published material: the domain weights and five-band rubrics in
+  `IV_CRITERIA`, the technique notes and worked example answers in `IV_KB`,
+  and the scenario prompts in `IV_SCENARIOS` all need to be written by doctors
+  who have sat on these panels before this reaches a real one, per the
+  standing rule against generated question banks.
+- Dashboard: interview prep's grading is **simulated, not real**.
+  `simulateGrade()` produces an illustrative score, breakdown and feedback
+  from a small hand-written pool — there is no backend in this app and
+  nowhere safe to hold a real model API key client-side, so no recording is
+  ever actually analysed. Every place a grade appears says "simulated" next
+  to it. Replacing this with a real model call needs a backend (to
+  transcribe the recording and hold the API key) before launch; the function
+  is written so that swap does not require reshaping anything that reads its
+  output.
 - Onboarding creates no account and sends no email. The magic-link step has an
   explicit demo control that says so rather than pretending to wait.
 - Milestones and the roadmap trail now derive from the record, so a doctor who
@@ -2056,89 +2067,118 @@ up.
 
 Asked directly whether interview prep was "lacking anything" — with a request
 for "knowledge base, voice simulator, video simulator, mock with a live
-tutor, analytics, interview scoring criteria" — the honest answer split three
-ways. Some of it already existed and was genuinely good: **Your evidence**
-reads the Gap analysis domains straight off the portfolio
-(`evidenceFor(d)`), which nothing else in the market can do because nothing
-else holds both halves of a doctor's record. Some of it was requested under a
-name that would be dishonest to build literally: an actual "AI voice/video
-simulator" means either a fabricated judgment of someone's interview
-technique or quietly routing their answer through a model to grade it,
-neither of which this product does anywhere else and both of which the
-standing rule against generated content already rules out here. And some of
-it was a real, missing gap: there was a countdown plan for exam prep and none
-for interview prep, "practice questions" quietly conflated technique with
-content into one thin stub, and there was no actual practice *moment* on the
-page — just a rating entered after a mock happened somewhere else.
+tutor, analytics, interview scoring criteria" — the first pass reframed the
+simulators into a self-rating tool with no AI judgment involved, on the
+theory that grading someone's interview technique was outside what this
+product does anywhere else. That was a wrong guess at the brief: told
+directly what the flows should actually look like — a scoring-criteria page
+you can open to see everything about it, a knowledge base with real
+technique *and* worked example answers, a voice simulator and a video
+simulator each built around a browsable scenario library you click into to
+practice one at a time, a mock interview that runs a full session through
+that same mechanic back to back, and — explicitly — that the simulators
+**should** be AI graded — the second pass rebuilt around that, and rebuilt
+the content too: every scenario, technique note and rubric line went from
+"content to be authored" stubs to real, populated placeholder text, clearly
+marked as illustrative rather than doctor-authored, closer to how `EXAMS` or
+`CYCLE` are treated elsewhere in this file than to a stub screen.
 
-`IV_GYM` grew from six surfaces to nine: **Countdown plan** and **Knowledge
-base** are new structural surfaces (paced off the doctor's own cycle dates
-and reviewed domain-by-domain, the same discipline exam prep already uses);
-**Practice questions** was restructured from one flat stub into a per-domain
-list with a practice-attempt counter; **What is assessed** gained a scoring-
-criteria framing paragraph and reads each domain's current self-rating back;
-**Mock interview** gained a mocks-history list; **Analytics** gained a trend
-line (`ivTrend()`, the same shape `trendFor()` already gives exam prep) and
-two coverage bars reading the new kb/practice state. **Your evidence** and
-**Mock with a tutor** are unchanged — the first was already the strongest
-part of the hub, the second is honestly left as a real booking surface rather
-than mocked up.
+`IV_GYM` is nine surfaces: **Countdown plan** (unchanged, paced off the
+doctor's own cycle dates), **Interview scoring criteria** (new — full detail,
+not a domain list: every domain's summary, an illustrative weight, and a
+five-band rubric ladder from weakest to strongest answer), **Your evidence**
+(unchanged — already the strongest part of the hub, reading Gap analysis
+straight off the portfolio), **Knowledge base** (deepened — technique *and* a
+worked example answer per domain, not a structure-only stub), **Voice
+simulator** and **Video simulator** (new, separate menu items sharing one
+scenario library — twelve scenarios, two per domain — but each its own entry
+point and its own attempt count), **Mock interview** (rebuilt — starts a full
+session, one scenario per domain, six back to back, ending in a graded
+summary, rather than a manual 1–5 self-rating), **Analytics** (rebuilt to
+read graded attempts and sessions instead of self-ratings), and **Mock with a
+tutor** (unchanged, and now says "live, not simulated" to draw the line
+against everything above it).
 
-### Record & review, not a simulator
+### Simulated grading, not a real model call
 
-The "voice simulator/video simulator" request became a self-recording tool:
-answer a question out loud, on camera or audio-only, then watch or listen
-back before rating yourself. Nothing evaluates the recording — the doctor's
-own domain rating, the same 1-5 scale the mock surface already uses, is the
-only judgment involved. A recording is never uploaded and does not survive a
-reload; the page says so before anyone presses Start, not as a discovery
-after the fact.
+This is a static file with no backend and nowhere safe to hold a real model
+API key client-side, so `simulateGrade(domainId)` cannot call a real model.
+What it builds instead is the complete grading *experience* — an overall
+score, a three-criteria breakdown, two feedback bullets drawn from a small
+illustrative pool keyed to the score band — labelled "simulated" everywhere
+it appears: in the intro copy before anyone starts, next to the score itself,
+and again in Analytics. The design is deliberately shaped so that swapping
+this one function for a real call later (transcribe the recording, score the
+transcript against `IV_CRITERIA`) is a backend job, not a redesign — nothing
+that reads its output (`{overall, subs, feedback}`) would need to change
+shape.
 
-Two things had to be designed around deliberately:
+### The recording and grading engine
+
+Voice simulator, Video simulator and Mock interview all share one mechanic —
+answer a scenario on camera or audio, then it grades automatically — reused
+via `recordAndGradeUI(scenario, kind, inSession)` and driven by `recStart()`/
+`recStopClick()`/`recDiscard()`/`recLogClick()`/`recNextClick()`. Three things
+had to be designed around deliberately:
 
 - **`render()` replaces `#view` wholesale on every state change.** A live
   `MediaStream`/`MediaRecorder` cannot survive having its DOM torn out from
   under it, so recorder state lives in a module-level `recState` variable
-  outside `S`, never touches `localStorage`, and `render()` itself carries a
-  guard at its very top — `if (recState && recState.recording) recAbort();`
-  — so every navigation path (switching gym tiles, opening a different
-  interview, the exit control, browser back, a bare hash change) is
-  guaranteed to stop the camera/mic rather than leaking it, because they all
-  funnel through that one function.
-- **Artifact-iframe permissions.** Camera/mic access can be blocked outright
-  when this app is viewed inside an embedded iframe rather than a normal
-  browser tab. The idle state, the "not supported" state and the error state
-  all name this specifically ("if this page is embedded, for example inside
-  a Claude Artifact...") rather than failing silently.
+  outside `S`, never touches `localStorage`, and a guard at the very top of
+  `render()` stops any in-progress recording on every navigation path.
+- **The render() guard almost broke every recording, including the very one
+  it was protecting.** `recStart()` itself calls `render()` once, deliberately,
+  to paint the "now recording" UI — and the guard, written as a blanket
+  `if (recState.recording) recAbort();`, fired on that call too, stopping the
+  stream and revoking it *before* `recorder.start()` even ran. This was not
+  an edge case: it fired on every single successful `getUserMedia()`
+  resolution, in any browser, for anyone. It went unnoticed through the
+  first version's tests because the sandboxed browser used for testing has
+  no working encoder at all, so `recorder.start()` always threw first — and
+  the resulting `NotSupportedError` read as a plausible, encoder-shaped
+  explanation on its own. Adding `--use-fake-device-for-media-stream` to a
+  Playwright launch and actually watching the "Stop and grade" state (or the
+  lack of it) surfaced the real cause. Fixed with `recSuppressGuard`, a
+  boolean the guard checks and `recStart()` sets true for exactly the one
+  `render()` call it makes itself.
+- **Async gaps needed a token, not a flag.** Three points in the flow are
+  async relative to a doctor's next click: `getUserMedia()` resolving, the
+  recorder's `onstop`, and the ~1.5s simulated grading delay. A monotonic
+  `recToken`, bumped by `recStart()`, `recAbort()` and `recDiscard()`, lets
+  every callback check `myToken === recToken` before touching `recState` or
+  calling `render()` — so starting a new recording, discarding, or navigating
+  away can never have a stale callback overwrite what the doctor is now
+  looking at.
 
-**One real bug, found by testing the failure path rather than reading the
-code:** `recorder.start()` can throw synchronously (`NotSupportedError` when
-no encoder is available — confirmed by testing in a sandboxed headless
-browser with no video/audio encoder at all, which is an environment limit,
-not an app one). The original code called `recorder.start()` *after* the
-live `stream` had already moved into `recState`, so the promise's outer
-`.catch(function(err){...})` handled the rejection but had no reference to
-`stream` in scope to stop its tracks — the camera would have stayed lit
-behind an honest-looking error message. Fixed by wrapping `recorder.start()`
-in its own `try/catch` where `stream` is still a closure variable, so a
-failure there stops the tracks immediately rather than leaking them. Playwright
-confirmed both that the fix works (no live track remains attached to any
-media element after a forced failure) and that the underlying scenario is
-real (it reproduces with `--use-fake-device-for-media-stream` in this
-environment every time).
+**A second, smaller bug found the same way:** the "Log this attempt" /
+"Next question" button was built as
+`'data-rec-' + (inSession ? "next" : "log") + '">'` — the stray `"` before
+`>` puts it inside the attribute *name* HTML parsers construct
+(`data-rec-log"`, quote included), so `document.querySelector('[data-rec-log]')`
+never matched it. Found the same way as the render-guard bug: by actually
+driving the button in a live browser rather than reading the template
+string, which looked correct at a glance.
+
+Both were caught running `ivprep.mjs`'s scenario/session flows against a
+real fake-device browser, including a full six-question Mock interview
+session end to end (start → record → stop → grade → next, six times → session
+summary → log), not by reading the code.
 
 ### Testing
 
-A new suite (`ivprep.mjs`, 7 sections) covers the countdown plan, knowledge
-base toggle-and-undo, practice-question logging, the record surface's honest
-disclosures, the mock history list, and the analytics trend/coverage bars.
-A second suite (`a11y_ivsurfaces.mjs`) runs axe-core and a 24px touch-target
-check across all nine surfaces individually — the existing `a11y_ws.mjs` only
-ever scanned the hub overview, not each surface. Both are in the permanent
-sweep. The `ws.mjs` regression suite's nav-item count assertion
-(`overview plus six surfaces plus the way out: 8`) was a stale literal from
-when interview prep had six surfaces; updated to eleven rather than treated
-as a failure, since the count genuinely changed on purpose.
+`ivprep.mjs` (9 sections) exercises the real pipeline against
+`--use-fake-device-for-media-stream`, not just markup assertions: the
+countdown plan, the full criteria rubric (one block per domain), knowledge
+base content and its reviewed toggle, a genuine record → grade → log round
+trip in both Voice and Video simulator, a complete six-question Mock
+interview session, Analytics reading real graded state, the tutor's "live,
+not simulated" framing, and — mid-recording — navigating away and confirming
+the render() guard actually stops the live stream and leaves a clean idle
+state on return. `a11y_ivsurfaces.mjs` runs axe-core and a 24px touch-target
+check across all nine surfaces individually, plus the scenario-open and
+graded-result states the base surface scan does not reach on its own. Both
+are in the permanent sweep, alongside a one-line fix to `ev2.mjs`'s stale
+assertion for the old "What is assessed" surface name.
 
 ## Noted for later, deliberately not built
 
