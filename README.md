@@ -2213,16 +2213,36 @@ Cardiology from a two-programme record leaves `["bst-gim"]`, not
 `["p-cardiology", "bst-gim"]` reseeded back). New suite `untrack.mjs`, in
 the permanent sweep, covers both states.
 
+**Three follow-up requests landed on this same page.** Stop tracking moved
+from the bottom of the detail page (after the entire checklist) to the top,
+next to the "All programmes" breadcrumb — a decision about this application
+made as often before reading the checklist as after, so it shouldn't cost a
+scroll either way. `trackBack()` now takes an optional `action` argument,
+rendered flush right via `margin-left:auto` inside the existing `.trk-back`
+flex row, rather than adding new markup. "Print this stage" (bare
+`window.print()`, no print stylesheet, printed the dark sidebar) is gone —
+see the placeholder note above. And the closing disclaimer, which read as a
+confident claim ("RCPI sets what actually applies, and that list is the one
+that counts"), is reworded as what it actually is: a warning to treat every
+requirement and date on the page as an illustrative placeholder and confirm
+the real ones on RCPI's own site before relying on them, since colleges
+change their own dates and this prototype has no way to know when. The
+now-removed "Requirements marked shared..." footer explained a mechanic
+(shared vs. per-application requirements) the checklist itself already shows
+via the `Shared` chip on each row, so cutting it lost no information, only a
+repeat of it. `tracker.mjs`'s three stale assertions for the old copy were
+updated to the new wording rather than left broken.
+
 ## Noted for later, deliberately not built
 
 - **The Application tracker is unfinished and parked.** What is built works —
   four derived stages, programme switching, inline actions — but it stopped
   mid-thought rather than at a natural end. Open when we return:
-  - **Print is a stub.** "Print this stage" calls bare `window.print()` and
-    there is no `@media print` block anywhere in the app, so it prints the dark
-    sidebar and the nav. Either build a real print stylesheet, or drop the
-    button until there is one; a control that produces something unusable is
-    worse than no control.
+  - **Print is gone.** "Print this stage" called bare `window.print()` with
+    no `@media print` block anywhere in the app, so it printed the dark
+    sidebar and the nav — a control that produced something unusable, so it
+    was removed rather than left as a broken affordance. Worth a real print
+    stylesheet later; add the button back only once one exists.
   - **The requirement lists are ours, not any college's.** The categories are
     defensible; the specific documents, formats, English tests and verification
     routes are not. Flagged on the page and in the placeholder list above.

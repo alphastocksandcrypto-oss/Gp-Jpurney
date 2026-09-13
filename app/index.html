@@ -3509,7 +3509,7 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
   /* the way back up, and the other applications one click away. A doctor
      chasing a reference on one application should be able to see they have a
      second without returning to the index first. */
-  function trackBack(progs, prog){
+  function trackBack(progs, prog, action){
     var others = progs.filter(function(x){ return x.id !== prog.id; });
     return '<div class="trk-back">' +
       '<a class="btn-link trk-up" href="#/progress">' + ico(I.arrow, 13) + "All programmes</a>" +
@@ -3518,7 +3518,8 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
             return '<a class="btn-link" href="#/progress/' + encodeURIComponent(x.id) + '">' +
               esc(x.t) + "</a>";
           }).join('<span aria-hidden="true"> \u00b7 </span>') + "</span>"
-        : "") + "</div>";
+        : "") +
+      (action ? '<span style="margin-left:auto">' + action + "</span>" : "") + "</div>";
   }
 
   /* the index-level header: the dates tab spans every application, so its
@@ -3635,7 +3636,25 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       var app = applicationFor(prog.t);
       var overall = checkProgress(target);
 
-      var h = trackBack(progs, prog) + '<div id="trackPanel">';
+      /* Stop tracking, at the top now rather than buried under the whole
+         checklist: it is a decision about this application, made before
+         reading what it wants, as often as after. progsTracked() falls back
+         to S.specialty/S.otherTargets whenever S.programmes is empty, so
+         dropping your only tracked application would not stay dropped -- it
+         would reappear on the next render, reseeded from the same
+         specialty, which reads as the button silently failing. The actual
+         lever for "I don't want this application any more" when it is your
+         only one is changing your target on the profile, so say that
+         instead of hiding the control with no explanation. */
+      var stopAction = progs.length > 1
+        ? '<button class="btn btn-sm btn-ghost" data-prog-off="' + esc(prog.id) + '">Stop tracking this</button>'
+        : '<a class="btn btn-sm btn-ghost" href="#/profile">Change your target instead</a>';
+      var h = trackBack(progs, prog, stopAction) + '<div id="trackPanel">';
+      if (progs.length <= 1){
+        h += '<p class="lede" style="max-width:60ch;margin:-8px 0 14px;font-size:12.5px;color:var(--txt-mute)">' +
+          "This is your only tracked application, so there is nothing to fall back to if you stop tracking it " +
+          "here — track a second application first, or change your target specialty on your profile.</p>";
+      }
       h += trackStats(prog);
 
       /* ---- the four phases ---- */
@@ -3704,41 +3723,14 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       });
       h += "</div>";
 
-      if (progs.length > 1){
-        h += ctxFoot("Requirements marked shared are one fact about you and count for every application: one CV, " +
-          "one Garda vetting. The rest belong to the application they sit under, because references and a " +
-          "submitted form are not shared between two.");
-      }
-
-      /* Stop tracking lives here now. The index card became a single link so it
-         could not carry a nested button, and this is the better place for it
-         anyway: you open the application, look at what it wants, and decide.
-
-         Below one, the button has nowhere useful to go: progsTracked() falls
-         back to S.specialty/S.otherTargets whenever S.programmes is empty, so
-         dropping your only application would not stay dropped -- it would
-         reappear on the next render, reseeded from the same specialty, which
-         reads as the button silently failing. The actual lever for "I don't
-         want this application any more" when it's your only one is changing
-         your target on the profile, so say that instead of hiding the
-         control with no explanation. */
       h += '<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">' +
-        '<button class="btn btn-sm btn-ghost" data-act="addMilestone">Add your own requirement</button>' +
-        '<button class="btn btn-sm btn-ghost" data-act="printReport">Print this stage</button>' +
-        (progs.length > 1
-          ? '<button class="btn btn-sm btn-ghost" data-prog-off="' + esc(prog.id) +
-            '">Stop tracking this</button>'
-          : '<a class="btn btn-sm btn-ghost" href="#/profile">Change your target instead</a>') + "</div>";
-      if (progs.length <= 1){
-        h += '<p class="lede" style="text-align:center;max-width:52ch;margin:6px auto 0;font-size:12.5px;' +
-          'color:var(--txt-mute)">This is your only tracked application, so there is nothing to fall back to if ' +
-          "you stop tracking it here — track a second application first, or change your target specialty on " +
-          "your profile.</p>";
-      }
+        '<button class="btn btn-sm btn-ghost" data-act="addMilestone">Add your own requirement</button></div>';
 
-      h += ctxFoot("These requirements are the shape an Irish training application takes, not any college's " +
-        "published list, and the stage dates follow the same illustrative cycle as the rest of the dashboard. " +
-        esc(body || "Each college") + " sets what actually applies, and that list is the one that counts.");
+      h += ctxFoot("This checklist is an illustrative model of what " + esc(body || "an Irish training application") +
+        " takes, built for this prototype and not " + esc(body || "the college") + "'s published list. The stage " +
+        "dates follow the same illustrative cycle as the rest of the dashboard and can change: treat every date " +
+        "here as a placeholder and confirm the real one on " + esc(body || "the college") + "'s own site before " +
+        "relying on it.");
       return h + "</div>";
     }
   };
