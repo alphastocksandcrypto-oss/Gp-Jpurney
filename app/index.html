@@ -3937,18 +3937,28 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
   }
 
   VIEWS.opportunities = {
-    title:"Matched to you", sub:"Posts, shifts and courses that fit your route and close your gaps.",
+    title:"Matched to you", sub:"Posts, shifts, courses and postgraduate study that fit your route and close your gaps.",
     render:function(){
       /* the specialty-shaped rows name the doctor's own specialty rather than
          Cardiology, which every user used to be shown whatever they trained in.
          The society row stays descriptive on purpose: inventing a named body
-         per specialty would be fabricating organisations that may not exist. */
+         per specialty would be fabricating organisations that may not exist.
+         Postgrad rows follow the same discipline: a generic MSc genuinely is
+         relevant across specialties, and saying so honestly (naming the
+         specialty in the reasoning) beats inventing a specialty-branded
+         programme name that may not exist under that title anywhere. */
       var osit = situation(), spec = S.specialty || "your specialty";
       var items = [
         {kind:"Course", t:"Quality Improvement in Clinical Practice", meta:"RCPI · online · 6 CPD points · €140",
          why:"Closes your largest gap. A completed QI project is worth 5 points.", href:"../opportunities/conferences.html", tag:"crit", region:"any"},
         {kind:"Course", t:"Teaching the Teacher, one day", meta:"RCSI · Dublin · 5 CPD points · €130",
          why:"Two logged sessions from this would take teaching to its full 5 points.", href:"../opportunities/conferences.html", tag:"crit", region:"east"},
+        {kind:"Postgrad", t:"MSc in Healthcare Leadership and Management", meta:"Part-time, blended · 1 to 2 years · postgraduate",
+         why:"Counts toward the leadership domain the same way a completed course does, and reads well on a " + spec +
+           " consultant-track application.", href:"../opportunities/conferences.html", tag:"warn", region:"any"},
+        {kind:"Postgrad", t:"MSc in Clinical Research and Biostatistics", meta:"Part-time, blended · 1 to 2 years · postgraduate",
+         why:"A second research output is one of your open gaps. A postgraduate dissertation is one route to it, " +
+           "whatever the specialty behind it.", href:"../opportunities/conferences.html", tag:"warn", region:"any"},
         {kind:"Job", t:"NCHD Registrar, " + spec, meta:"St. James's Hospital · Dublin · Training post",
          why:"Matches your specialty and grade. Closes 20 Sep.", href:"../opportunities/jobs.html", tag:"warn", region:"east"},
         {kind:"Job", t:"Specialist Registrar, " + spec, meta:"Mater Misericordiae · Dublin · Training post",
@@ -3958,9 +3968,9 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
         {kind:"Event", t:spec + " annual scientific meeting", meta:"Dublin · 14 Oct · 8 CPD points · €180",
          why:"An accepted abstract here would count as your second research output.", href:"../opportunities/conferences.html", tag:"warn", region:"east"}
       ];
-      /* location only reorders and badges, it never hides. Six demo rows
-         filtered down to nothing would read as "found nothing" rather than
-         "this is a small demo", so every row still shows either way. */
+      /* location only reorders and badges, it never hides. Demo rows filtered
+         down to nothing would read as "found nothing" rather than "this is a
+         small demo", so every row still shows either way. */
       var willing = S.willing || [];
       var filtering = willing.length && willing.indexOf("any") === -1;
       items.forEach(function(o){ o.near = filtering && regionMatches(o.region); });
@@ -3968,11 +3978,12 @@ button.pcsw:hover{transform:translateY(-2px);box-shadow:4px 6px 0 rgba(11,46,54,
       var nearCount = items.filter(function(o){ return o.near; }).length;
 
       var h = '<div class="card"><div class="card-head"><h2>Why these</h2></div>' +
-        '<p class="lede">Matched on your specialty, your grade and the two domains you are short in. The two courses at the top are here ' +
-        "because they close scored gaps, not because they are popular.</p>";
+        '<p class="lede">Matched on your specialty, your grade and the two domains you are short in. The courses and ' +
+        "postgraduate options near the top are here because they close scored gaps, not because they are popular.</p>";
       h += filtering
         ? '<p class="lede" style="margin-top:8px">' + nearCount + " of " + items.length + " also match where you said you would work" +
-          (willing.length === 1 ? ", " + esc(regionLabel(willing[0])) : "") + ". This is a six-row demo, so a low count here is the sample, not a real shortage."
+          (willing.length === 1 ? ", " + esc(regionLabel(willing[0])) : "") + ". This is a " + items.length +
+          "-row demo, so a low count here is the sample, not a real shortage."
         : '<p class="lede" style="margin-top:8px">Set where you would work on <a href="#/profile">your profile</a> to bring local posts to the top.';
       h += "</p></div>";
       h += '<div class="grid g2" style="margin-top:14px">' + items.map(function(o){
