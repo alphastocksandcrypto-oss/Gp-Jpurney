@@ -2321,6 +2321,114 @@ it" — the old assertion was written when only one such page existed and
 was never meant to forbid a second, but it read as a straightforward count
 either way.
 
+## Gap analysis 3.0: a real priority engine, not just a denser layout
+
+2.0 changed the page's *shape* (density, layout). 3.0 changes the *order* of
+its answer: which action to do first, ranked by what the doctor actually
+controls rather than by raw points. `VIEWS.gaps3` (`#/gaps3`) is a third nav
+entry alongside 1.0 and 2.0 — nothing replaced, same comparison pattern.
+
+This was prompted by an external review of the Gap analysis implementation
+that made one real, checkable point: `levers()` ranks purely by `pts`, so a
+lever that needs an exam sitting date months away can outrank one that is a
+single click away today, for no reason but a point-value tie-break. Verified
+against the actual code before acting on it — worth recording, because the
+same review also asserted `levers()` was still "essentially manually written
+around QI, teaching, research and leadership, independent of the domain
+engine," and re-described, nearly verbatim, a drift bug that was already
+fixed earlier in this project (see "One real bug, found by reading the code
+rather than the page," above) — `levers()` does nothing but collect each
+domain's own `next()`, and the code carries a comment documenting the exact
+fix. One claim in a review being wrong doesn't make the review wrong
+throughout; the ranking-by-points gap was real and is what 3.0 fixes.
+
+### The fix reads real signals, never invents effort or time
+
+The review's own mockup illustrated the fix with invented specifics —
+*"~2-3 weeks,"* *"75% complete · high feasibility"* — exactly the
+fabricated-precision problem this project has refused everywhere else (see
+the Gap Analysis mockup critique, and every entry under "Placeholders to
+replace before launch"). 3.0 gets the same ranking improvement from two
+things that are already real, tracked state, and nothing else:
+
+- **Control** (`leverControl3()`): whether finishing a lever is the doctor's
+  own action (`act`, a button — audit/QI, teaching, research, leadership) or
+  waits on something outside their calendar (`href` — exams, which means
+  sitting a stage). This is a structural fact about how each domain's
+  `next()` already works, not a guess about duration.
+- **Proximity** (`leverProximity3()`): how close an already-started item is,
+  read from numbers the domain note already prints — `S.qiPct` for the
+  in-progress audit/QI project, sessions or outputs still needed for
+  teaching and research. Real state, not an estimate.
+
+`priorityActions3()` re-ranks the exact same `levers()` list 1.0 and 2.0 use
+— never a second, independently derived list — first by control (self
+before external before optional), then by proximity within the self tier,
+then by points as the final tie-break. In the default demo persona this
+visibly reorders the list a pure-points sort would produce: "Sit your next
+MRCPI stage" (+5, exam-gated) drops out of the top three entirely, and
+"Record a second research output" (+3, one output away) outranks "Finish
+the second audit or QI project" (+5, 40% along) because it is closer to
+done. `gaps3.mjs` asserts this reordering explicitly, not just that the
+labels render.
+
+### What else changed
+
+- **A self-directed ceiling tile** (`selfDirectedCeiling3()`) alongside the
+  usual score: points reachable without sitting a further exam stage —
+  `scoreMax()` minus the exams domain's own remaining points. Deliberately
+  narrow: it isolates the one domain structurally gated on a date outside
+  the doctor's calendar rather than guessing whether teaching, research or
+  audit/QI are realistic in the time left.
+- **"Your best next moves"** is now a full-width, three-card primary section
+  above the domain matrix (not a small sidebar list) — the review's central
+  ask was that this become the page's centerpiece, not a footnote.
+- **A quick-wins strip** in the rail surfaces exactly the self-actionable,
+  close-to-done levers — no separate logic, a filter over the same ranked
+  list.
+- **Domains already at their modelled maximum collapse behind one line** by
+  default (`doneStrip3()`), so the page's visual weight goes to what's
+  still open rather than restating finished domains at equal prominence.
+  `domainLadder2()` picked up an optional `colspan` argument (default 6) so
+  3.0's seven-column table — one more than 2.0's, for the new Control
+  column — can reuse it without duplicating the function.
+- **A `Control` column** in the domain matrix (`domainRow3()`, `domainControl3()`)
+  shows the same self/external/optional tag inline per domain, so the
+  table and the priority cards can never disagree about which tier a domain
+  is in — both read `leverControl3()` off the same `next()` call.
+
+### What the review asked for that 3.0 deliberately leaves out
+
+- **A week-by-week closure plan** ("Weeks 1-2: finish QI," "Weeks 3-5:
+  clinical reasoning"). Would require inventing duration estimates this
+  prototype has no real data for — the exact thing the priority engine was
+  built to avoid doing elsewhere on the same page.
+- **Evidence-gap tracking** ("QI complete but evidence not uploaded" as a
+  third gap type, distinct from eligibility and scoring gaps). A genuinely
+  good idea, but it needs new state — a per-domain evidence-uploaded flag —
+  that does not exist anywhere in the record yet. Left as a note for a
+  future pass rather than bolted on as a guess.
+
+### Testing
+
+`gaps3.mjs` (new, in the permanent sweep) covers: the third nav entry
+alongside 1.0 and 2.0; all four KPI tiles including the ceiling tile's
+computed value; the priority-engine reorder itself (the highest-point lever
+is absent from the top three because it's exam-gated; a lower-point,
+closer-to-done lever outranks a higher-point one still starting from
+scratch); the Control tags in the domain table matching the same
+`leverControl3()` the cards use; quick wins containing exactly the
+self-actionable, close-to-done levers and nothing else; ladder expand/
+collapse and expand-all as in 2.0; the done-domains collapse (a two-maxed-
+domain persona shows a "2 domains at maximum" strip, hides them as full rows
+until expanded, and never hides the open domains); the shared empty state,
+eligibility chip and application switcher; and that no invented duration or
+feasibility-percentage text appears anywhere on the page. `a11y_gap3.mjs`
+(new, in the permanent sweep) found zero problems on the first pass — the
+lessons from 2.0's a11y pass (explicit `background-color` behind a
+gradient, `min-width:0` on grid children, no `.chip` reused for long
+sentences) carried over cleanly to the new components.
+
 ## Noted for later, deliberately not built
 
 - **The Application tracker is unfinished and parked.** What is built works —
